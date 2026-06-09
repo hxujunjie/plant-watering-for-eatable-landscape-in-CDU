@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.db
+.trae/
+plant-watering-prd/
+ui-prototypes/
+docker-compose.yml
+**/static/uploads/*
+!**/static/uploads/.gitkeep
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp

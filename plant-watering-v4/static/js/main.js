@@ -1,0 +1,402 @@
+/* ============================================================
+   植物浇水签到系统 - 前端通用 JS
+   ============================================================ */
+
+(function () {
+  "use strict";
+
+  /* ========== 函数定义（先定义后使用） ========== */
+
+  /* ---------- 1. Toast 提示 ---------- */
+  window.showToast = function (message, type) {
+    type = type || "success";
+    var toast = document.getElementById("toast");
+    if (!toast) return;
+
+    toast.classList.remove("show", "success", "error");
+    void toast.offsetWidth;
+
+    toast.textContent = message;
+    toast.classList.add(type, "show");
+
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(function () {
+      toast.classList.remove("show");
+    }, 2000);
+  };
+
+  /* ---------- 2. Modal 弹窗 ---------- */
+  window.showModal = function (title, message, onConfirm) {
+    var overlay = document.getElementById("modalOverlay");
+    if (!overlay) return;
+
+    var titleEl = overlay.querySelector(".modal-title");
+    var msgEl = overlay.querySelector(".modal-message");
+    var oldConfirm = overlay.querySelector(".modal-confirm");
+
+    if (titleEl) titleEl.textContent = title;
+    if (msgEl) msgEl.textContent = message;
+
+    if (oldConfirm) {
+      var newConfirm = oldConfirm.cloneNode(true);
+      oldConfirm.parentNode.replaceChild(newConfirm, oldConfirm);
+
+      newConfirm.addEventListener("click", function () {
+        closeModal();
+        if (typeof onConfirm === "function") {
+          onConfirm();
+        }
+      });
+    }
+
+    overlay.classList.add("show");
+  };
+
+  /* ---------- 3. 关闭 Modal ---------- */
+  window.closeModal = function () {
+    var overlay = document.getElementById("modalOverlay");
+    if (overlay) overlay.classList.remove("show");
+  };
+
+  /* ---------- 4. 全屏照片查看器（轨道滑动） ---------- */
+  var viewerPhotos = [];
+  var viewerIndex = 0;
+
+  function getTrack() {
+    return document.getElementById("viewerTrack");
+  }
+
+  function getBody() {
+    return document.getElementById("viewerBody");
+  }
+
+  function setTrackPosition(offset, animate) {
+    var track = getTrack();
+    if (!track) return;
+    if (animate) {
+      track.classList.remove("dragging");
+    } else {
+      track.classList.add("dragging");
+    }
+    track.style.transform = "translateX(" + offset + "px)";
+  }
+
+  function buildSlides() {
+    var track = getTrack();
+    if (!track) return;
+    track.innerHTML = "";
+    viewerPhotos.forEach(function (src) {
+      var slide = document.createElement("div");
+      slide.className = "viewer-slide";
+      var img = document.createElement("img");
+      img.src = src;
+      img.alt = "照片";
+      img.draggable = false;
+      slide.appendChild(img);
+      track.appendChild(slide);
+    });
+  }
+
+  function slideToIndex(index, animate) {
+    var body = getBody();
+    if (!body) return;
+    viewerIndex = index;
+    var offset = -viewerIndex * body.clientWidth;
+    setTrackPosition(offset, animate !== false);
+    updateCounter();
+  }
+
+  function updateCounter() {
+    var counter = document.getElementById("viewerCounter");
+    var prevBtn = document.getElementById("viewerPrev");
+    var nextBtn = document.getElementById("viewerNext");
+    if (counter) counter.textContent = (viewerIndex + 1) + " / " + viewerPhotos.length;
+    if (prevBtn) prevBtn.disabled = viewerPhotos.length <= 1;
+    if (nextBtn) nextBtn.disabled = viewerPhotos.length <= 1;
+  }
+
+  function showViewer() {
+    var overlay = document.getElementById("viewerOverlay");
+    if (!overlay || viewerPhotos.length === 0) return;
+    buildSlides();
+    overlay.classList.add("show");
+    // 等 DOM 渲染后再定位，避免动画错位
+    requestAnimationFrame(function () {
+      slideToIndex(viewerIndex, false);
+    });
+    document.body.style.overflow = "hidden";
+  }
+
+  window.closeViewer = function () {
+    var overlay = document.getElementById("viewerOverlay");
+    if (overlay) overlay.classList.remove("show");
+    document.body.style.overflow = "";
+  };
+
+  window.viewerPrev = function () {
+    if (viewerIndex > 0) slideToIndex(viewerIndex - 1, true);
+  };
+
+  window.viewerNext = function () {
+    if (viewerIndex < viewerPhotos.length - 1) slideToIndex(viewerIndex + 1, true);
+  };
+
+  window.openViewer = function (imgElement) {
+    var recordItem = imgElement.closest(".record-item") || imgElement.closest(".cal-detail-item");
+    if (!recordItem) return;
+
+    var thumbs = recordItem.querySelectorAll("img[class*='thumb']");
+    viewerPhotos = [];
+    thumbs.forEach(function (thumb) {
+      var src = thumb.getAttribute("src") || thumb.dataset.src;
+      if (src) viewerPhotos.push(src);
+    });
+
+    var clickedSrc = imgElement.getAttribute("src") || imgElement.dataset.src;
+    viewerIndex = viewerPhotos.indexOf(clickedSrc);
+    if (viewerIndex === -1) viewerIndex = 0;
+
+    showViewer();
+  };
+
+  window.openViewerUrl = function (url) {
+    var imgEl = document.querySelector('img[src="' + url + '"]');
+    if (imgEl) {
+      var photoGroup = imgEl.closest(".photo-group");
+      if (photoGroup) {
+        var items = photoGroup.querySelectorAll(".photo-item img");
+        viewerPhotos = [];
+        items.forEach(function (item) {
+          var src = item.getAttribute("src");
+          if (src) viewerPhotos.push(src);
+        });
+        viewerIndex = viewerPhotos.indexOf(url);
+        if (viewerIndex === -1) viewerIndex = 0;
+        showViewer();
+        return;
+      }
+    }
+
+    if (imgEl) {
+      var recordItem = imgEl.closest(".record-item");
+      var calDetailItem = imgEl.closest(".cal-detail-item");
+      var container = recordItem || calDetailItem;
+
+      if (container) {
+        var thumbs = container.querySelectorAll("img[class*='thumb']");
+        if (thumbs.length > 0) {
+          viewerPhotos = [];
+          thumbs.forEach(function (thumb) {
+            var src = thumb.getAttribute("src");
+            if (src) viewerPhotos.push(src);
+          });
+          viewerIndex = viewerPhotos.indexOf(url);
+          if (viewerIndex === -1) viewerIndex = 0;
+          showViewer();
+          return;
+        }
+      }
+    }
+
+    viewerPhotos = [url];
+    viewerIndex = 0;
+    showViewer();
+  };
+
+  /* ---------- 5. 设置面板 ---------- */
+  window.openSettings = function () {
+    var overlay = document.getElementById("settingsOverlay");
+    if (overlay) {
+      overlay.classList.add("show");
+      document.body.style.overflow = "hidden";
+    }
+  };
+
+  window.closeSettings = function () {
+    var overlay = document.getElementById("settingsOverlay");
+    if (overlay) {
+      overlay.classList.remove("show");
+      document.body.style.overflow = "";
+    }
+  };
+
+  /* ========== 初始化（在所有函数定义之后） ========== */
+
+  /* ---------- I1. 水滴动画初始化 ---------- */
+  (function initDroplets() {
+    var container = document.querySelector(".droplets");
+    if (!container) return;
+
+    var DROP_COUNT = 15;
+
+    for (var i = 0; i < DROP_COUNT; i++) {
+      var drop = document.createElement("div");
+      drop.classList.add("drop");
+
+      var size = Math.random() * 6 + 4;
+      var left = Math.random() * 100;
+      var duration = Math.random() * 4 + 3;
+      var delay = Math.random() * 5;
+
+      drop.style.width = size + "px";
+      drop.style.height = (size * 1.5) + "px";
+      drop.style.left = left + "%";
+      drop.style.animationDuration = duration + "s";
+      drop.style.animationDelay = delay + "s";
+
+      container.appendChild(drop);
+    }
+  })();
+
+  /* ---------- I2. Modal 取消按钮 ---------- */
+  (function initModalCancel() {
+    var cancelBtn = document.getElementById("modalCancelBtn");
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", function () {
+        closeModal();
+      });
+    }
+  })();
+
+  /* ---------- I3. 点击遮罩关闭 ---------- */
+  (function initOverlayClose() {
+    var modalOverlay = document.getElementById("modalOverlay");
+    if (modalOverlay) {
+      modalOverlay.addEventListener("click", function (e) {
+        if (e.target === modalOverlay) {
+          closeModal();
+        }
+      });
+    }
+
+    var settingsOverlay = document.getElementById("settingsOverlay");
+    if (settingsOverlay) {
+      settingsOverlay.addEventListener("click", function (e) {
+        if (e.target === settingsOverlay) {
+          closeSettings();
+        }
+      });
+    }
+  })();
+
+  /* ---------- I4. 查看器按钮事件 ---------- */
+  (function initViewerButtons() {
+    var closeBtn = document.getElementById("viewerClose");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", closeViewer);
+    }
+    var prevBtn = document.getElementById("viewerPrev");
+    if (prevBtn) {
+      prevBtn.addEventListener("click", viewerPrev);
+    }
+    var nextBtn = document.getElementById("viewerNext");
+    if (nextBtn) {
+      nextBtn.addEventListener("click", viewerNext);
+    }
+  })();
+
+  /* ---------- I5. 触摸滑动（轨道跟手拖拽） ---------- */
+  (function initViewerTouch() {
+    var overlay = document.getElementById("viewerOverlay");
+    var body = getBody();
+    if (!overlay || !body) return;
+
+    var startX = 0;
+    var startY = 0;
+    var dragOffset = 0;
+    var isDragging = false;
+    var isHorizontal = null;
+
+    overlay.addEventListener("touchstart", function (e) {
+      startX = e.changedTouches[0].clientX;
+      startY = e.changedTouches[0].clientY;
+      dragOffset = 0;
+      isDragging = true;
+      isHorizontal = null;
+    }, { passive: true });
+
+    overlay.addEventListener("touchmove", function (e) {
+      if (!isDragging) return;
+
+      var dx = e.changedTouches[0].clientX - startX;
+      var dy = e.changedTouches[0].clientY - startY;
+
+      if (isHorizontal === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+        isHorizontal = Math.abs(dx) > Math.abs(dy);
+      }
+      if (!isHorizontal) return;
+
+      // 基准位置 + 拖拽偏移
+      var baseOffset = -viewerIndex * body.clientWidth;
+      dragOffset = dx;
+
+      // 边缘阻力
+      if ((viewerIndex === 0 && dx > 0) || (viewerIndex === viewerPhotos.length - 1 && dx < 0)) {
+        dragOffset = dx * 0.3;
+      }
+
+      setTrackPosition(baseOffset + dragOffset, false);
+    }, { passive: true });
+
+    overlay.addEventListener("touchend", function () {
+      if (!isDragging) return;
+      isDragging = false;
+
+      var threshold = body.clientWidth * 0.2; // 滑过20%宽度即切换
+
+      if (dragOffset < -threshold && viewerIndex < viewerPhotos.length - 1) {
+        slideToIndex(viewerIndex + 1, true);
+      } else if (dragOffset > threshold && viewerIndex > 0) {
+        slideToIndex(viewerIndex - 1, true);
+      } else {
+        // 回弹到当前
+        slideToIndex(viewerIndex, true);
+      }
+    }, { passive: true });
+  })();
+
+  /* ---------- I6. 键盘支持 ---------- */
+  (function initKeyboard() {
+    document.addEventListener("keydown", function (e) {
+      var viewerOverlay = document.getElementById("viewerOverlay");
+      var modalOverlay = document.getElementById("modalOverlay");
+      var settingsOverlay = document.getElementById("settingsOverlay");
+
+      if (e.key === "Escape") {
+        if (viewerOverlay && viewerOverlay.classList.contains("show")) {
+          closeViewer();
+          return;
+        }
+        if (modalOverlay && modalOverlay.classList.contains("show")) {
+          closeModal();
+          return;
+        }
+        if (settingsOverlay && settingsOverlay.classList.contains("show")) {
+          closeSettings();
+          return;
+        }
+      }
+
+      if (viewerOverlay && viewerOverlay.classList.contains("show")) {
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          viewerPrev();
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          viewerNext();
+        }
+      }
+    });
+  })();
+
+  /* ---------- I7. 设置关闭按钮 ---------- */
+  (function initSettingsClose() {
+    var closeBtn = document.getElementById("settingsClose");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () {
+        closeSettings();
+      });
+    }
+  })();
+
+})();

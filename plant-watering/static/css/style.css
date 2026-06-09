@@ -1,0 +1,1517 @@
+/* ============================================================
+   植物浇水签到系统 - 绿意盎然主题样式
+   ============================================================ */
+
+/* ---------- CSS 变量 ---------- */
+:root {
+  --bg-start: #f1f8e9;
+  --bg-mid: #e8f5e9;
+  --bg-end: #dcedc8;
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --ink: #1b5e20;
+  --muted: #558b2f;
+  --accent: #43a047;
+  --accent-light: #66bb6a;
+  --accent-dark: #2e7d32;
+  --shadow: rgba(67, 160, 71, 0.15);
+  --radius: 16px;
+  --radius-lg: 20px;
+  --nav-height: 70px;
+}
+
+/* ---------- 1. 基础重置 ---------- */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+  color: var(--ink);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ---------- 2. body 背景 ---------- */
+body {
+  background: linear-gradient(180deg, var(--bg-start), var(--bg-mid), var(--bg-end));
+  background-attachment: fixed;
+}
+
+/* ---------- 3. 浮动水滴动画 ---------- */
+.droplets {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.droplets .drop {
+  position: absolute;
+  top: -20px;
+  width: 8px;
+  height: 12px;
+  background: radial-gradient(ellipse at 30% 30%, rgba(129, 199, 132, 0.7), rgba(76, 175, 80, 0.3));
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  opacity: 0;
+  animation: fall linear infinite;
+}
+
+@keyframes fall {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.8);
+  }
+  10% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) scale(0.4);
+  }
+}
+
+/* ---------- 4. 手机框架 ---------- */
+.phone-frame {
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  padding-bottom: calc(var(--nav-height) + 20px);
+}
+
+/* ---------- 5. 页面区块 ---------- */
+.page-section {
+  display: none;
+}
+
+.page-section.active {
+  display: block;
+}
+
+/* ---------- 6. 头部 ---------- */
+.header {
+  text-align: center;
+  padding: 1.5rem 1rem 1rem;
+}
+
+.header-icon {
+  font-size: 3rem;
+  display: inline-block;
+  animation: sway 3s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+@keyframes sway {
+  0%, 100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+.header h1 {
+  font-family: "ZCOOL KuaiLe", "Segoe UI", sans-serif;
+  font-size: 1.8rem;
+  color: var(--ink);
+  margin-top: 0.3rem;
+  letter-spacing: 0.05em;
+}
+
+/* ---------- 7. 上次浇水 ---------- */
+.last-water {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.8rem 1rem;
+  padding: 1rem 1.2rem;
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--radius);
+  border: 1px solid rgba(165, 214, 167, 0.4);
+  box-shadow: 0 4px 20px var(--shadow);
+}
+
+/* last-water-card 内部结构 (index.html 使用) */
+.last-water-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.last-water-card .icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.last-water-card .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.last-water-card .info .label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.last-water-card .info .value {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.last-water-card .days {
+  text-align: center;
+  flex-shrink: 0;
+  font-family: "ZCOOL KuaiLe", sans-serif;
+  font-size: 1rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* last-water-empty (空状态) */
+.last-water-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.last-water-empty .icon {
+  font-size: 2rem;
+}
+
+.last-water-empty p {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* lw-* 结构 (兼容) */
+.last-water .lw-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.last-water .lw-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.last-water .lw-info .lw-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.last-water .lw-info .lw-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.last-water .lw-days {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.last-water .lw-days .days-num {
+  font-family: "ZCOOL KuaiLe", sans-serif;
+  font-size: 2rem;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.last-water .lw-days .days-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* ---------- 8. 签到卡片 ---------- */
+.checkin-card {
+  margin: 0.8rem 1rem;
+  padding: 1.5rem 1.2rem;
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(165, 214, 167, 0.4);
+  box-shadow: 0 6px 24px var(--shadow);
+}
+
+.checkin-card .card-title {
+  font-family: "ZCOOL KuaiLe", sans-serif;
+  font-size: 1.2rem;
+  color: var(--ink);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* ---------- 9. 表单字段 ---------- */
+.field {
+  margin-bottom: 1rem;
+}
+
+.field label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.field-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.7);
+  border: 2px solid #c8e6c9;
+  border-radius: 14px;
+  outline: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  font-family: inherit;
+}
+
+.field-input::placeholder {
+  color: #a5d6a7;
+}
+
+.field-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(67, 160, 71, 0.15);
+}
+
+/* ---------- 10. 名称下拉 ---------- */
+.name-input-wrapper {
+  position: relative;
+}
+
+.name-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: 0 0 14px 14px;
+  border: 2px solid var(--accent-light);
+  border-top: none;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.name-dropdown:empty {
+  display: none;
+}
+
+.name-dropdown:not(:empty) {
+  display: block;
+}
+
+.name-dropdown.show {
+  display: block;
+}
+
+.name-option,
+.dropdown-item {
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.name-option:hover,
+.dropdown-item:hover {
+  background-color: #e8f5e9;
+}
+
+/* ---------- 11. 上传区域 ---------- */
+.upload-zone {
+  border: 2px dashed #a5d6a7;
+  border-radius: 14px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.25s ease, background-color 0.25s ease;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+  border-color: var(--accent);
+  background-color: rgba(200, 230, 201, 0.2);
+}
+
+.upload-zone .upload-icon {
+  font-size: 2rem;
+  margin-bottom: 0.4rem;
+}
+
+.upload-zone .upload-text {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.upload-zone .upload-hint {
+  font-size: 0.75rem;
+  color: #a5d6a7;
+  margin-top: 0.2rem;
+}
+
+/* ---------- 12. 照片预览 ---------- */
+.photo-preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.preview-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: none;
+  font-size: 0.7rem;
+  line-height: 22px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.preview-remove:hover {
+  background: rgba(211, 47, 47, 0.8);
+}
+
+/* ---------- 13. 签到按钮 ---------- */
+.btn-checkin {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent-light), var(--accent), var(--accent-dark));
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: "ZCOOL KuaiLe", sans-serif;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(67, 160, 71, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-top: 1rem;
+}
+
+.btn-checkin:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(67, 160, 71, 0.45);
+}
+
+.btn-checkin:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(67, 160, 71, 0.3);
+}
+
+.btn-checkin:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------- 14. 庆祝动画 ---------- */
+.celebration {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.celebration.active {
+  display: flex;
+}
+
+.plant-grow {
+  position: relative;
+  width: 60px;
+  height: 80px;
+  margin-bottom: 1rem;
+}
+
+.plant-stem {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 0;
+  background: linear-gradient(to top, var(--accent-dark), var(--accent-light));
+  border-radius: 2px;
+  animation: stemGrow 0.8s ease-out forwards;
+}
+
+@keyframes stemGrow {
+  0% {
+    height: 0;
+  }
+  100% {
+    height: 60px;
+  }
+}
+
+.plant-leaf {
+  position: absolute;
+  width: 20px;
+  height: 12px;
+  background: var(--accent);
+  border-radius: 0 50% 50% 50%;
+  opacity: 0;
+}
+
+.plant-leaf.left {
+  left: -14px;
+  animation: leafLeft 0.5s ease-out 0.6s forwards;
+}
+
+.plant-leaf.right {
+  right: -14px;
+  border-radius: 50% 0 50% 50%;
+  animation: leafRight 0.5s ease-out 0.8s forwards;
+}
+
+@keyframes leafLeft {
+  0% {
+    opacity: 0;
+    transform: rotate(-20deg) scale(0.3);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-20deg) scale(1);
+  }
+}
+
+@keyframes leafRight {
+  0% {
+    opacity: 0;
+    transform: rotate(20deg) scale(0.3);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(20deg) scale(1);
+  }
+}
+
+.plant-top {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 24px;
+  background: radial-gradient(circle, var(--accent-light), var(--accent));
+  border-radius: 50%;
+  opacity: 0;
+  animation: topGrow 0.5s ease-out 1s forwards;
+}
+
+@keyframes topGrow {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.2);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+.celebration-text {
+  font-family: "ZCOOL KuaiLe", sans-serif;
+  font-size: 1.4rem;
+  color: var(--accent-dark);
+  opacity: 0;
+  animation: fadeInUp 0.6s ease-out 1.2s forwards;
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- 15. 底部导航 ---------- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  height: var(--nav-height);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(165, 214, 167, 0.4);
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* ---------- 16. 导航项 ---------- */
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  color: #a5d6a7;
+  text-decoration: none;
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0.4rem 0.8rem;
+  transition: color 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-item .nav-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.nav-item.active {
+  color: var(--accent-dark);
+}
+
+.nav-item:hover {
+  color: var(--accent);
+}
+
+/* ---------- 17. 标签页 ---------- */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.tab {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+  text-align: center;
+}
+
+.tab.active {
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
+  color: #fff;
+  box-shadow: 0 2px 10px var(--shadow);
+}
+
+.tab:hover:not(.active) {
+  background: rgba(200, 230, 201, 0.4);
+}
+
+/* ---------- 18. 标签内容 ---------- */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ---------- 19. 记录项 ---------- */
+.record-item {
+  display: flex;
+  gap: 0.8rem;
+  margin: 0 1rem 0.8rem;
+  padding: 1rem;
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--radius);
+  border: 1px solid rgba(165, 214, 167, 0.3);
+  box-shadow: 0 2px 12px var(--shadow);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.record-item:hover {
+  box-shadow: 0 4px 18px var(--shadow);
+}
+
+/* ---------- 20. 记录头像 ---------- */
+.record-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+/* ---------- 21. 记录信息 ---------- */
+.record-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.record-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.record-time {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+.record-photos {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+}
+
+/* ---------- 22. 记录缩略图 ---------- */
+.record-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.record-thumb:hover {
+  transform: scale(1.1);
+}
+
+/* ---------- 23. 撤销按钮 ---------- */
+.btn-undo {
+  align-self: flex-start;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  border: 1px solid #ef9a9a;
+  border-radius: 8px;
+  background: rgba(229, 115, 115, 0.1);
+  color: #c62828;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-undo:hover {
+  background: rgba(229, 115, 115, 0.25);
+  color: #b71c1c;
+}
+
+/* ---------- 24. 加载更多 ---------- */
+.load-more-wrapper {
+  text-align: center;
+  padding: 1rem;
+}
+
+.btn-load-more {
+  display: inline-block;
+  padding: 0.6rem 1.5rem;
+  border: 2px solid var(--accent-light);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.btn-load-more:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ---------- 25. 日历导航 ---------- */
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+}
+
+.cal-nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #c8e6c9;
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--accent);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.cal-nav-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.cal-month-label {
+  font-family: "ZCOOL KuaiLe", sans-serif;
+  font-size: 1.1rem;
+  color: var(--ink);
+  min-width: 140px;
+  text-align: center;
+}
+
+/* ---------- 26. 日历网格 ---------- */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  padding: 0 1rem;
+}
+
+.cal-header {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0.3rem 0;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+}
+
+.cal-day.empty {
+  cursor: default;
+}
+
+.cal-day.marked {
+  background: rgba(102, 187, 106, 0.25);
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+
+.cal-day.marked::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.cal-day.today {
+  border: 2px solid var(--accent);
+  font-weight: 700;
+}
+
+.cal-day.selected {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.cal-day.selected::after {
+  background: #fff;
+}
+
+.cal-day:hover:not(.empty):not(.selected) {
+  background: rgba(200, 230, 201, 0.4);
+}
+
+/* ---------- 27. 日历详情 ---------- */
+.cal-detail {
+  margin: 0.8rem 1rem;
+  padding: 1rem 1.2rem;
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--radius);
+  border: 1px solid rgba(165, 214, 167, 0.3);
+  box-shadow: 0 2px 12px var(--shadow);
+  display: none;
+}
+
+.cal-detail.show {
+  display: block;
+}
+
+.cal-detail-title {
+  font-family: "ZCOOL KuaiLe", sans-serif;
+  font-size: 1rem;
+  color: var(--ink);
+  margin-bottom: 0.6rem;
+}
+
+.cal-detail-item {
+  font-size: 0.9rem;
+  color: var(--muted);
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(200, 230, 201, 0.3);
+}
+
+.cal-detail-item:last-child {
+  border-bottom: none;
+}
+
+/* 日历详情内部结构 */
+.cal-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.cal-detail-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.cal-detail-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cal-detail-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink);
+  display: block;
+}
+
+.cal-detail-time {
+  font-size: 0.8rem;
+  color: var(--muted);
+  display: block;
+}
+
+/* 日历详情照片缩略图 */
+.cal-detail-thumbs {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cal-detail-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  border: 1px solid rgba(165, 214, 167, 0.3);
+}
+
+.cal-detail-thumb:hover {
+  transform: scale(1.1);
+}
+
+.cal-detail-loading,
+.cal-detail-empty {
+  text-align: center;
+  padding: 1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* ---------- 28. 照片集 ---------- */
+.photo-group {
+  margin-bottom: 1.5rem;
+}
+
+.photo-date {
+  font-family: "ZCOOL KuaiLe", sans-serif;
+  font-size: 1rem;
+  color: var(--ink);
+  margin-bottom: 0.6rem;
+  padding-left: 0.2rem;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.photo-item {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.25s ease;
+}
+
+.photo-item:hover {
+  transform: scale(1.03);
+}
+
+.photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- 29. 空状态 ---------- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  opacity: 0.6;
+  margin-bottom: 0.8rem;
+}
+
+.empty-title {
+  font-family: "ZCOOL KuaiLe", sans-serif;
+  font-size: 1.2rem;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+}
+
+.empty-desc {
+  font-size: 0.9rem;
+  color: var(--muted);
+  max-width: 260px;
+}
+
+/* ---------- 30. Toast 提示 ---------- */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  padding: 0.8rem 1.5rem;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  z-index: 9999;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.success {
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
+}
+
+.toast.error {
+  background: linear-gradient(135deg, #ef5350, #c62828);
+}
+
+/* ---------- 31. 弹窗 ---------- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 1rem;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal-box {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.5rem;
+  max-width: 340px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  animation: modalIn 0.3s ease-out;
+}
+
+@keyframes modalIn {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-box .modal-title {
+  font-family: "ZCOOL KuaiLe", sans-serif;
+  font-size: 1.2rem;
+  color: var(--ink);
+  margin-bottom: 0.6rem;
+}
+
+.modal-box .modal-message {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.modal-box .modal-actions {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+}
+
+.modal-box .modal-actions button {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border: none;
+}
+
+.modal-box .modal-cancel {
+  background: #f5f5f5;
+  color: var(--muted);
+}
+
+.modal-box .modal-cancel:hover {
+  background: #eeeeee;
+}
+
+.modal-box .modal-confirm {
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
+  color: #fff;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.modal-box .modal-confirm:hover {
+  box-shadow: 0 4px 14px var(--shadow);
+}
+
+/* ---------- 32. 全屏照片查看器 ---------- */
+.viewer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  display: none;
+  flex-direction: column;
+  z-index: 300;
+}
+
+.viewer-overlay.show {
+  display: flex;
+}
+
+.viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  flex-shrink: 0;
+}
+
+.viewer-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.viewer-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.viewer-counter {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+
+.viewer-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  min-height: 0;
+  touch-action: pan-y;
+}
+
+.viewer-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+.viewer-track.dragging {
+  transition: none;
+}
+
+.viewer-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.5rem;
+  box-sizing: border-box;
+}
+
+.viewer-slide img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.viewer-nav {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1rem;
+  pointer-events: none;
+}
+
+.viewer-arrow {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  transition: background-color 0.2s ease;
+}
+
+.viewer-arrow:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.viewer-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ---------- 33. 设置面板 ---------- */
+.settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 250;
+}
+
+.settings-overlay.show {
+  display: flex;
+}
+
+.settings-panel {
+  background: #ffffff;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  width: 100%;
+  max-width: 480px;
+  max-height: 70vh;
+  overflow-y: auto;
+  animation: slideUp 0.35s ease-out;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.5rem 0.8rem;
+  border-bottom: 1px solid #e8f5e9;
+}
+
+.settings-header .settings-title {
+  font-family: "ZCOOL KuaiLe", sans-serif;
+  font-size: 1.2rem;
+  color: var(--ink);
+}
+
+.settings-header .settings-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f5f5f5;
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.settings-header .settings-close:hover {
+  background: #eeeeee;
+}
+
+.settings-body {
+  padding: 1rem 1.5rem 1.5rem;
+}
+
+.settings-section {
+  margin-bottom: 1.2rem;
+}
+
+.settings-section .settings-section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+.settings-section .settings-section-content {
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.settings-buttons {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.settings-btn {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.settings-btn:hover {
+  box-shadow: 0 4px 14px var(--shadow);
+  transform: translateY(-1px);
+}
+
+.settings-btn.danger {
+  background: linear-gradient(135deg, #ef9a9a, #e53935);
+  box-shadow: 0 2px 8px rgba(229, 57, 53, 0.2);
+}
+
+.settings-btn.danger:hover {
+  box-shadow: 0 4px 14px rgba(229, 57, 53, 0.3);
+}
+
+/* ---------- 导出按钮 ---------- */
+.btn-export {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 2px 8px var(--shadow);
+  display: inline-block;
+}
+
+.btn-export:hover {
+  box-shadow: 0 4px 14px var(--shadow);
+  transform: translateY(-1px);
+}
+
+/* ---------- 34. 响应式 ---------- */
+@media (max-width: 480px) {
+  .phone-frame {
+    max-width: 100%;
+  }
+
+  .bottom-nav {
+    max-width: 100%;
+  }
+
+  .settings-panel {
+    max-width: 100%;
+  }
+}
+
+/* ---------- 辅助 / 工具类 ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(165, 214, 167, 0.5);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 187, 106, 0.7);
+}

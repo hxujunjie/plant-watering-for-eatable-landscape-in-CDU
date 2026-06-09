@@ -1,0 +1,550 @@
+{% extends "base.html" %}
+
+{% block title %}观察档案{% endblock %}
+
+{% block content %}
+<!-- 页面头部 - 植物志封面风格 -->
+<div class="header">
+    <div class="header-badge">ARCHIVE</div>
+    <h1>观察档案</h1>
+    <div class="header-divider">
+        <div class="line"></div>
+        <div class="leaf">📖</div>
+        <div class="line"></div>
+    </div>
+</div>
+
+<!-- 标签页切换 -->
+<div class="tabs">
+    <button class="tab active" data-tab="list">记录列表</button>
+    <button class="tab" data-tab="calendar">日历</button>
+    <button class="tab" data-tab="photos">图鉴</button>
+</div>
+
+<!-- 签到列表 -->
+<div class="tab-content active" id="tabList">
+    <div id="recordsList"></div>
+    <div class="empty-state" id="listEmpty">
+        <div class="empty-icon">🌿</div>
+        <div class="empty-title">尚无记录</div>
+        <div class="empty-desc">快来写下第一条观察笔记</div>
+    </div>
+    <div class="load-more-wrapper" id="loadMoreWrapper">
+        <button class="btn-load-more" id="loadMoreBtn">加载更多</button>
+    </div>
+</div>
+
+<!-- 日历视图 -->
+<div class="tab-content" id="tabCalendar">
+    <div class="calendar-nav">
+        <button class="cal-nav-btn" id="calPrev">&lt;</button>
+        <span class="cal-month-label" id="calMonthLabel"></span>
+        <button class="cal-nav-btn" id="calNext">&gt;</button>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+    <div class="cal-detail" id="calDetail"></div>
+    <div class="empty-state" id="calendarEmpty">
+        <div class="empty-icon">📅</div>
+        <div class="empty-title">本月暂无记录</div>
+        <div class="empty-desc">浇水后这里会显示标记</div>
+    </div>
+</div>
+
+<!-- 照片集（图鉴） -->
+<div class="tab-content" id="tabPhotos">
+    <div id="photosContainer"></div>
+    <div class="empty-state" id="photosEmpty">
+        <div class="empty-icon">📷</div>
+        <div class="empty-title">尚无影像</div>
+        <div class="empty-desc">签到时上传照片，此处将展示图鉴</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    // ========== 竖排中文数字 ==========
+    var cnNumbers = ['壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖', '拾',
+                     '拾壹', '拾贰', '拾叁', '拾肆', '拾伍', '拾陆', '拾柒', '拾捌', '拾玖', '贰拾'];
+    var recordCounter = 0;
+
+    function getCnNumber(index) {
+        if (index < cnNumbers.length) return cnNumbers[index];
+        return String(index + 1);
+    }
+
+    // ========== 状态变量 ==========
+    var currentPage = 1;
+    var hasMore = true;
+    var listLoaded = false;
+    var calendarLoaded = false;
+    var photosLoaded = false;
+    var calYear, calMonth;
+
+    // ========== Tab 切换逻辑 ==========
+    var tabs = document.querySelectorAll('.tab');
+    var tabContents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            var targetTab = this.getAttribute('data-tab');
+
+            // 切换 tab 样式
+            tabs.forEach(function(t) { t.classList.remove('active'); });
+            this.classList.add('active');
+
+            // 切换内容区域
+            tabContents.forEach(function(tc) { tc.classList.remove('active'); });
+            document.getElementById('tab' + targetTab.charAt(0).toUpperCase() + targetTab.slice(1)).classList.add('active');
+
+            // 按需加载数据
+            if (targetTab === 'list' && !listLoaded) {
+                loadRecords(false);
+            } else if (targetTab === 'calendar' && !calendarLoaded) {
+                calendarLoaded = true;
+                initCalendar();
+                loadCalendar();
+            } else if (targetTab === 'photos' && !photosLoaded) {
+                loadPhotos();
+            }
+        });
+    });
+
+    // ========== 签到列表 ==========
+    function loadRecords(append) {
+        var recordsList = document.getElementById('recordsList');
+        var listEmpty = document.getElementById('listEmpty');
+        var loadMoreWrapper = document.getElementById('loadMoreWrapper');
+        var loadMoreBtn = document.getElementById('loadMoreBtn');
+
+        if (!append) {
+            currentPage = 1;
+            hasMore = true;
+            recordsList.innerHTML = '';
+            recordCounter = 0;
+        }
+
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = '加载中...';
+
+        fetch('/api/logs?page=' + currentPage)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                var logs = data.logs || [];
+                if (logs.length === 0 && !append) {
+                    listEmpty.style.display = '';
+                    loadMoreWrapper.style.display = 'none';
+                } else {
+                    listEmpty.style.display = 'none';
+                    logs.forEach(function(log) {
+                        recordsList.appendChild(renderRecordItem(log));
+                    });
+                    bindRecordEvents();
+                    if (logs.length < 20) {
+                        hasMore = false;
+                        loadMoreWrapper.style.display = 'none';
+                    } else {
+                        loadMoreWrapper.style.display = '';
+                    }
+                }
+                listLoaded = true;
+            })
+            .catch(function() {
+                showToast('加载记录失败');
+            })
+            .finally(function() {
+                loadMoreBtn.disabled = false;
+                loadMoreBtn.textContent = '加载更多';
+            });
+    }
+
+    function renderRecordItem(log) {
+        var item = document.createElement('div');
+        item.className = 'record-item';
+        item.setAttribute('data-id', log.id);
+
+        // 竖排中文编号
+        var indexEl = document.createElement('div');
+        indexEl.className = 'record-index-cn';
+        indexEl.textContent = getCnNumber(recordCounter);
+        recordCounter++;
+
+        // 头像：取名字首字
+        var avatar = document.createElement('div');
+        avatar.className = 'record-avatar';
+        avatar.textContent = log.name ? log.name.charAt(0) : '?';
+
+        // 内容区
+        var content = document.createElement('div');
+        content.className = 'record-info';
+
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'record-name';
+        nameSpan.textContent = log.name || '未知';
+
+        var timeSpan = document.createElement('span');
+        timeSpan.className = 'record-time';
+        timeSpan.textContent = formatTime(log.created_at);
+
+        content.appendChild(nameSpan);
+        content.appendChild(timeSpan);
+
+        // 照片缩略图
+        if (log.photos && log.photos.length > 0) {
+            var thumbs = document.createElement('div');
+            thumbs.className = 'record-photos';
+            log.photos.forEach(function(photo) {
+                var img = document.createElement('img');
+                img.className = 'record-thumb';
+                img.src = photo.file_path || photo.path;
+                img.alt = '照片';
+                img.loading = 'lazy';
+                img.addEventListener('click', function() {
+                    openViewer(img);
+                });
+                thumbs.appendChild(img);
+            });
+            content.appendChild(thumbs);
+        }
+
+        // 撤销按钮 - 文字"作废"
+        var undoBtn = document.createElement('button');
+        undoBtn.className = 'btn-undo';
+        undoBtn.textContent = '作废';
+        undoBtn.setAttribute('data-id', log.id);
+
+        item.appendChild(indexEl);
+        item.appendChild(avatar);
+        item.appendChild(content);
+        item.appendChild(undoBtn);
+
+        return item;
+    }
+
+    function formatTime(timeStr) {
+        if (!timeStr) return '';
+        var d = new Date(timeStr.replace(/-/g, '/'));
+        var now = new Date();
+        var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        var target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        var diffDays = Math.floor((today - target) / (1000 * 60 * 60 * 24));
+
+        var hh = String(d.getHours()).padStart(2, '0');
+        var mm = String(d.getMinutes()).padStart(2, '0');
+        var timePart = hh + ':' + mm;
+
+        if (diffDays === 0) return '今日 ' + timePart;
+        if (diffDays === 1) return '昨日 ' + timePart;
+        if (diffDays === 2) return '前日 ' + timePart;
+
+        var month = d.getMonth() + 1;
+        var day = d.getDate();
+        if (d.getFullYear() === now.getFullYear()) {
+            return month + '月' + day + '日 ' + timePart;
+        }
+        return d.getFullYear() + '/' + month + '/' + day + ' ' + timePart;
+    }
+
+    function bindRecordEvents() {
+        var undoBtns = document.querySelectorAll('.btn-undo');
+        undoBtns.forEach(function(btn) {
+            // 避免重复绑定
+            if (btn.getAttribute('data-bound')) return;
+            btn.setAttribute('data-bound', '1');
+
+            btn.addEventListener('click', function() {
+                var id = this.getAttribute('data-id');
+                showModal('确认作废', '确定要将这条记录作废吗？', function() {
+                    fetch('/api/delete/' + id, { method: 'DELETE' })
+                        .then(function(res) { return res.json(); })
+                        .then(function(data) {
+                            if (data.success) {
+                                showToast('已作废');
+                                var item = document.querySelector('.record-item[data-id="' + id + '"]');
+                                if (item) {
+                                    item.style.transition = 'all 0.3s ease';
+                                    item.style.opacity = '0';
+                                    item.style.transform = 'translateX(100%)';
+                                    item.style.maxHeight = item.scrollHeight + 'px';
+                                    setTimeout(function() {
+                                        item.style.maxHeight = '0';
+                                        item.style.padding = '0';
+                                        item.style.margin = '0';
+                                    }, 300);
+                                    setTimeout(function() {
+                                        item.remove();
+                                        // 检查列表是否为空
+                                        var recordsList = document.getElementById('recordsList');
+                                        if (recordsList.children.length === 0) {
+                                            document.getElementById('listEmpty').style.display = '';
+                                            document.getElementById('loadMoreWrapper').style.display = 'none';
+                                        }
+                                    }, 600);
+                                }
+                            } else {
+                                showToast(data.message || '操作失败');
+                            }
+                        })
+                        .catch(function() {
+                            showToast('网络错误，请重试');
+                        });
+                });
+            });
+        });
+    }
+
+    // 加载更多按钮
+    document.getElementById('loadMoreBtn').addEventListener('click', function() {
+        if (hasMore) {
+            currentPage++;
+            loadRecords(true);
+        }
+    });
+
+    // ========== 日历视图 ==========
+    function initCalendar() {
+        var now = new Date();
+        calYear = now.getFullYear();
+        calMonth = now.getMonth() + 1;
+        updateCalLabel();
+    }
+
+    function updateCalLabel() {
+        document.getElementById('calMonthLabel').textContent = calYear + '年' + calMonth + '月';
+    }
+
+    function loadCalendar() {
+        var calendarGrid = document.getElementById('calendarGrid');
+        var calendarEmpty = document.getElementById('calendarEmpty');
+        var calDetail = document.getElementById('calDetail');
+        calDetail.innerHTML = '';
+
+        fetch('/api/calendar?year=' + calYear + '&month=' + calMonth)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                var dates = data.dates || [];
+                renderCalendar(dates);
+                if (dates.length === 0) {
+                    calendarEmpty.style.display = '';
+                } else {
+                    calendarEmpty.style.display = 'none';
+                }
+            })
+            .catch(function() {
+                showToast('加载日历失败');
+            });
+    }
+
+    function renderCalendar(markedDates) {
+        var grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
+
+        // 星期标题行
+        var weekHeaders = ['日', '一', '二', '三', '四', '五', '六'];
+        weekHeaders.forEach(function(w) {
+            var cell = document.createElement('div');
+            cell.className = 'cal-header';
+            cell.textContent = w;
+            grid.appendChild(cell);
+        });
+
+        // 计算本月第一天星期几和天数
+        var firstDay = new Date(calYear, calMonth - 1, 1).getDay();
+        var daysInMonth = new Date(calYear, calMonth, 0).getDate();
+        var today = new Date();
+        var todayYear = today.getFullYear();
+        var todayMonth = today.getMonth() + 1;
+        var todayDate = today.getDate();
+
+        // 标记日期集合（用于快速查找）
+        var markedSet = {};
+        markedDates.forEach(function(d) {
+            // d 可能是 "2026-06-10" 格式，提取日号
+            var parts = d.split('-');
+            var dayNum = parts.length === 3 ? parseInt(parts[2], 10) : parseInt(d, 10);
+            markedSet[dayNum] = true;
+        });
+
+        // 前面的空白格
+        for (var i = 0; i < firstDay; i++) {
+            var empty = document.createElement('div');
+            empty.className = 'cal-day empty';
+            grid.appendChild(empty);
+        }
+
+        // 日期格
+        for (var day = 1; day <= daysInMonth; day++) {
+            var cell = document.createElement('div');
+            cell.className = 'cal-day';
+            cell.textContent = day;
+
+            if (markedSet[day]) {
+                cell.classList.add('marked');
+            }
+            if (calYear === todayYear && calMonth === todayMonth && day === todayDate) {
+                cell.classList.add('today');
+            }
+
+            // 绑定点击加载详情
+            (function(d) {
+                cell.addEventListener('click', function() {
+                    // 高亮选中
+                    grid.querySelectorAll('.cal-day').forEach(function(c) {
+                        c.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    loadCalendarDetail(d);
+                });
+            })(day);
+
+            grid.appendChild(cell);
+        }
+    }
+
+    function loadCalendarDetail(day) {
+        var calDetail = document.getElementById('calDetail');
+        calDetail.innerHTML = '<div class="cal-detail-loading">加载中...</div>';
+        calDetail.classList.add('show');
+
+        fetch('/api/calendar/detail?year=' + calYear + '&month=' + calMonth + '&day=' + day)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                var logs = data.logs || [];
+                if (logs.length === 0) {
+                    calDetail.innerHTML = '<div class="cal-detail-empty">当日暂无记录</div>';
+                    return;
+                }
+                calDetail.innerHTML = '';
+                logs.forEach(function(log) {
+                    var item = document.createElement('div');
+                    item.className = 'cal-detail-item';
+
+                    var avatar = document.createElement('div');
+                    avatar.className = 'cal-detail-avatar';
+                    avatar.textContent = log.name ? log.name.charAt(0) : '?';
+
+                    var info = document.createElement('div');
+                    info.className = 'cal-detail-info';
+
+                    var nameSpan = document.createElement('span');
+                    nameSpan.className = 'cal-detail-name';
+                    nameSpan.textContent = log.name || '未知';
+
+                    var timeSpan = document.createElement('span');
+                    timeSpan.className = 'cal-detail-time';
+                    timeSpan.textContent = log.created_at ? log.created_at.split(' ')[1] || '' : '';
+
+                    info.appendChild(nameSpan);
+                    info.appendChild(timeSpan);
+
+                    // 照片缩略图
+                    if (log.photos && log.photos.length > 0) {
+                        var thumbs = document.createElement('div');
+                        thumbs.className = 'cal-detail-thumbs';
+                        log.photos.forEach(function(photo) {
+                            var img = document.createElement('img');
+                            img.className = 'cal-detail-thumb';
+                            img.src = photo.file_path || photo.path;
+                            img.alt = '照片';
+                            img.loading = 'lazy';
+                            img.addEventListener('click', function() {
+                                openViewer(img);
+                            });
+                            thumbs.appendChild(img);
+                        });
+                        info.appendChild(thumbs);
+                    }
+
+                    item.appendChild(avatar);
+                    item.appendChild(info);
+                    calDetail.appendChild(item);
+                });
+            })
+            .catch(function() {
+                calDetail.innerHTML = '<div class="cal-detail-empty">加载失败</div>';
+            });
+    }
+
+    // 日历月份切换
+    document.getElementById('calPrev').addEventListener('click', function() {
+        calMonth--;
+        if (calMonth < 1) {
+            calMonth = 12;
+            calYear--;
+        }
+        updateCalLabel();
+        loadCalendar();
+    });
+
+    document.getElementById('calNext').addEventListener('click', function() {
+        calMonth++;
+        if (calMonth > 12) {
+            calMonth = 1;
+            calYear++;
+        }
+        updateCalLabel();
+        loadCalendar();
+    });
+
+    // ========== 照片集（图鉴） ==========
+    function loadPhotos() {
+        var container = document.getElementById('photosContainer');
+        var photosEmpty = document.getElementById('photosEmpty');
+
+        fetch('/api/photos')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                var groups = data.groups || {};
+                // groups 可能是对象（按日期分组）或数组
+                var groupKeys = Array.isArray(groups) ? groups.map(function(g) { return g.date; }) : Object.keys(groups);
+                if (groupKeys.length === 0) {
+                    photosEmpty.style.display = '';
+                    return;
+                }
+                photosEmpty.style.display = 'none';
+                photosLoaded = true;
+
+                container.innerHTML = '';
+                groupKeys.forEach(function(dateKey) {
+                    var photos = Array.isArray(groups) ? groups[groupKeys.indexOf(dateKey)].photos : groups[dateKey];
+                    var groupEl = document.createElement('div');
+                    groupEl.className = 'photo-group';
+
+                    var dateLabel = document.createElement('div');
+                    dateLabel.className = 'photo-date';
+                    dateLabel.textContent = dateKey || '';
+                    groupEl.appendChild(dateLabel);
+
+                    var photoGrid = document.createElement('div');
+                    photoGrid.className = 'photo-grid';
+
+                    (photos || []).forEach(function(photo) {
+                        var item = document.createElement('div');
+                        item.className = 'photo-item';
+                        var img = document.createElement('img');
+                        img.src = photo.file_path || photo.path;
+                        img.alt = '照片';
+                        img.loading = 'lazy';
+                        img.addEventListener('click', function() {
+                            openViewerUrl(img.src);
+                        });
+                        item.appendChild(img);
+                        photoGrid.appendChild(item);
+                    });
+
+                    groupEl.appendChild(photoGrid);
+                    container.appendChild(groupEl);
+                });
+            })
+            .catch(function() {
+                showToast('加载照片失败');
+            });
+    }
+
+    // ========== 初始化 ==========
+    initCalendar();
+    loadRecords(false);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}植物浇水签到{% endblock %}
+
+{% block content %}
+<!-- 页面头部 -->
+<div class="header">
+    <span class="header-icon">🌱</span>
+    <h1>植物浇水签到</h1>
+    <p>记录每一次用心浇灌</p>
+</div>
+
+<!-- 上次浇水信息 -->
+<div class="last-water" id="lastWater">
+    {% if last_watering %}
+    <div class="last-water-card">
+        <span class="icon">💧</span>
+        <div class="info">
+            <span class="label">上次浇水</span>
+            <span class="value" id="lastWaterValue"></span>
+        </div>
+        <span class="days" id="daysDiff"></span>
+    </div>
+    {% else %}
+    <div class="last-water-empty">
+        <span class="icon">🌱</span>
+        <p>还没有浇水记录，快来浇第一滴水吧</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 签到卡片 -->
+<div class="checkin-card">
+    <form id="checkinForm" enctype="multipart/form-data">
+        <!-- 姓名输入 -->
+        <div class="field">
+            <label for="nameInput">你的名字</label>
+            <input type="text" id="nameInput" class="field-input" name="name" placeholder="选择或输入姓名" autocomplete="off" required>
+            <div class="name-dropdown" id="nameDropdown"></div>
+        </div>
+
+        <!-- 照片上传 -->
+        <div class="field">
+            <label>拍照记录（可选）</label>
+            <div class="upload-zone" id="uploadZone">
+                <span class="upload-icon">📷</span>
+                <span class="upload-text">点击上传照片</span>
+            </div>
+            <input type="file" id="photoInput" name="photos" accept="image/*" multiple hidden>
+            <div class="photo-preview" id="photoPreview"></div>
+        </div>
+
+        <!-- 签到按钮 -->
+        <button type="submit" class="btn-checkin" id="checkinBtn">💧 浇水签到</button>
+    </form>
+</div>
+
+<!-- 签到成功动画 -->
+<div class="celebration" id="celebration">
+    <div class="plant-grow">
+        <div class="plant-stem"></div>
+        <div class="plant-leaf left"></div>
+        <div class="plant-leaf right"></div>
+        <div class="plant-top"></div>
+    </div>
+    <div class="celebration-text">签到成功！</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    // ========== 上次浇水天数计算 ==========
+    const daysDiffEl = document.getElementById('daysDiff');
+    const lastWaterValueEl = document.getElementById('lastWaterValue');
+    {% if last_watering %}
+    (function() {
+        const lastTime = new Date('{{ last_watering.created_at }}'.replace(/-/g, '/'));
+        const now = new Date();
+        const diffMs = now - lastTime;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        daysDiffEl.textContent = diffDays === 0 ? '今天' : diffDays + '天前';
+        // 格式化时间显示
+        const m = lastTime.getMonth() + 1;
+        const dd = lastTime.getDate();
+        const hh = String(lastTime.getHours()).padStart(2, '0');
+        const mm = String(lastTime.getMinutes()).padStart(2, '0');
+        lastWaterValueEl.textContent = m + '月' + dd + '日 ' + hh + ':' + mm + ' · {{ last_watering.name }}';
+    })();
+    {% endif %}
+
+    // ========== 姓名下拉补全 ==========
+    const nameInput = document.getElementById('nameInput');
+    const nameDropdown = document.getElementById('nameDropdown');
+    const allNames = {{ names | tojson }};
+
+    function renderDropdown(filter) {
+        nameDropdown.innerHTML = '';
+        if (!filter) return;
+        const filtered = allNames.filter(function(n) {
+            return n.toLowerCase().includes(filter.toLowerCase());
+        });
+        if (filtered.length === 0) return;
+        filtered.forEach(function(name) {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            item.textContent = name;
+            item.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                nameInput.value = name;
+                nameDropdown.innerHTML = '';
+            });
+            nameDropdown.appendChild(item);
+        });
+    }
+
+    nameInput.addEventListener('focus', function() {
+        renderDropdown(nameInput.value);
+    });
+
+    nameInput.addEventListener('input', function() {
+        renderDropdown(nameInput.value);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!nameInput.contains(e.target) && !nameDropdown.contains(e.target)) {
+            nameDropdown.innerHTML = '';
+        }
+    });
+
+    // ========== 照片预览 ==========
+    const uploadZone = document.getElementById('uploadZone');
+    const photoInput = document.getElementById('photoInput');
+    const photoPreview = document.getElementById('photoPreview');
+    let selectedFiles = [];
+
+    uploadZone.addEventListener('click', function() {
+        photoInput.click();
+    });
+
+    photoInput.addEventListener('change', function() {
+        const files = Array.from(photoInput.files);
+        files.forEach(function(file) {
+            if (!file.type.startsWith('image/')) return;
+            selectedFiles.push(file);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'preview-item';
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'preview-remove';
+                removeBtn.textContent = '✕';
+                removeBtn.addEventListener('click', function() {
+                    const idx = selectedFiles.indexOf(file);
+                    if (idx > -1) selectedFiles.splice(idx, 1);
+                    wrapper.remove();
+                });
+                wrapper.appendChild(img);
+                wrapper.appendChild(removeBtn);
+                photoPreview.appendChild(wrapper);
+            };
+            reader.readAsDataURL(file);
+        });
+        photoInput.value = '';
+    });
+
+    // ========== 签到提交 ==========
+    const checkinForm = document.getElementById('checkinForm');
+    const checkinBtn = document.getElementById('checkinBtn');
+
+    checkinForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('name', nameInput.value.trim());
+        selectedFiles.forEach(function(file) {
+            formData.append('photos', file);
+        });
+
+        checkinBtn.disabled = true;
+        checkinBtn.textContent = '提交中...';
+
+        fetch('/api/checkin', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function(res) {
+            return res.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                playCelebration();
+                showToast('签到成功！');
+                // 更新上次浇水信息
+                fetch('/api/last_watering').then(function(r) { return r.json(); }).then(function(d) {
+                    if (d.last_watering) {
+                        var lw = d.last_watering;
+                        var cd = new Date(lw.created_at.replace(/-/g, '/'));
+                        var m = cd.getMonth() + 1;
+                        var dd = cd.getDate();
+                        var hh = String(cd.getHours()).padStart(2, '0');
+                        var mm = String(cd.getMinutes()).padStart(2, '0');
+                        var lastWater = document.getElementById('lastWater');
+                        lastWater.innerHTML =
+                            '<div class="last-water-card">' +
+                            '<span class="icon">💧</span>' +
+                            '<div class="info">' +
+                            '<span class="label">上次浇水</span>' +
+                            '<span class="value">' + m + '月' + dd + '日 ' + hh + ':' + mm + ' · ' + lw.name + '</span>' +
+                            '</div>' +
+                            '<span class="days">刚刚</span>' +
+                            '</div>';
+                    }
+                });
+                // 清空表单
+                nameInput.value = '';
+                photoPreview.innerHTML = '';
+                selectedFiles = [];
+            } else {
+                showToast(data.message || '签到失败，请重试');
+            }
+        })
+        .catch(function() {
+            showToast('网络错误，请重试');
+        })
+        .finally(function() {
+            checkinBtn.disabled = false;
+            checkinBtn.textContent = '💧 浇水签到';
+        });
+    });
+
+    // ========== 签到成功动画 ==========
+    function playCelebration() {
+        const celebration = document.getElementById('celebration');
+        celebration.classList.add('active');
+        setTimeout(function() {
+            celebration.classList.remove('active');
+        }, 2000);
+    }
+})();
+</script>
+{% endblock %}

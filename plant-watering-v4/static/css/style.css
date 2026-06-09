@@ -1,0 +1,1838 @@
+/* ============================================================
+   植物浇水签到系统 - 手绘植物志风格 (Botanical Sketch Style)
+   精确匹配 variant-d.html 原型设计
+   ============================================================ */
+
+/* ---------- Google Fonts ---------- */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=ZCOOL+XiaoWei&display=swap');
+
+/* ---------- CSS 变量 (精确匹配原型) ---------- */
+:root {
+  --paper: #f7f3e9;
+  --paper-dark: #ede7d9;
+  --ink: #2c2416;
+  --ink-light: #5c4d3c;
+  --accent: #4a7c59;
+  --accent-warm: #8b6914;
+  --accent-rose: #a0522d;
+  --pencil: #8b7355;
+  --shadow: rgba(44, 36, 22, 0.08);
+  --grid: rgba(139, 115, 85, 0.06);
+  --radius: 2px;
+  --nav-height: 70px;
+}
+
+/* ---------- 1. 基础重置 ---------- */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Noto Serif SC', Georgia, serif;
+  color: var(--ink);
+  line-height: 1.7;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-attachment: fixed;
+}
+
+/* ---------- 2. 纸张纹理覆盖层 ---------- */
+.paper-texture {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* ---------- 3. 浮动叶片动画 ---------- */
+.droplets {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.droplets .drop {
+  position: absolute;
+  top: -20px;
+  width: 6px;
+  height: 10px;
+  background: rgba(74, 124, 89, 0.12);
+  border: 1px solid rgba(107, 158, 120, 0.3);
+  border-radius: 0 50% 50% 50%;
+  opacity: 0;
+  animation: fall linear infinite;
+}
+
+@keyframes fall {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) rotate(0deg) scale(0.8);
+  }
+  10% {
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(50vh) rotate(180deg) scale(0.6);
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) rotate(360deg) scale(0.4);
+  }
+}
+
+/* ---------- 4. 手机框架 ---------- */
+.phone-frame {
+  max-width: 420px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  padding-bottom: calc(var(--nav-height) + 10px);
+}
+
+/* ---------- 5. 状态栏 ---------- */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.7rem;
+  color: var(--pencil);
+  font-family: 'ZCOOL XiaoWei', serif;
+  letter-spacing: 2px;
+}
+
+/* ---------- 6. 头部 - 植物志封面风格 ---------- */
+.header {
+  text-align: center;
+  padding: 1.5rem 1.5rem 1rem;
+  position: relative;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.header-icon {
+  display: none;
+}
+
+.header-badge {
+  display: inline-block;
+  border: 1px solid var(--pencil);
+  padding: 0.2rem 0.8rem;
+  border-radius: 2px;
+  font-size: 0.65rem;
+  color: var(--pencil);
+  margin-bottom: 1rem;
+  letter-spacing: 3px;
+  font-family: 'ZCOOL XiaoWei', serif;
+}
+
+.header h1 {
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+  letter-spacing: 4px;
+}
+
+.header h1::after {
+  display: none;
+}
+
+.header .subtitle {
+  font-size: 0.8rem;
+  color: var(--pencil);
+  font-style: italic;
+  letter-spacing: 1px;
+}
+
+.header-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+
+.header-divider .line {
+  width: 40px;
+  height: 1px;
+  background: var(--pencil);
+  opacity: 0.3;
+}
+
+.header-divider .leaf {
+  font-size: 0.9rem;
+  opacity: 0.5;
+}
+
+/* ---------- 7. 手绘边框卡片 ---------- */
+.sketch-card {
+  background: #fff;
+  border-radius: 2px;
+  margin: 0 1.2rem 1rem;
+  padding: 1.2rem;
+  position: relative;
+  box-shadow: 2px 3px 0 var(--shadow);
+}
+
+/* 内缩边框 */
+.sketch-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: 2px;
+  bottom: 2px;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* 外扩边框 */
+.sketch-card::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: -2px;
+  bottom: -2px;
+  border: 1px solid var(--pencil);
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+/* ---------- 8. 上次浇水 - 标本标签风格 ---------- */
+.last-water {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+}
+
+.last-water::before,
+.last-water::after {
+  display: none;
+}
+
+.last-water .specimen-num {
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 0.65rem;
+  color: var(--pencil);
+  border: 1px solid var(--pencil);
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.last-water .content {
+  flex: 1;
+}
+
+.last-water .label {
+  font-size: 0.7rem;
+  color: var(--pencil);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+
+.last-water .value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.last-water .value .name {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.last-water .days-tag {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.7rem;
+  color: var(--accent-rose);
+  border-bottom: 1px solid var(--accent-rose);
+  padding-bottom: 1px;
+}
+
+/* last-water-card 内部结构 (index.html 动态生成) */
+.last-water-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  width: 100%;
+}
+
+.last-water-card .icon {
+  display: none;
+}
+
+.last-water-card .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.last-water-card .info .label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--pencil);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+
+.last-water-card .info .value {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.last-water-card .days {
+  display: none;
+}
+
+/* last-water-empty (空状态) */
+.last-water-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.last-water-empty .icon {
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.last-water-empty p {
+  font-size: 0.85rem;
+  color: var(--pencil);
+  font-style: italic;
+}
+
+/* ---------- 9. 签到卡片 ---------- */
+.checkin-card {
+  margin: 0 1.2rem 1rem;
+  padding: 1.2rem;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  position: relative;
+}
+
+.checkin-card::before,
+.checkin-card::after {
+  display: none;
+}
+
+/* ---------- 10. 表单字段 ---------- */
+.field {
+  margin-bottom: 1.2rem;
+}
+
+.field label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--pencil);
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+}
+
+.field-label {
+  font-size: 0.75rem;
+  color: var(--pencil);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  letter-spacing: 1px;
+}
+
+.field-label .num {
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 0.65rem;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.field-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-bottom: 2px solid var(--paper-dark);
+  font-size: 1rem;
+  font-family: inherit;
+  background: transparent;
+  color: var(--ink);
+  transition: border-color 0.3s;
+  outline: none;
+}
+
+.field-input::placeholder {
+  color: #c4b8a3;
+  font-style: italic;
+}
+
+.field-input:focus {
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- 11. 名称下拉 ---------- */
+.name-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 0 0 2px 2px;
+  border: 1px solid var(--paper-dark);
+  border-top: 1px dashed var(--paper-dark);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 1px 2px 0 var(--shadow);
+}
+
+.name-dropdown:empty {
+  display: none;
+}
+
+.name-dropdown:not(:empty) {
+  display: block;
+}
+
+.name-option,
+.dropdown-item {
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px dashed var(--paper-dark);
+  font-family: 'Noto Serif SC', serif;
+}
+
+.name-option:last-child,
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.name-option:hover,
+.dropdown-item:hover {
+  background-color: rgba(74, 124, 89, 0.03);
+}
+
+/* ---------- 12. 上传区域 - 素描风格 ---------- */
+.upload-zone {
+  border: 2px dashed var(--paper-dark);
+  border-radius: 2px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: var(--paper);
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+  border-color: var(--accent);
+  background: rgba(74, 124, 89, 0.03);
+}
+
+/* CSS绘制的素描相机 */
+.upload-zone .sketch-camera {
+  width: 48px;
+  height: 40px;
+  margin: 0 auto 0.8rem;
+  position: relative;
+}
+
+.upload-zone .sketch-camera::before {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 28px;
+  border: 2px solid var(--pencil);
+  border-radius: 4px;
+  top: 8px;
+  left: 4px;
+}
+
+.upload-zone .sketch-camera::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--pencil);
+  border-radius: 50%;
+  top: 14px;
+  left: 17px;
+}
+
+.upload-zone .upload-icon {
+  display: none;
+}
+
+.upload-zone .upload-text {
+  font-size: 0.85rem;
+  color: var(--ink-light);
+  font-weight: 600;
+}
+
+.upload-zone .upload-hint {
+  font-size: 0.7rem;
+  color: var(--pencil);
+  margin-top: 0.3rem;
+  font-style: italic;
+}
+
+/* ---------- 13. 照片预览 ---------- */
+.photo-preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.preview-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid var(--paper-dark);
+}
+
+.preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 2px;
+  background: rgba(44, 36, 22, 0.7);
+  color: #fff;
+  border: 1px solid var(--pencil);
+  font-size: 0.7rem;
+  line-height: 22px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.preview-remove:hover {
+  background: var(--accent-rose);
+}
+
+/* ---------- 14. 签到按钮 - 绿色背景+印章圆圈 ---------- */
+.btn-checkin {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid var(--accent);
+  border-radius: 2px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: 'ZCOOL XiaoWei', serif;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 4px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.btn-checkin:hover {
+  background: transparent;
+  color: var(--accent);
+}
+
+.btn-checkin:active {
+  transform: scale(0.98);
+}
+
+.btn-checkin:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 右侧印章圆圈 "志" */
+.btn-checkin .seal {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+}
+
+/* ---------- 15. 庆祝动画 ---------- */
+.celebration {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.celebration.active {
+  display: flex;
+}
+
+.plant-grow {
+  position: relative;
+  width: 60px;
+  height: 80px;
+  margin-bottom: 1rem;
+}
+
+.plant-stem {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 0;
+  background: var(--accent);
+  border-radius: 1px;
+  animation: stemGrow 0.8s ease-out forwards;
+}
+
+@keyframes stemGrow {
+  0% { height: 0; }
+  100% { height: 60px; }
+}
+
+.plant-leaf {
+  position: absolute;
+  width: 18px;
+  height: 10px;
+  background: var(--accent);
+  border-radius: 0 50% 50% 50%;
+  opacity: 0;
+  border: 1px solid rgba(53, 90, 64, 0.5);
+}
+
+.plant-leaf.left {
+  left: -13px;
+  animation: leafLeft 0.5s ease-out 0.6s forwards;
+}
+
+.plant-leaf.right {
+  right: -13px;
+  border-radius: 50% 0 50% 50%;
+  animation: leafRight 0.5s ease-out 0.8s forwards;
+}
+
+@keyframes leafLeft {
+  0% { opacity: 0; transform: rotate(-20deg) scale(0.3); }
+  100% { opacity: 1; transform: rotate(-20deg) scale(1); }
+}
+
+@keyframes leafRight {
+  0% { opacity: 0; transform: rotate(20deg) scale(0.3); }
+  100% { opacity: 1; transform: rotate(20deg) scale(1); }
+}
+
+.plant-top {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 22px;
+  background: rgba(107, 158, 120, 0.6);
+  border-radius: 50%;
+  opacity: 0;
+  border: 1px solid rgba(53, 90, 64, 0.5);
+  animation: topGrow 0.5s ease-out 1s forwards;
+}
+
+@keyframes topGrow {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.2); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+/* 印章效果 */
+.stamp-seal {
+  display: none;
+  width: 80px;
+  height: 80px;
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 2.2rem;
+  color: var(--accent);
+  position: relative;
+  animation: stampDown 0.4s cubic-bezier(0.17, 0.67, 0.21, 1.2) forwards;
+}
+
+.stamp-seal::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  border: 1px solid rgba(74, 124, 89, 0.4);
+  border-radius: 50%;
+}
+
+.celebration.active .stamp-seal {
+  display: flex;
+}
+
+@keyframes stampDown {
+  0% { transform: scale(2) rotate(-15deg); opacity: 0; }
+  60% { transform: scale(0.9) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.celebration-text {
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 1.4rem;
+  color: var(--accent);
+  opacity: 0;
+  animation: fadeInUp 0.6s ease-out 1.2s forwards;
+  letter-spacing: 0.15em;
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- 16. 底部导航 ---------- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--paper);
+  border-top: 1px solid var(--paper-dark);
+  display: flex;
+  justify-content: space-around;
+  padding: 0.6rem 0 0.8rem;
+  z-index: 100;
+  max-width: 420px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.3rem 1.2rem;
+  color: var(--pencil);
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 1px;
+  font-family: 'ZCOOL XiaoWei', serif;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-item .nav-icon {
+  font-size: 1.3rem;
+  opacity: 0.6;
+  transition: all 0.2s;
+}
+
+.nav-item.active {
+  color: var(--accent);
+}
+
+.nav-item.active .nav-icon {
+  opacity: 1;
+}
+
+.nav-item:hover {
+  color: var(--accent);
+}
+
+/* ---------- 17. 标签页 ---------- */
+.tabs {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--paper-dark);
+  border-radius: 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  background: transparent;
+  color: var(--pencil);
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.tab.active {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.tab:hover:not(.active) {
+  background: rgba(74, 124, 89, 0.03);
+}
+
+/* ---------- 18. 标签内容 ---------- */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ---------- 19. 记录项 - 标本卡片 ---------- */
+.record-item {
+  background: #fff;
+  border-radius: 2px;
+  margin: 0 1.2rem 0.8rem;
+  padding: 1rem 1.2rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  box-shadow: 1px 2px 0 var(--shadow);
+  position: relative;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* 左侧绿色竖线 */
+.record-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent);
+  opacity: 0.3;
+}
+
+/* ---------- 20. 竖排中文编号 ---------- */
+.record-index-cn {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 0.6rem;
+  color: var(--pencil);
+  letter-spacing: 2px;
+  padding-top: 0.2rem;
+  flex-shrink: 0;
+  margin-right: 0;
+  border-right: none;
+  user-select: none;
+}
+
+/* ---------- 21. 记录头像 ---------- */
+.record-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  font-family: 'ZCOOL XiaoWei', serif;
+  background: transparent;
+}
+
+/* ---------- 22. 记录信息 ---------- */
+.record-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.record-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.record-time {
+  font-size: 0.7rem;
+  color: var(--pencil);
+  font-style: italic;
+  margin-top: 0.1rem;
+}
+
+.record-photos {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+/* ---------- 23. 记录缩略图 ---------- */
+.record-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  background: var(--paper);
+  border: 1px solid var(--paper-dark);
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.record-thumb:hover {
+  transform: scale(1.1);
+}
+
+/* ---------- 24. 撤销按钮 "作废" ---------- */
+.btn-undo {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--paper-dark);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--pencil);
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  align-self: flex-start;
+  flex-shrink: 0;
+}
+
+.btn-undo:hover {
+  border-color: var(--accent-rose);
+  color: var(--accent-rose);
+}
+
+/* ---------- 25. 加载更多 ---------- */
+.load-more-wrapper {
+  text-align: center;
+  padding: 1rem;
+}
+
+.btn-load-more {
+  display: inline-block;
+  padding: 0.6rem 1.5rem;
+  border: 1px solid var(--paper-dark);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--pencil);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  letter-spacing: 1px;
+}
+
+.btn-load-more:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------- 26. 日历导航 ---------- */
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.8rem 1.2rem;
+}
+
+.cal-nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 2px;
+  border: 1px solid var(--paper-dark);
+  background: transparent;
+  color: var(--accent);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.cal-nav-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.cal-month-label {
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 1.1rem;
+  color: var(--ink);
+  min-width: 140px;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+/* ---------- 27. 日历网格 ---------- */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  padding: 0 1.2rem;
+  text-align: center;
+}
+
+.cal-header {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--pencil);
+  padding: 0.4rem 0;
+  letter-spacing: 1px;
+  font-family: 'ZCOOL XiaoWei', serif;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  border-radius: 2px;
+  color: var(--ink);
+  font-weight: 500;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  font-family: 'ZCOOL XiaoWei', serif;
+  cursor: pointer;
+  position: relative;
+}
+
+.cal-day.empty {
+  color: transparent;
+  cursor: default;
+}
+
+.cal-day.marked {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.cal-day.marked::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.cal-day.today {
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.cal-day.selected {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.cal-day.selected::after {
+  background: #fff;
+}
+
+.cal-day:hover:not(.empty):not(.selected) {
+  background: rgba(74, 124, 89, 0.06);
+}
+
+/* ---------- 28. 日历详情 ---------- */
+.cal-detail {
+  margin: 0.8rem 1.2rem;
+  padding: 1rem 1.2rem;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 1px 2px 0 var(--shadow);
+  display: none;
+  position: relative;
+}
+
+.cal-detail::before {
+  display: none;
+}
+
+.cal-detail.show {
+  display: block;
+}
+
+.cal-detail-title {
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 1rem;
+  color: var(--ink);
+  margin-bottom: 0.6rem;
+  letter-spacing: 2px;
+  border-bottom: 1px solid var(--paper-dark);
+  padding-bottom: 0.3rem;
+}
+
+.cal-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.9rem;
+  color: var(--pencil);
+  padding: 0.3rem 0;
+  border-bottom: 1px dashed var(--paper-dark);
+}
+
+.cal-detail-item:last-child {
+  border-bottom: none;
+}
+
+.cal-detail-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: var(--accent);
+  flex-shrink: 0;
+  background: transparent;
+  font-family: 'ZCOOL XiaoWei', serif;
+}
+
+.cal-detail-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cal-detail-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink);
+  display: block;
+}
+
+.cal-detail-time {
+  font-size: 0.8rem;
+  color: var(--pencil);
+  display: block;
+  font-style: italic;
+}
+
+.cal-detail-thumbs {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cal-detail-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 2px;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  border: 1px solid var(--paper-dark);
+}
+
+.cal-detail-thumb:hover {
+  transform: scale(1.1);
+}
+
+.cal-detail-loading,
+.cal-detail-empty {
+  text-align: center;
+  padding: 1rem;
+  color: var(--pencil);
+  font-size: 0.9rem;
+}
+
+/* ---------- 29. 照片集 ---------- */
+.photo-group {
+  padding: 0 1.2rem;
+  margin-bottom: 1.2rem;
+}
+
+.photo-date {
+  font-size: 0.75rem;
+  color: var(--pencil);
+  margin-bottom: 0.5rem;
+  padding-left: 0.3rem;
+  letter-spacing: 2px;
+  font-family: 'ZCOOL XiaoWei', serif;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.photo-date::before {
+  content: '';
+  width: 12px;
+  height: 1px;
+  background: var(--pencil);
+  opacity: 0.4;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
+.photo-item {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: var(--paper-dark);
+  border: 1px solid var(--paper-dark);
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.25s ease;
+  overflow: hidden;
+}
+
+/* 双边框效果 */
+.photo-item::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  right: -3px;
+  bottom: -3px;
+  border: 1px solid var(--paper-dark);
+  border-radius: 2px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.photo-item:hover {
+  transform: scale(1.03);
+}
+
+.photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- 30. 空状态 ---------- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  opacity: 0.5;
+  margin-bottom: 0.8rem;
+}
+
+.empty-title {
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 1.2rem;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+  letter-spacing: 2px;
+}
+
+.empty-desc {
+  font-size: 0.9rem;
+  color: var(--pencil);
+  max-width: 260px;
+  line-height: 1.8;
+  font-style: italic;
+}
+
+/* ---------- 31. Toast 提示 ---------- */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  padding: 0.8rem 1.5rem;
+  border-radius: 2px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  z-index: 9999;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  box-shadow: 2px 3px 0 rgba(0, 0, 0, 0.2);
+  font-family: 'Noto Serif SC', serif;
+  letter-spacing: 1px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.success {
+  background: var(--accent);
+  border-color: rgba(74, 124, 89, 0.8);
+}
+
+.toast.error {
+  background: var(--accent-rose);
+  border-color: rgba(160, 82, 45, 0.8);
+}
+
+/* ---------- 32. 弹窗 ---------- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(44, 36, 22, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 1rem;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 2px;
+  padding: 2rem 1.5rem;
+  max-width: 340px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 4px 6px 0 rgba(44, 36, 22, 0.15);
+  animation: modalIn 0.3s ease-out;
+  border: 1.5px solid var(--ink);
+  position: relative;
+}
+
+.modal-box::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  border: 1px solid var(--pencil);
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+@keyframes modalIn {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.modal-box .modal-title {
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 1.2rem;
+  color: var(--ink);
+  margin-bottom: 0.6rem;
+  letter-spacing: 2px;
+}
+
+.modal-box .modal-message {
+  font-size: 0.95rem;
+  color: var(--pencil);
+  margin-bottom: 1.5rem;
+  line-height: 1.7;
+}
+
+.modal-box .modal-actions {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+}
+
+.modal-box .modal-actions button {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border-radius: 2px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--paper-dark);
+  font-family: 'Noto Serif SC', serif;
+  letter-spacing: 1px;
+}
+
+.modal-box .modal-cancel {
+  background: transparent;
+  color: var(--pencil);
+}
+
+.modal-box .modal-cancel:hover {
+  background: var(--paper-dark);
+  color: var(--ink);
+}
+
+.modal-box .modal-confirm {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.modal-box .modal-confirm:hover {
+  opacity: 0.85;
+}
+
+/* ---------- 33. 全屏照片查看器 ---------- */
+.viewer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(44, 36, 22, 0.95);
+  display: none;
+  flex-direction: column;
+  z-index: 300;
+}
+
+.viewer-overlay.show {
+  display: flex;
+}
+
+.viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  flex-shrink: 0;
+}
+
+.viewer-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.viewer-close:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.viewer-counter {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  font-family: 'Noto Serif SC', serif;
+  letter-spacing: 1px;
+}
+
+.viewer-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  min-height: 0;
+  touch-action: pan-y;
+}
+
+.viewer-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+.viewer-track.dragging {
+  transition: none;
+}
+
+.viewer-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.5rem;
+  box-sizing: border-box;
+}
+
+.viewer-slide img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 2px;
+  user-select: none;
+  -webkit-user-drag: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.viewer-nav {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1rem;
+  pointer-events: none;
+}
+
+.viewer-arrow {
+  width: 44px;
+  height: 44px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  transition: background-color 0.2s ease;
+}
+
+.viewer-arrow:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.viewer-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ---------- 34. 设置面板 ---------- */
+.settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(44, 36, 22, 0.5);
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 250;
+}
+
+.settings-overlay.show {
+  display: flex;
+}
+
+.settings-panel {
+  background: #fff;
+  border-radius: 2px 2px 0 0;
+  width: 100%;
+  max-width: 420px;
+  max-height: 70vh;
+  overflow-y: auto;
+  animation: slideUp 0.35s ease-out;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  border-top: 1px solid var(--paper-dark);
+  box-shadow: 0 -2px 0 var(--shadow);
+}
+
+@keyframes slideUp {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.5rem 0.8rem;
+  border-bottom: 1px solid var(--paper-dark);
+}
+
+.settings-header h2 {
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 1.2rem;
+  color: var(--ink);
+  letter-spacing: 2px;
+}
+
+.settings-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 2px;
+  border: 1px solid var(--paper-dark);
+  background: transparent;
+  color: var(--pencil);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.settings-close:hover {
+  background: var(--paper-dark);
+  color: var(--ink);
+}
+
+.settings-body {
+  padding: 1rem 1.5rem 1.5rem;
+}
+
+.settings-section {
+  margin-bottom: 1.2rem;
+}
+
+.settings-section h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--pencil);
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+}
+
+.settings-section p {
+  font-size: 0.95rem;
+  color: var(--ink);
+  line-height: 1.7;
+}
+
+.settings-buttons {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.btn-export {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  border: 2px solid var(--accent);
+  border-radius: 2px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.2s;
+  display: inline-block;
+  font-family: 'Noto Serif SC', serif;
+  letter-spacing: 1px;
+}
+
+.btn-export:hover {
+  background: transparent;
+  color: var(--accent);
+}
+
+/* ---------- 35. 植物线描装饰 SVG ---------- */
+.plant-deco {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.06;
+}
+
+.plant-deco.top-right {
+  top: 60px;
+  right: 10px;
+  width: 80px;
+  height: 120px;
+}
+
+.plant-deco.bottom-left {
+  bottom: 100px;
+  left: 10px;
+  width: 60px;
+  height: 100px;
+}
+
+/* ---------- 36. 页面区块 ---------- */
+.page-section {
+  display: none;
+}
+
+.page-section.active {
+  display: block;
+}
+
+/* ---------- 37. 响应式 ---------- */
+@media (max-width: 480px) {
+  .phone-frame {
+    max-width: 100%;
+  }
+
+  .bottom-nav {
+    max-width: 100%;
+    left: 0;
+    transform: none;
+  }
+
+  .settings-panel {
+    max-width: 100%;
+  }
+}
+
+/* ---------- 辅助 / 工具类 ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--pencil);
+  opacity: 0.3;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pencil);
+}
+
+/* ---------- 标本编号兼容 ---------- */
+.specimen-no {
+  display: inline-block;
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 0.65rem;
+  color: var(--pencil);
+  border: 1px solid var(--pencil);
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+}
+
+/* ---------- 编号圆圈兼容 ---------- */
+.field-number-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  font-size: 0.65rem;
+  color: var(--accent);
+  flex-shrink: 0;
+  font-family: 'ZCOOL XiaoWei', serif;
+  line-height: 1;
+}

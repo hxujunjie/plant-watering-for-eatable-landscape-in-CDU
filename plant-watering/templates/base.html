@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>{% block title %}植物浇水签到{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- 浮动水滴装饰 -->
+    <div class="droplets" id="droplets"></div>
+
+    <!-- 手机框架 -->
+    <div class="phone-frame">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- 底部导航 -->
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">签到</span>
+        </a>
+        <a href="/records" class="nav-item {% if request.endpoint == 'records' %}active{% endif %}">
+            <span class="nav-icon">📖</span>
+            <span class="nav-label">记录</span>
+        </a>
+        <a href="javascript:void(0)" class="nav-item" onclick="openSettings()">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">设置</span>
+        </a>
+    </nav>
+
+    <!-- Toast 提示 -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 确认弹窗 -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <div class="modal-icon">⚠</div>
+            <h3 class="modal-title" id="modalTitle"></h3>
+            <p class="modal-message" id="modalMessage"></p>
+            <div class="modal-actions">
+                <button class="modal-cancel" id="modalCancelBtn">取消</button>
+                <button class="modal-confirm" id="modalConfirmBtn">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全屏照片查看器 -->
+    <div class="viewer-overlay" id="viewerOverlay">
+        <div class="viewer-header">
+            <button class="viewer-close" id="viewerClose">✕</button>
+            <span class="viewer-counter" id="viewerCounter"></span>
+        </div>
+        <div class="viewer-body" id="viewerBody">
+            <div class="viewer-track" id="viewerTrack"></div>
+        </div>
+        <div class="viewer-nav">
+            <button class="viewer-arrow" id="viewerPrev">◀</button>
+            <button class="viewer-arrow" id="viewerNext">▶</button>
+        </div>
+    </div>
+
+    <!-- 设置面板 -->
+    <div class="settings-overlay" id="settingsOverlay">
+        <div class="settings-panel">
+            <div class="settings-header">
+                <h2>设置</h2>
+                <button class="settings-close" id="settingsClose">✕</button>
+            </div>
+            <div class="settings-body">
+                <div class="settings-section">
+                    <h3>数据导出</h3>
+                    <p>将浇水记录导出为文件保存到本地</p>
+                    <div class="settings-buttons">
+                        <a href="/export/excel" class="btn-export">导出 Excel</a>
+                        <a href="/export/csv" class="btn-export">导出 CSV</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
