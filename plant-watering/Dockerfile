@@ -18,8 +18,8 @@ COPY --chown=user templates/ templates/
 COPY --chown=user static/ static/
 
 # 数据持久化到 /data（HF Spaces 提供的持久化目录）
-RUN mkdir -p /data/uploads && chmod 777 /data
-ENV UPLOAD_DIR=/data/uploads
+RUN mkdir -p /data/user_uploads && chmod -R 777 /data
+ENV UPLOAD_DIR=/data/user_uploads
 ENV DB_PATH=/data/watering.db
 ENV PORT=7860
 
