@@ -61,10 +61,17 @@ def add_watering_log(name):
 def add_photo(watering_log_id, file_path):
     """为签到记录添加照片。"""
     conn = get_db()
-    conn.execute(
-        "INSERT INTO photo (watering_log_id, file_path, created_at) VALUES (?, ?, ?)",
-        (watering_log_id, file_path, current_time_str())
-    )
+    columns = {row['name'] for row in conn.execute("PRAGMA table_info(photo)").fetchall()}
+    if 'caption' in columns:
+        conn.execute(
+            "INSERT INTO photo (watering_log_id, file_path, caption, created_at) VALUES (?, ?, ?, ?)",
+            (watering_log_id, file_path, '', current_time_str())
+        )
+    else:
+        conn.execute(
+            "INSERT INTO photo (watering_log_id, file_path, created_at) VALUES (?, ?, ?)",
+            (watering_log_id, file_path, current_time_str())
+        )
     conn.commit()
     conn.close()
 
