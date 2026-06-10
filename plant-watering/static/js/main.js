@@ -58,9 +58,13 @@
     if (overlay) overlay.classList.remove("show");
   };
 
-  /* ---------- 4. 全屏照片查看器（轨道滑动） ---------- */
+  /* ---------- 4. 全屏照片查看器（滑动 + 缩放） ---------- */
   var viewerPhotos = [];
   var viewerIndex = 0;
+  var viewerScale = 1;
+  var viewerTranslateX = 0;
+  var viewerTranslateY = 0;
+  var lastTapTime = 0;
 
   function getTrack() {
     return document.getElementById("viewerTrack");
@@ -79,6 +83,56 @@
       track.classList.add("dragging");
     }
     track.style.transform = "translateX(" + offset + "px)";
+  }
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function getActiveImage() {
+    var track = getTrack();
+    if (!track) return null;
+    var slide = track.children[viewerIndex];
+    return slide ? slide.querySelector("img") : null;
+  }
+
+  function applyImageTransform() {
+    var img = getActiveImage();
+    if (!img) return;
+    img.style.transform = "translate(" + viewerTranslateX + "px, " + viewerTranslateY + "px) scale(" + viewerScale + ")";
+    img.classList.toggle("zoomed", viewerScale > 1);
+  }
+
+  function resetZoom() {
+    var track = getTrack();
+    if (track) {
+      track.querySelectorAll(".viewer-slide img").forEach(function (img) {
+        img.style.transform = "";
+        img.classList.remove("zoomed");
+      });
+    }
+    viewerScale = 1;
+    viewerTranslateX = 0;
+    viewerTranslateY = 0;
+  }
+
+  function setZoom(scale, centerX, centerY) {
+    var oldScale = viewerScale;
+    viewerScale = clamp(scale, 1, 4);
+    if (viewerScale === 1) {
+      viewerTranslateX = 0;
+      viewerTranslateY = 0;
+    } else if (centerX !== undefined && centerY !== undefined && oldScale > 0) {
+      var body = getBody();
+      if (body) {
+        var dx = centerX - body.clientWidth / 2;
+        var dy = centerY - body.clientHeight / 2;
+        var ratio = viewerScale / oldScale;
+        viewerTranslateX = viewerTranslateX * ratio - dx * (ratio - 1);
+        viewerTranslateY = viewerTranslateY * ratio - dy * (ratio - 1);
+      }
+    }
+    applyImageTransform();
   }
 
   function buildSlides() {
@@ -100,6 +154,7 @@
   function slideToIndex(index, animate) {
     var body = getBody();
     if (!body) return;
+    resetZoom();
     viewerIndex = index;
     var offset = -viewerIndex * body.clientWidth;
     setTrackPosition(offset, animate !== false);
@@ -120,6 +175,7 @@
     if (!overlay || viewerPhotos.length === 0) return;
     buildSlides();
     overlay.classList.add("show");
+    resetZoom();
     // 等 DOM 渲染后再定位，避免动画错位
     requestAnimationFrame(function () {
       slideToIndex(viewerIndex, false);
@@ -139,6 +195,13 @@
 
   window.viewerNext = function () {
     if (viewerIndex < viewerPhotos.length - 1) slideToIndex(viewerIndex + 1, true);
+  };
+
+  window.openViewerFromUrls = function (urls, index) {
+    viewerPhotos = (urls || []).filter(Boolean);
+    viewerIndex = index || 0;
+    if (viewerIndex < 0 || viewerIndex >= viewerPhotos.length) viewerIndex = 0;
+    showViewer();
   };
 
   window.openViewer = function (imgElement) {
@@ -295,7 +358,7 @@
     }
   })();
 
-  /* ---------- I5. 触摸滑动（轨道跟手拖拽） ---------- */
+  /* ---------- I5. 查看器手势：滑动、拖动、双指缩放、双击缩放 ---------- */
   (function initViewerTouch() {
     var overlay = document.getElementById("viewerOverlay");
     var body = getBody();
@@ -306,25 +369,75 @@
     var dragOffset = 0;
     var isDragging = false;
     var isHorizontal = null;
+    var gestureMode = "";
+    var panStartX = 0;
+    var panStartY = 0;
+    var panBaseX = 0;
+    var panBaseY = 0;
+    var pinchStartDistance = 0;
+    var pinchStartScale = 1;
+
+    function getDistance(t1, t2) {
+      var dx = t1.clientX - t2.clientX;
+      var dy = t1.clientY - t2.clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function getMidpoint(t1, t2) {
+      return {
+        x: (t1.clientX + t2.clientX) / 2,
+        y: (t1.clientY + t2.clientY) / 2
+      };
+    }
 
     overlay.addEventListener("touchstart", function (e) {
+      if (e.touches.length === 2) {
+        gestureMode = "pinch";
+        pinchStartDistance = getDistance(e.touches[0], e.touches[1]);
+        pinchStartScale = viewerScale;
+        isDragging = false;
+        return;
+      }
+
       startX = e.changedTouches[0].clientX;
       startY = e.changedTouches[0].clientY;
       dragOffset = 0;
       isDragging = true;
       isHorizontal = null;
+      gestureMode = viewerScale > 1 ? "pan" : "swipe";
+      panStartX = startX;
+      panStartY = startY;
+      panBaseX = viewerTranslateX;
+      panBaseY = viewerTranslateY;
     }, { passive: true });
 
     overlay.addEventListener("touchmove", function (e) {
-      if (!isDragging) return;
+      if (gestureMode === "pinch" && e.touches.length >= 2) {
+        e.preventDefault();
+        var midpoint = getMidpoint(e.touches[0], e.touches[1]);
+        var nextScale = pinchStartScale * (getDistance(e.touches[0], e.touches[1]) / Math.max(pinchStartDistance, 1));
+        setZoom(nextScale, midpoint.x, midpoint.y);
+        return;
+      }
+
+      if (!isDragging || e.touches.length !== 1) return;
 
       var dx = e.changedTouches[0].clientX - startX;
       var dy = e.changedTouches[0].clientY - startY;
+
+      if (gestureMode === "pan") {
+        e.preventDefault();
+        viewerTranslateX = panBaseX + (e.changedTouches[0].clientX - panStartX);
+        viewerTranslateY = panBaseY + (e.changedTouches[0].clientY - panStartY);
+        applyImageTransform();
+        return;
+      }
 
       if (isHorizontal === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
         isHorizontal = Math.abs(dx) > Math.abs(dy);
       }
       if (!isHorizontal) return;
+      e.preventDefault();
 
       // 基准位置 + 拖拽偏移
       var baseOffset = -viewerIndex * body.clientWidth;
@@ -336,9 +449,22 @@
       }
 
       setTrackPosition(baseOffset + dragOffset, false);
-    }, { passive: true });
+    }, { passive: false });
 
     overlay.addEventListener("touchend", function () {
+      if (gestureMode === "pinch") {
+        if (viewerScale <= 1.02) resetZoom();
+        gestureMode = "";
+        return;
+      }
+
+      if (gestureMode === "pan") {
+        if (viewerScale <= 1.02) resetZoom();
+        gestureMode = "";
+        isDragging = false;
+        return;
+      }
+
       if (!isDragging) return;
       isDragging = false;
 
@@ -352,7 +478,17 @@
         // 回弹到当前
         slideToIndex(viewerIndex, true);
       }
+      gestureMode = "";
     }, { passive: true });
+
+    overlay.addEventListener("dblclick", function (e) {
+      if (!e.target || e.target.tagName !== "IMG") return;
+      if (viewerScale > 1) {
+        resetZoom();
+      } else {
+        setZoom(2, e.clientX, e.clientY);
+      }
+    });
   })();
 
   /* ---------- I6. 键盘支持 ---------- */

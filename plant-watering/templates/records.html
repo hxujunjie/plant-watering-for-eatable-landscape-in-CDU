@@ -514,7 +514,11 @@
                     var photoGrid = document.createElement('div');
                     photoGrid.className = 'photo-grid';
 
-                    (photos || []).forEach(function(photo) {
+                    var photoUrls = (photos || []).map(function(photo) {
+                        return photo.file_path || photo.path;
+                    }).filter(Boolean);
+
+                    (photos || []).forEach(function(photo, index) {
                         var item = document.createElement('div');
                         item.className = 'photo-item';
                         var img = document.createElement('img');
@@ -522,7 +526,7 @@
                         img.alt = '照片';
                         img.loading = 'lazy';
                         img.addEventListener('click', function() {
-                            openViewerUrl(img.src);
+                            openViewerFromUrls(photoUrls, index);
                         });
                         item.appendChild(img);
                         photoGrid.appendChild(item);

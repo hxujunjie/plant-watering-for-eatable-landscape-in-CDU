@@ -1250,7 +1250,7 @@ body {
   overflow: hidden;
   position: relative;
   min-height: 0;
-  touch-action: pan-y;
+  touch-action: none;
 }
 
 .viewer-track {
@@ -1284,6 +1284,14 @@ body {
   border-radius: 8px;
   user-select: none;
   -webkit-user-drag: none;
+  transform-origin: center center;
+  transition: transform 0.18s ease-out;
+  will-change: transform;
+}
+
+.viewer-slide img.zoomed {
+  cursor: grab;
+  transition: none;
 }
 
 .viewer-nav {
