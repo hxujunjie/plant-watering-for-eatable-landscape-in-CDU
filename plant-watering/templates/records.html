@@ -238,6 +238,7 @@
                         .then(function(data) {
                             if (data.success) {
                                 showToast('已撤销');
+                                refreshViewsAfterDelete();
                                 var item = document.querySelector('.record-item[data-id="' + id + '"]');
                                 if (item) {
                                     item.style.transition = 'all 0.3s ease';
@@ -269,6 +270,23 @@
                 });
             });
         });
+    }
+
+    function refreshViewsAfterDelete() {
+        calendarLoaded = false;
+        photosLoaded = false;
+
+        var calendarTab = document.getElementById('tabCalendar');
+        if (calendarTab && calendarTab.classList.contains('active')) {
+            calendarLoaded = true;
+            loadCalendar();
+        }
+
+        var photosTab = document.getElementById('tabPhotos');
+        if (photosTab && photosTab.classList.contains('active')) {
+            photosLoaded = true;
+            loadPhotos();
+        }
     }
 
     // 加载更多按钮

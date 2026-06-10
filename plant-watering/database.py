@@ -1,8 +1,18 @@
 import sqlite3
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 DB_PATH = os.environ.get('DB_PATH', os.path.join(os.path.dirname(__file__), 'watering.db'))
+
+# 项目所在地区为中国大陆，统一使用北京时间（UTC+8）。
+# Hugging Face Spaces 容器默认 UTC，sqlite 的 datetime('now', 'localtime') 在该环境下仍取 UTC，
+# 因此改为应用层显式生成北京时间字符串。
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+
+def current_time_str():
+    """返回北京时间字符串（YYYY-MM-DD HH:MM:SS），与 SQLite 默认格式兼容。"""
+    return datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M:%S')
 
 
 def get_db():
@@ -20,14 +30,14 @@ def init_db():
         CREATE TABLE IF NOT EXISTS watering_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT (datetime('now', 'localtime'))
+            created_at DATETIME NOT NULL DEFAULT (datetime('now', '+8 hours'))
         );
 
         CREATE TABLE IF NOT EXISTS photo (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             watering_log_id INTEGER NOT NULL,
             file_path TEXT NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT (datetime('now', 'localtime')),
+            created_at DATETIME NOT NULL DEFAULT (datetime('now', '+8 hours')),
             FOREIGN KEY (watering_log_id) REFERENCES watering_log(id) ON DELETE CASCADE
         );
     ''')
@@ -39,8 +49,8 @@ def add_watering_log(name):
     """新增一条签到记录，返回记录ID。"""
     conn = get_db()
     cursor = conn.execute(
-        "INSERT INTO watering_log (name, created_at) VALUES (?, datetime('now', 'localtime'))",
-        (name,)
+        "INSERT INTO watering_log (name, created_at) VALUES (?, ?)",
+        (name, current_time_str())
     )
     log_id = cursor.lastrowid
     conn.commit()
@@ -52,8 +62,8 @@ def add_photo(watering_log_id, file_path):
     """为签到记录添加照片。"""
     conn = get_db()
     conn.execute(
-        "INSERT INTO photo (watering_log_id, file_path, created_at) VALUES (?, ?, datetime('now', 'localtime'))",
-        (watering_log_id, file_path)
+        "INSERT INTO photo (watering_log_id, file_path, created_at) VALUES (?, ?, ?)",
+        (watering_log_id, file_path, current_time_str())
     )
     conn.commit()
     conn.close()

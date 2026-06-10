@@ -2,7 +2,7 @@ import os
 import io
 import csv
 from flask import Flask, render_template, request, jsonify, send_file
-from PIL import Image
+from PIL import Image, ImageOps
 from database import init_db, add_watering_log, add_photo, get_recent_logs, \
     delete_watering_log, get_last_watering, get_all_names, get_logs_by_date, \
     get_marked_dates, get_all_photos_grouped_by_date, get_all_logs_for_export
@@ -27,12 +27,21 @@ def allowed_file(filename):
 def compress_image(file_stream, max_size=1200):
     """压缩图片，长边不超过 max_size 像素。"""
     img = Image.open(file_stream)
+    img = ImageOps.exif_transpose(img)
     img.thumbnail((max_size, max_size), Image.LANCZOS)
     buffer = io.BytesIO()
     fmt = img.format if img.format else 'JPEG'
     if fmt == 'PNG':
         img.save(buffer, format='PNG', optimize=True)
     else:
+        if img.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'P':
+                img = img.convert('RGBA')
+            background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+            img = background
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
         img.save(buffer, format='JPEG', quality=85, optimize=True)
     buffer.seek(0)
     return buffer, 'png' if fmt == 'PNG' else 'jpg'
@@ -69,16 +78,25 @@ def checkin():
 
     photo_count = 0
     files = request.files.getlist('photos')
-    for file in files:
-        if file and allowed_file(file.filename):
-            buffer, ext = compress_image(file.stream)
-            filename = f"{log_id}_{photo_count}_{os.urandom(4).hex()}.{ext}"
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
-            os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-            with open(filepath, 'wb') as f:
-                f.write(buffer.getvalue())
-            add_photo(log_id, f'/uploads/{filename}')
-            photo_count += 1
+    saved_files = []
+    try:
+        for file in files:
+            if file and allowed_file(file.filename):
+                buffer, ext = compress_image(file.stream)
+                filename = f"{log_id}_{photo_count}_{os.urandom(4).hex()}.{ext}"
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                with open(filepath, 'wb') as f:
+                    f.write(buffer.getvalue())
+                saved_files.append(filepath)
+                add_photo(log_id, f'/uploads/{filename}')
+                photo_count += 1
+    except Exception:
+        delete_watering_log(log_id)
+        for filepath in saved_files:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+        return jsonify({'success': False, 'error': '照片处理失败，请换一张照片重试'}), 400
 
     return jsonify({
         'success': True,
@@ -179,7 +197,7 @@ def export_excel():
         io.BytesIO(buffer.getvalue()),
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         as_attachment=True,
-        download_name='浇水签到记录.xlsx'
+        download_name='watering_log.xlsx'
     )
 
 
@@ -199,7 +217,7 @@ def export_csv():
         output,
         mimetype='text/csv; charset=utf-8',
         as_attachment=True,
-        download_name='浇水签到记录.csv'
+        download_name='watering_log.csv'
     )
 
 

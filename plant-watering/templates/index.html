@@ -173,8 +173,15 @@
 
     checkinForm.addEventListener('submit', function(e) {
         e.preventDefault();
+        const name = nameInput.value.trim();
+        if (!name) {
+            showToast('请输入姓名', 'error');
+            nameInput.focus();
+            return;
+        }
+
         const formData = new FormData();
-        formData.append('name', nameInput.value.trim());
+        formData.append('name', name);
         selectedFiles.forEach(function(file) {
             formData.append('photos', file);
         });
@@ -219,11 +226,11 @@
                 photoPreview.innerHTML = '';
                 selectedFiles = [];
             } else {
-                showToast(data.message || '签到失败，请重试');
+                showToast(data.error || data.message || '签到失败，请重试', 'error');
             }
         })
         .catch(function() {
-            showToast('网络错误，请重试');
+            showToast('网络错误，请重试', 'error');
         })
         .finally(function() {
             checkinBtn.disabled = false;
