@@ -13,7 +13,7 @@ COPY --chown=user requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 复制项目文件
-COPY --chown=user app.py database.py .
+COPY --chown=user app.py database.py backup.py ./
 COPY --chown=user templates/ templates/
 COPY --chown=user static/ static/
 

@@ -6,6 +6,7 @@ from PIL import Image, ImageOps
 from database import init_db, add_watering_log, add_photo, get_recent_logs, \
     delete_watering_log, get_last_watering, get_all_names, get_logs_by_date, \
     get_marked_dates, get_all_photos_grouped_by_date, get_all_logs_for_export
+import backup
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB 上传限制
@@ -98,12 +99,20 @@ def checkin():
                 os.remove(filepath)
         return jsonify({'success': False, 'error': '照片处理失败，请换一张照片重试'}), 400
 
+    _trigger_backup()
     return jsonify({
         'success': True,
         'message': '签到成功',
         'name': name,
         'photo_count': photo_count
     })
+
+
+def _trigger_backup():
+    try:
+        backup.schedule_backup()
+    except Exception:
+        pass
 
 
 @app.route('/api/logs', methods=['GET'])
@@ -134,6 +143,7 @@ def api_last_watering():
 def delete_log(log_id):
     """撤销签到记录。"""
     delete_watering_log(log_id)
+    _trigger_backup()
     return jsonify({'success': True, 'message': '已撤销'})
 
 
@@ -221,7 +231,91 @@ def export_csv():
     )
 
 
-if __name__ == '__main__':
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# ========== 备份 / 恢复 (admin) ==========
+
+def _check_admin(req):
+    pwd = req.headers.get('X-Admin-Password') or req.form.get('admin_password') or req.args.get('admin_password')
+    if not backup.has_admin_password():
+        return False, '后端未配置 BACKUP_ADMIN_PASSWORD'
+    if not backup.admin_password_ok(pwd):
+        return False, '管理员密码错误'
+    return True, ''
+
+
+@app.route('/api/backup/status', methods=['GET'])
+def backup_status():
+    """前端查询是否启用了备份功能（不暴露任何敏感信息）。"""
+    return jsonify({
+        'configured': backup.is_configured(),
+        'has_password': backup.has_admin_password(),
+    })
+
+
+@app.route('/admin/backup', methods=['POST'])
+def admin_backup_download():
+    """下载完整备份 zip。"""
+    ok, msg = _check_admin(request)
+    if not ok:
+        return jsonify({'success': False, 'error': msg}), 401
+    try:
+        data = backup.get_zip_bytes()
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+    ts = _dt.now(_tz(_td(hours=8))).strftime('%Y%m%d_%H%M%S')
+    return send_file(
+        io.BytesIO(data),
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=f'plant-watering-backup-{ts}.zip'
+    )
+
+
+@app.route('/admin/backup/push', methods=['POST'])
+def admin_backup_push():
+    """立即推送一次备份到 GitHub。"""
+    ok, msg = _check_admin(request)
+    if not ok:
+        return jsonify({'success': False, 'error': msg}), 401
+    if not backup.is_configured():
+        return jsonify({'success': False, 'error': '后端未配置 BACKUP_GITHUB_TOKEN/REPO'}), 400
+    try:
+        info = backup.push_now()
+        return jsonify({'success': True, 'info': info})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/admin/restore', methods=['POST'])
+def admin_restore():
+    """从上传的 zip 恢复数据。"""
+    ok, msg = _check_admin(request)
+    if not ok:
+        return jsonify({'success': False, 'error': msg}), 401
+    f = request.files.get('backup_file')
+    if not f:
+        return jsonify({'success': False, 'error': '请上传备份 zip 文件'}), 400
+    try:
+        data = f.read()
+        backup.restore_from_zip(data)
+        return jsonify({'success': True, 'message': '恢复成功，请刷新页面'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ========== 启动逻辑 ==========
+
+# 在模块加载时执行：先建表，再尝试从 GitHub 恢复（如果库为空且远端有备份）
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+init_db()
+try:
+    backup.restore_on_startup_if_empty()
+    # 恢复后表结构可能来自旧版本（如带 caption 字段），重新 init_db 不会破坏已有表
     init_db()
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger(__name__).warning('Startup restore error: %s', _e)
+
+
+if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=PORT)
