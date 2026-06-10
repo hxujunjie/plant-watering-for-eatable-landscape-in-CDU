@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>{% block title %}植物浇水志{% endblock %}</title>
+    <title>{% block title %}植物日志{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
@@ -35,7 +35,7 @@
     <div class="phone-frame">
         <!-- 状态栏 -->
         <div class="status-bar">
-            <span>植物观察日志</span>
+            <span>植物日志</span>
             <span id="statusDate"></span>
         </div>
 
@@ -47,6 +47,10 @@
         <a href="/" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
             <span class="nav-icon">✏️</span>
             <span class="nav-label">记录</span>
+        </a>
+        <a href="/board" class="nav-item {% if request.endpoint == 'board' %}active{% endif %}">
+            <span class="nav-icon">📝</span>
+            <span class="nav-label">黑板</span>
         </a>
         <a href="/records" class="nav-item {% if request.endpoint == 'records' %}active{% endif %}">
             <span class="nav-icon">📜</span>
@@ -78,6 +82,10 @@
     <div class="viewer-overlay" id="viewerOverlay">
         <div class="viewer-header">
             <button class="viewer-close" id="viewerClose">✕</button>
+            <div class="viewer-header-actions">
+                <button class="viewer-edit-tags" id="viewerEditTags" title="编辑标签">🏷️ 标签</button>
+                <button class="viewer-edit-caption" id="viewerEditCaption" title="编辑注释">✏️ 注释</button>
+            </div>
             <span class="viewer-counter" id="viewerCounter"></span>
         </div>
         <div class="viewer-body" id="viewerBody">
@@ -86,6 +94,25 @@
         <div class="viewer-nav">
             <button class="viewer-arrow" id="viewerPrev">◀</button>
             <button class="viewer-arrow" id="viewerNext">▶</button>
+        </div>
+        <!-- 注释编辑弹层（全屏查看器内） -->
+        <div class="viewer-caption-editor" id="viewerCaptionEditor" style="display:none;">
+            <textarea id="viewerCaptionInput" placeholder="输入照片注释..." rows="2" maxlength="200"></textarea>
+            <div class="viewer-caption-btns">
+                <button onclick="saveViewerCaption()">保存</button>
+                <button onclick="closeCaptionEditor()">取消</button>
+            </div>
+        </div>
+        <!-- 照片查看器留言区域 -->
+        <div class="viewer-comments" id="viewerComments">
+            <div class="viewer-comments-list" id="viewerCommentsList">
+                <!-- 动态渲染留言 -->
+            </div>
+            <div class="viewer-comment-input">
+                <input type="text" id="commentAuthor" placeholder="你的名字" class="comment-author-input">
+                <input type="text" id="commentContent" placeholder="写留言..." class="comment-content-input">
+                <button class="comment-submit-btn" onclick="submitComment()">发送</button>
+            </div>
         </div>
     </div>
 
@@ -98,6 +125,14 @@
             </div>
             <div class="settings-body">
                 <div class="settings-section">
+                    <h3>排序方式</h3>
+                    <p>照片和记录的时间排列顺序</p>
+                    <div class="settings-buttons">
+                        <button class="btn-export sort-option active" data-order="desc" onclick="setSortOrder('desc')">从新到旧</button>
+                        <button class="btn-export sort-option" data-order="asc" onclick="setSortOrder('asc')">从旧到新</button>
+                    </div>
+                </div>
+                <div class="settings-section">
                     <h3>数据导出</h3>
                     <p>将浇水记录导出为文件保存到本地</p>
                     <div class="settings-buttons">
@@ -105,6 +140,28 @@
                         <a href="/export/csv" class="btn-export">导出 CSV</a>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tag选择弹层 -->
+    <div class="tag-picker-overlay" id="tagPickerOverlay" style="display:none;">
+        <div class="tag-picker-panel">
+            <div class="tag-picker-header">
+                <h3>选择标签</h3>
+                <button class="tag-picker-close" onclick="closeTagPicker()">&#x2715;</button>
+            </div>
+            <div class="tag-picker-search">
+                <input type="text" id="tagSearchInput" placeholder="搜索或创建新标签" oninput="filterTags(this.value)">
+            </div>
+            <div class="tag-picker-list" id="tagPickerList">
+                <!-- 动态渲染 -->
+            </div>
+            <div class="tag-picker-create" id="tagPickerCreate" style="display:none;">
+                <button id="tagCreateBtn" onclick="createTagFromPicker()">创建 "xxx" 标签</button>
+            </div>
+            <div class="tag-picker-footer">
+                <button class="tag-picker-confirm" onclick="confirmTagPicker()">确定</button>
             </div>
         </div>
     </div>

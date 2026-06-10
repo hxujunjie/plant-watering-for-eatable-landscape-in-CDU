@@ -19,6 +19,7 @@
     <button class="tab active" data-tab="list">记录列表</button>
     <button class="tab" data-tab="calendar">日历</button>
     <button class="tab" data-tab="photos">图鉴</button>
+    <button class="tab" data-tab="tags" onclick="switchTab('tags')">标签筛选</button>
 </div>
 
 <!-- 签到列表 -->
@@ -59,6 +60,16 @@
         <div class="empty-desc">签到时上传照片，此处将展示图鉴</div>
     </div>
 </div>
+
+<!-- 标签筛选 -->
+<div class="tab-content" id="tabTags">
+    <div class="tags-cloud" id="tagsCloud">
+        <!-- 动态渲染tag列表 -->
+    </div>
+    <div class="tag-filter-result" id="tagFilterResult">
+        <!-- 点击tag后显示照片合集 -->
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -80,6 +91,7 @@
     var listLoaded = false;
     var calendarLoaded = false;
     var photosLoaded = false;
+    var tagsLoaded = false;
     var calYear, calMonth;
 
     // ========== Tab 切换逻辑 ==========
@@ -128,7 +140,7 @@
         loadMoreBtn.disabled = true;
         loadMoreBtn.textContent = '加载中...';
 
-        fetch('/api/logs?page=' + currentPage)
+        fetch('/api/logs?page=' + currentPage + '&order=' + (typeof getSortOrder === 'function' ? getSortOrder() : 'desc'))
             .then(function(res) { return res.json(); })
             .then(function(data) {
                 var logs = data.logs || [];
@@ -195,18 +207,74 @@
             var thumbs = document.createElement('div');
             thumbs.className = 'record-photos';
             log.photos.forEach(function(photo) {
+                var thumbWrap = document.createElement('div');
+                thumbWrap.className = 'record-thumb-wrap';
+                thumbWrap.style.position = 'relative';
+
                 var img = document.createElement('img');
                 img.className = 'record-thumb';
                 img.src = photo.file_path || photo.path;
                 img.alt = '照片';
                 img.loading = 'lazy';
+                // 将 photo id 存储到 data 属性，用于留言加载
+                if (photo.id) {
+                    img.setAttribute('data-photo-id', photo.id);
+                }
                 img.addEventListener('click', function() {
                     openViewer(img);
                 });
-                thumbs.appendChild(img);
+                thumbWrap.appendChild(img);
+
+                // 叠加注释文字
+                if (photo.caption) {
+                    var captionEl = document.createElement('div');
+                    captionEl.className = 'photo-caption-overlay';
+                    captionEl.textContent = photo.caption;
+                    thumbWrap.appendChild(captionEl);
+                }
+
+                // 叠加tag小标签
+                if (photo.tags && photo.tags.length > 0) {
+                    var tagOverlay = document.createElement('div');
+                    tagOverlay.className = 'photo-tag-overlay';
+                    photo.tags.forEach(function(tag) {
+                        var badge = document.createElement('span');
+                        badge.className = 'photo-tag-badge';
+                        badge.textContent = tag.name || tag;
+                        tagOverlay.appendChild(badge);
+                    });
+                    thumbWrap.appendChild(tagOverlay);
+                }
+
+                // 照片留言预览（显示留言数和最新一条留言）
+                if (photo.id) {
+                    var commentPreview = document.createElement('div');
+                    commentPreview.className = 'photo-comment-preview';
+                    commentPreview.setAttribute('data-photo-id', photo.id);
+                    // 先显示加载占位
+                    commentPreview.innerHTML = '<span class="photo-comment-loading">...</span>';
+                    thumbs.appendChild(thumbWrap);
+                    thumbs.appendChild(commentPreview);
+                    // 异步加载留言预览
+                    loadPhotoCommentPreview(photo.id, commentPreview);
+                } else {
+                    thumbs.appendChild(thumbWrap);
+                }
             });
             content.appendChild(thumbs);
         }
+
+        // 点赞按钮
+        var likeDiv = document.createElement('div');
+        likeDiv.className = 'record-like';
+        var likeBtn = document.createElement('button');
+        likeBtn.className = 'like-btn';
+        likeBtn.setAttribute('data-log-id', log.id);
+        likeBtn.innerHTML = '<span class="like-icon">🤍</span><span class="like-count">' + (log.like_count || 0) + '</span>';
+        likeBtn.addEventListener('click', function() {
+            toggleLike(log.id, this);
+        });
+        likeDiv.appendChild(likeBtn);
 
         // 撤销按钮 - 文字"作废"
         var undoBtn = document.createElement('button');
@@ -217,6 +285,7 @@
         item.appendChild(indexEl);
         item.appendChild(avatar);
         item.appendChild(content);
+        item.appendChild(likeDiv);
         item.appendChild(undoBtn);
 
         return item;
@@ -488,6 +557,8 @@
     });
 
     // ========== 照片集（图鉴） ==========
+    var photosGroupsCache = null; // 缓存分组数据
+
     function loadPhotos() {
         var container = document.getElementById('photosContainer');
         var photosEmpty = document.getElementById('photosEmpty');
@@ -496,7 +567,6 @@
             .then(function(res) { return res.json(); })
             .then(function(data) {
                 var groups = data.groups || {};
-                // groups 可能是对象（按日期分组）或数组
                 var groupKeys = Array.isArray(groups) ? groups.map(function(g) { return g.date; }) : Object.keys(groups);
                 if (groupKeys.length === 0) {
                     photosEmpty.style.display = '';
@@ -505,46 +575,519 @@
                 photosEmpty.style.display = 'none';
                 photosLoaded = true;
 
-                container.innerHTML = '';
-                groupKeys.forEach(function(dateKey) {
-                    var photos = Array.isArray(groups) ? groups[groupKeys.indexOf(dateKey)].photos : groups[dateKey];
-                    var groupEl = document.createElement('div');
-                    groupEl.className = 'photo-group';
-
-                    var dateLabel = document.createElement('div');
-                    dateLabel.className = 'photo-date';
-                    dateLabel.textContent = dateKey || '';
-                    groupEl.appendChild(dateLabel);
-
-                    var photoGrid = document.createElement('div');
-                    photoGrid.className = 'photo-grid';
-
-                    (photos || []).forEach(function(photo) {
-                        var item = document.createElement('div');
-                        item.className = 'photo-item';
-                        var img = document.createElement('img');
-                        img.src = photo.file_path || photo.path;
-                        img.alt = '照片';
-                        img.loading = 'lazy';
-                        img.addEventListener('click', function() {
-                            openViewerUrl(img.src);
-                        });
-                        item.appendChild(img);
-                        photoGrid.appendChild(item);
-                    });
-
-                    groupEl.appendChild(photoGrid);
-                    container.appendChild(groupEl);
-                });
+                // 缓存原始数据
+                photosGroupsCache = { groups: groups, groupKeys: groupKeys };
+                renderPhotos(photosGroupsCache);
             })
             .catch(function() {
                 showToast('加载照片失败');
             });
     }
 
+    function renderPhotos(cache) {
+        var container = document.getElementById('photosContainer');
+        var groups = cache.groups;
+        var groupKeys = cache.groupKeys.slice(); // 复制一份，避免修改原数据
+
+        // 按排序要求排列日期分组
+        var order = typeof getSortOrder === 'function' ? getSortOrder() : 'desc';
+        if (order === 'asc') {
+            groupKeys.sort(); // 日期字符串升序 = 从旧到新
+        } else {
+            groupKeys.sort().reverse(); // 从新到旧
+        }
+
+        container.innerHTML = '';
+        groupKeys.forEach(function(dateKey) {
+            var photos = Array.isArray(groups) ? groups[groupKeys.indexOf(dateKey)].photos : groups[dateKey];
+            var groupEl = document.createElement('div');
+            groupEl.className = 'photo-group';
+
+            var dateLabel = document.createElement('div');
+            dateLabel.className = 'photo-date';
+            dateLabel.textContent = dateKey || '';
+            groupEl.appendChild(dateLabel);
+
+            var photoGrid = document.createElement('div');
+            photoGrid.className = 'photo-grid';
+
+            (photos || []).forEach(function(photo) {
+                var item = document.createElement('div');
+                item.className = 'photo-item';
+                var img = document.createElement('img');
+                img.src = photo.file_path || photo.path;
+                img.alt = '照片';
+                img.loading = 'lazy';
+                if (photo.id) img.setAttribute('data-photo-id', photo.id);
+                img.addEventListener('click', function() {
+                    openViewerUrl(img);
+                });
+                item.appendChild(img);
+
+                // 叠加注释文字
+                if (photo.caption) {
+                    var captionEl = document.createElement('div');
+                    captionEl.className = 'photo-caption-overlay';
+                    captionEl.textContent = photo.caption;
+                    item.appendChild(captionEl);
+                }
+
+                // 叠加tag标签
+                if (photo.tags && photo.tags.length > 0) {
+                    var tagOverlay = document.createElement('div');
+                    tagOverlay.className = 'photo-tag-overlay';
+                    photo.tags.forEach(function(tag) {
+                        var badge = document.createElement('span');
+                        badge.className = 'photo-tag-badge';
+                        badge.textContent = tag.name || tag;
+                        tagOverlay.appendChild(badge);
+                    });
+                    item.appendChild(tagOverlay);
+                }
+
+                photoGrid.appendChild(item);
+            });
+
+            groupEl.appendChild(photoGrid);
+            container.appendChild(groupEl);
+        });
+    }
+
+    // ========== 标签筛选Tab ==========
+    var allTagsCache = [];
+    var activeTagIds = [];
+
+    function loadTagsCloud() {
+        var tagsCloud = document.getElementById('tagsCloud');
+        tagsCloud.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--pencil);font-size:0.85rem;">加载中...</div>';
+
+        fetch('/api/tags')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                allTagsCache = data.tags || [];
+                renderTagsCloud();
+                tagsLoaded = true;
+            })
+            .catch(function() {
+                tagsCloud.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--accent-rose);font-size:0.85rem;">加载标签失败</div>';
+            });
+    }
+
+    function renderTagsCloud() {
+        var tagsCloud = document.getElementById('tagsCloud');
+        tagsCloud.innerHTML = '';
+
+        if (allTagsCache.length === 0) {
+            tagsCloud.innerHTML = '<div class="empty-state" style="padding:2rem 1rem;"><div class="empty-title">尚无标签</div><div class="empty-desc">签到时为照片添加标签，此处将展示</div></div>';
+            return;
+        }
+
+        allTagsCache.forEach(function(tag) {
+            var item = document.createElement('button');
+            var isActive = activeTagIds.indexOf(tag.id) !== -1;
+            item.className = 'tag-cloud-item' + (isActive ? ' active' : '');
+            item.setAttribute('data-id', tag.id);
+            item.innerHTML = '<span class="tag-cloud-name">' + escapeHtml(tag.name) + '</span>' +
+                (tag.count !== undefined ? '<span class="tag-cloud-count">' + tag.count + '</span>' : '');
+            item.addEventListener('click', function() {
+                var idx = activeTagIds.indexOf(tag.id);
+                if (idx !== -1) {
+                    // 取消选中
+                    activeTagIds.splice(idx, 1);
+                } else {
+                    // 添加选中
+                    activeTagIds.push(tag.id);
+                }
+                renderTagsCloud();
+                // 如果有选中的标签，执行筛选
+                if (activeTagIds.length > 0) {
+                    loadTagFilterResult();
+                } else {
+                    document.getElementById('tagFilterResult').innerHTML = '';
+                }
+            });
+            tagsCloud.appendChild(item);
+        });
+    }
+
+    function loadTagFilterResult() {
+        var resultDiv = document.getElementById('tagFilterResult');
+        resultDiv.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--pencil);font-size:0.85rem;">筛选中...</div>';
+
+        // 构建选中标签名称
+        var tagNames = [];
+        allTagsCache.forEach(function(t) {
+            if (activeTagIds.indexOf(t.id) !== -1) tagNames.push(t.name);
+        });
+
+        var url = '/api/photos/by-tags?tag_ids=' + activeTagIds.join(',') + '&order=' + (typeof getSortOrder === 'function' ? getSortOrder() : 'desc');
+
+        fetch(url)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                var photos = data.photos || [];
+                resultDiv.innerHTML = '';
+
+                if (photos.length === 0) {
+                    resultDiv.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--pencil);font-size:0.85rem;">没有同时包含 ' + tagNames.join(' + ') + ' 的照片</div>';
+                    return;
+                }
+
+                // 标题
+                var title = document.createElement('div');
+                title.className = 'photo-date';
+                title.textContent = tagNames.join(' + ') + ' (' + photos.length + '张照片)';
+                resultDiv.appendChild(title);
+
+                // 照片网格
+                var grid = document.createElement('div');
+                grid.className = 'photo-grid';
+
+                photos.forEach(function(photo) {
+                    var item = document.createElement('div');
+                    item.className = 'photo-item';
+                    var img = document.createElement('img');
+                    img.src = photo.file_path || photo.path;
+                    img.alt = '照片';
+                    img.loading = 'lazy';
+                    if (photo.id) img.setAttribute('data-photo-id', photo.id);
+                    img.addEventListener('click', function() {
+                        openViewerUrl(img);
+                    });
+                    item.appendChild(img);
+
+                    // 叠加注释
+                    if (photo.caption) {
+                        var captionEl = document.createElement('div');
+                        captionEl.className = 'photo-caption-overlay';
+                        captionEl.textContent = photo.caption;
+                        item.appendChild(captionEl);
+                    }
+
+                    // 叠加tag
+                    if (photo.tags && photo.tags.length > 0) {
+                        var tagOverlay = document.createElement('div');
+                        tagOverlay.className = 'photo-tag-overlay';
+                        photo.tags.forEach(function(t) {
+                            var badge = document.createElement('span');
+                            badge.className = 'photo-tag-badge';
+                            badge.textContent = t.name || t;
+                            tagOverlay.appendChild(badge);
+                        });
+                        item.appendChild(tagOverlay);
+                    }
+
+                    grid.appendChild(item);
+                });
+
+                resultDiv.appendChild(grid);
+            })
+            .catch(function() {
+                resultDiv.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--accent-rose);font-size:0.85rem;">加载失败</div>';
+            });
+    }
+
+    // HTML转义工具函数
+    function escapeHtml(str) {
+        if (!str) return '';
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // 全局 switchTab 函数（供标签筛选Tab按钮的 onclick 调用）
+    window.switchTab = function(targetTab) {
+        // 切换 tab 样式
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        var targetBtn = document.querySelector('.tab[data-tab="' + targetTab + '"]');
+        if (targetBtn) targetBtn.classList.add('active');
+
+        // 切换内容区域
+        tabContents.forEach(function(tc) { tc.classList.remove('active'); });
+        var targetContent = document.getElementById('tab' + targetTab.charAt(0).toUpperCase() + targetTab.slice(1));
+        if (targetContent) targetContent.classList.add('active');
+
+        // 按需加载数据
+        if (targetTab === 'list' && !listLoaded) {
+            loadRecords(false);
+        } else if (targetTab === 'calendar' && !calendarLoaded) {
+            calendarLoaded = true;
+            initCalendar();
+            loadCalendar();
+        } else if (targetTab === 'photos' && !photosLoaded) {
+            loadPhotos();
+        } else if (targetTab === 'tags' && !tagsLoaded) {
+            loadTagsCloud();
+        }
+    };
+
+    // ========== 点赞功能 ==========
+    // 切换点赞状态
+    window.toggleLike = function(logId, btn) {
+        var author = localStorage.getItem('board_author') || '匿名';
+        var isLiked = btn.classList.contains('liked');
+
+        if (isLiked) {
+            // 取消点赞
+            fetch('/api/logs/' + logId + '/like', {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({author: author})
+            }).then(function(r) { return r.json(); }).then(function(data) {
+                btn.classList.remove('liked');
+                btn.querySelector('.like-icon').textContent = '🤍';
+                btn.querySelector('.like-count').textContent = data.like_count || 0;
+            }).catch(function() {
+                showToast('操作失败');
+            });
+        } else {
+            // 点赞
+            fetch('/api/logs/' + logId + '/like', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({author: author})
+            }).then(function(r) { return r.json(); }).then(function(data) {
+                btn.classList.add('liked');
+                btn.querySelector('.like-icon').textContent = '❤️';
+                btn.querySelector('.like-count').textContent = data.like_count || 1;
+            }).catch(function() {
+                showToast('操作失败');
+            });
+        }
+    };
+
+    // ========== 照片留言功能 ==========
+    // 当前正在查看的照片ID
+    var currentViewingPhotoId = null;
+
+    // 加载照片留言预览（记录列表中每张照片下方显示留言数和最新留言）
+    function loadPhotoCommentPreview(photoId, containerEl) {
+        fetch('/api/photos/' + photoId + '/comments')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var comments = data.comments || [];
+                if (comments.length === 0) {
+                    // 无留言时隐藏预览区域
+                    containerEl.style.display = 'none';
+                    return;
+                }
+                containerEl.style.display = '';
+                var latest = comments[comments.length - 1];
+                var previewHtml = '<span class="photo-comment-count">' + comments.length + '条留言</span>';
+                previewHtml += ' <span class="photo-comment-latest">' + escapeHtml(latest.author) + '：' + escapeHtml(latest.content) + '</span>';
+                containerEl.innerHTML = previewHtml;
+            })
+            .catch(function() {
+                // 加载失败时隐藏
+                containerEl.style.display = 'none';
+            });
+    }
+
+    // 加载照片留言（全屏查看器中）
+    window.loadPhotoComments = function(photoId) {
+        currentViewingPhotoId = photoId;
+        var commentsList = document.getElementById('viewerCommentsList');
+        if (commentsList) {
+            commentsList.innerHTML = '<div class="viewer-comments-loading">加载留言中...</div>';
+        }
+        fetch('/api/photos/' + photoId + '/comments')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                renderComments(data.comments || []);
+            })
+            .catch(function() {
+                if (commentsList) {
+                    commentsList.innerHTML = '<div class="viewer-comments-empty">加载留言失败</div>';
+                }
+            });
+    };
+
+    // 提交留言
+    window.submitComment = function() {
+        var authorInput = document.getElementById('commentAuthor');
+        var contentInput = document.getElementById('commentContent');
+        var author = authorInput ? (authorInput.value.trim() || '匿名') : '匿名';
+        var content = contentInput ? contentInput.value.trim() : '';
+        if (!content || !currentViewingPhotoId) return;
+
+        fetch('/api/photos/' + currentViewingPhotoId + '/comments', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({author: author, content: content})
+        }).then(function(r) { return r.json(); }).then(function(data) {
+            if (contentInput) contentInput.value = '';
+            localStorage.setItem('board_author', author);
+            loadPhotoComments(currentViewingPhotoId);
+        }).catch(function() {
+            showToast('留言发送失败');
+        });
+    };
+
+    // 渲染留言列表
+    function renderComments(comments) {
+        var commentsList = document.getElementById('viewerCommentsList');
+        if (!commentsList) return;
+
+        if (comments.length === 0) {
+            commentsList.innerHTML = '<div class="viewer-comments-empty">暂无留言，来说两句吧</div>';
+            return;
+        }
+
+        commentsList.innerHTML = '';
+        comments.forEach(function(comment) {
+            var item = document.createElement('div');
+            item.className = 'viewer-comment-item';
+
+            var authorSpan = document.createElement('span');
+            authorSpan.className = 'viewer-comment-author';
+            authorSpan.textContent = comment.author || '匿名';
+
+            var contentSpan = document.createElement('span');
+            contentSpan.className = 'viewer-comment-text';
+            contentSpan.textContent = comment.content;
+
+            var timeSpan = document.createElement('span');
+            timeSpan.className = 'viewer-comment-time';
+            timeSpan.textContent = comment.created_at ? formatCommentTime(comment.created_at) : '';
+
+            item.appendChild(authorSpan);
+            item.appendChild(contentSpan);
+            item.appendChild(timeSpan);
+            commentsList.appendChild(item);
+        });
+
+        // 滚动到最新留言
+        commentsList.scrollTop = commentsList.scrollHeight;
+    }
+
+    // 格式化留言时间（简易版）
+    function formatCommentTime(timeStr) {
+        if (!timeStr) return '';
+        var d = new Date(timeStr.replace(/-/g, '/'));
+        var month = d.getMonth() + 1;
+        var day = d.getDate();
+        var hh = String(d.getHours()).padStart(2, '0');
+        var mm = String(d.getMinutes()).padStart(2, '0');
+        return month + '/' + day + ' ' + hh + ':' + mm;
+    }
+
+    // ========== 增强 openViewer：打开查看器时加载留言 ==========
+    // 保存原始 openViewer 函数引用
+    var _originalOpenViewer = window.openViewer;
+    var _originalOpenViewerUrl = window.openViewerUrl;
+
+    // 重写 openViewer，在打开后加载当前照片的留言
+    window.openViewer = function(imgElement) {
+        _originalOpenViewer(imgElement);
+        // 延迟一帧确保 viewer 已渲染
+        requestAnimationFrame(function() {
+            loadViewerCommentsForCurrentSlide();
+        });
+    };
+
+    // 重写 openViewerUrl
+    window.openViewerUrl = function(url) {
+        _originalOpenViewerUrl(url);
+        requestAnimationFrame(function() {
+            loadViewerCommentsForCurrentSlide();
+        });
+    };
+
+    // 根据当前查看器中显示的照片加载留言
+    function loadViewerCommentsForCurrentSlide() {
+        // 查找当前 slide 中图片的 data-photo-id
+        var slides = document.querySelectorAll('.viewer-slide');
+        var currentSlide = slides[viewerIndex]; // viewerIndex 在 main.js 中定义
+        if (!currentSlide) return;
+
+        var img = currentSlide.querySelector('img');
+        if (!img) return;
+
+        // 尝试从原始 DOM 中找到对应的 photo id
+        var photoId = img.getAttribute('data-photo-id');
+        if (!photoId) {
+            // 通过图片 src 在页面中查找原始缩略图的 photo id
+            var src = img.getAttribute('src');
+            var allThumbs = document.querySelectorAll('img[data-photo-id]');
+            for (var i = 0; i < allThumbs.length; i++) {
+                if (allThumbs[i].getAttribute('src') === src) {
+                    photoId = allThumbs[i].getAttribute('data-photo-id');
+                    break;
+                }
+            }
+        }
+
+        // 显示/隐藏留言区域
+        var commentsDiv = document.getElementById('viewerComments');
+        if (commentsDiv) {
+            if (photoId) {
+                commentsDiv.style.display = '';
+                loadPhotoComments(photoId);
+            } else {
+                commentsDiv.style.display = 'none';
+            }
+        }
+    }
+
+    // 监听查看器翻页事件，切换照片时重新加载留言
+    var _originalSlideToIndex = null;
+    // 由于 slideToIndex 在 main.js 的闭包中，我们通过监听 viewer-track 的 transform 变化来检测翻页
+    (function() {
+        var track = document.getElementById('viewerTrack');
+        if (!track) return;
+        var observer = new MutationObserver(function() {
+            // track innerHTML 变化时（buildSlides 被调用）
+        });
+        // 使用更简单的方式：监听 prev/next 按钮点击后加载留言
+        var prevBtn = document.getElementById('viewerPrev');
+        var nextBtn = document.getElementById('viewerNext');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function() {
+                setTimeout(loadViewerCommentsForCurrentSlide, 100);
+            });
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function() {
+                setTimeout(loadViewerCommentsForCurrentSlide, 100);
+            });
+        }
+    })();
+
+    // 回车键发送留言
+    (function() {
+        var commentContent = document.getElementById('commentContent');
+        if (commentContent) {
+            commentContent.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submitComment();
+                }
+            });
+        }
+    })();
+
     // ========== 初始化 ==========
     initCalendar();
     loadRecords(false);
+
+    // 监听全局排序变化，刷新当前数据
+    window.addEventListener('sortOrderChanged', function() {
+        // 重置记录列表
+        recordsList.innerHTML = '';
+        recordCounter = 0;
+        currentPage = 1;
+        hasMore = true;
+        listLoaded = false;
+        loadRecords(false);
+        // 重置图鉴
+        photosLoaded = false;
+        photosGroupsCache = null;
+        loadPhotos();
+        // 重置标签筛选
+        if (activeTagIds.length > 0) {
+            loadTagFilterResult();
+        }
+    });
 })();
 </script>
 {% endblock %}

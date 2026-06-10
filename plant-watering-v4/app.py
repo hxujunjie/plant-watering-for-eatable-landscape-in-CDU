@@ -1,11 +1,22 @@
 import os
 import io
+import json
 import csv
 from flask import Flask, render_template, request, jsonify, send_file
 from PIL import Image
-from database import init_db, add_watering_log, add_photo, get_recent_logs, \
+from database import (
+    get_db, init_db, add_watering_log, add_photo, get_recent_logs, \
     delete_watering_log, get_last_watering, get_all_names, get_logs_by_date, \
-    get_marked_dates, get_all_photos_grouped_by_date, get_all_logs_for_export
+    get_marked_dates, get_all_photos_grouped_by_date, get_all_logs_for_export, \
+    set_photo_tags, get_photo_tags, get_all_tags, create_tag, delete_tag, \
+    get_photos_by_tag, get_photos_by_tags_intersection, get_photos_with_tags_by_log_id, \
+    get_recent_logs_with_details, get_logs_by_date_with_details, \
+    get_all_photos_with_tags_grouped_by_date, \
+    add_board_message, get_board_messages, delete_board_message, \
+    add_photo_comment, get_photo_comments, delete_photo_comment, \
+    add_log_like, remove_log_like, get_log_likes, get_log_like_count, check_log_liked
+)
+import backup
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB 上传限制
@@ -60,7 +71,7 @@ def records():
 
 @app.route('/api/checkin', methods=['POST'])
 def checkin():
-    """处理签到请求。"""
+    """处理签到请求，支持每张照片的 caption 和 tags。"""
     name = request.form.get('name', '').strip()
     if not name:
         return jsonify({'success': False, 'error': '请输入姓名'}), 400
@@ -69,7 +80,7 @@ def checkin():
 
     photo_count = 0
     files = request.files.getlist('photos')
-    for file in files:
+    for idx, file in enumerate(files):
         if file and allowed_file(file.filename):
             buffer, ext = compress_image(file.stream)
             filename = f"{log_id}_{photo_count}_{os.urandom(4).hex()}.{ext}"
@@ -77,9 +88,25 @@ def checkin():
             os.makedirs(UPLOAD_FOLDER, exist_ok=True)
             with open(filepath, 'wb') as f:
                 f.write(buffer.getvalue())
-            add_photo(log_id, f'/uploads/{filename}')
+
+            # 获取该照片的 caption 和 tags
+            caption = request.form.get(f'caption_{idx}', '').strip()
+            tags_str = request.form.get(f'tags_{idx}', '[]').strip()
+            try:
+                tag_ids = json.loads(tags_str) if tags_str else []
+            except (json.JSONDecodeError, TypeError):
+                tag_ids = []
+
+            # 保存照片（含 caption）
+            photo_id = add_photo(log_id, f'/uploads/{filename}', caption=caption)
+
+            # 设置照片标签
+            if tag_ids:
+                set_photo_tags(photo_id, tag_ids)
+
             photo_count += 1
 
+    _trigger_backup()
     return jsonify({
         'success': True,
         'message': '签到成功',
@@ -88,13 +115,22 @@ def checkin():
     })
 
 
+def _trigger_backup():
+    """异步触发备份（失败静默忽略）。"""
+    try:
+        backup.schedule_backup()
+    except Exception:
+        pass
+
+
 @app.route('/api/logs', methods=['GET'])
 def api_logs():
-    """获取签到记录列表（分页）。"""
+    """获取签到记录列表（分页），含照片 caption 和 tags，支持排序。"""
     page = request.args.get('page', 1, type=int)
+    order = request.args.get('order', 'desc')
     limit = 20
     offset = (page - 1) * limit
-    logs = get_recent_logs(limit=limit, offset=offset)
+    logs = get_recent_logs_with_details(limit=limit, offset=offset, order=order)
     return jsonify({'logs': logs})
 
 
@@ -116,6 +152,7 @@ def api_last_watering():
 def delete_log(log_id):
     """撤销签到记录。"""
     delete_watering_log(log_id)
+    _trigger_backup()
     return jsonify({'success': True, 'message': '已撤销'})
 
 
@@ -132,21 +169,230 @@ def api_calendar():
 
 @app.route('/api/calendar/detail', methods=['GET'])
 def api_calendar_detail():
-    """获取某天的签到详情。"""
+    """获取某天的签到详情，含照片 caption 和 tags。"""
     year = request.args.get('year', type=int)
     month = request.args.get('month', type=int)
     day = request.args.get('day', type=int)
     if not all([year, month, day]):
         return jsonify({'error': '缺少参数'}), 400
-    logs = get_logs_by_date(year, month, day)
+    logs = get_logs_by_date_with_details(year, month, day)
     return jsonify({'logs': logs})
 
 
 @app.route('/api/photos', methods=['GET'])
 def api_photos():
-    """获取所有照片（按日期分组）。"""
-    groups = get_all_photos_grouped_by_date()
+    """获取所有照片（按日期分组），含 caption 和 tags。"""
+    groups = get_all_photos_with_tags_grouped_by_date()
     return jsonify({'groups': groups})
+
+
+# ========== Tag 标签 API ==========
+
+@app.route('/api/tags', methods=['GET'])
+def api_tags():
+    """获取所有标签。"""
+    tags = get_all_tags()
+    return jsonify({'tags': tags})
+
+
+@app.route('/api/tags', methods=['POST'])
+def api_create_tag():
+    """创建新标签，body: {name: "..."}。"""
+    data = request.get_json()
+    if not data or not data.get('name', '').strip():
+        return jsonify({'success': False, 'error': '标签名称不能为空'}), 400
+    name = data['name'].strip()
+    try:
+        tag_id = create_tag(name)
+        return jsonify({'success': True, 'tag': {'id': tag_id, 'name': name}})
+    except Exception as e:
+        # 可能是 UNIQUE 约束冲突（标签已存在）
+        if 'UNIQUE' in str(e):
+            return jsonify({'success': False, 'error': '标签已存在'}), 409
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/tags/<int:tag_id>', methods=['DELETE'])
+def api_delete_tag(tag_id):
+    """删除标签（关联的 photo_tag 会级联删除）。"""
+    delete_tag(tag_id)
+    return jsonify({'success': True, 'message': '标签已删除'})
+
+
+@app.route('/api/photos/<int:photo_id>', methods=['GET'])
+def api_get_photo(photo_id):
+    """获取单张照片详情（含tags和caption），供全屏查看器编辑使用。"""
+    conn = get_db()
+    row = conn.execute("SELECT id, file_path, caption FROM photo WHERE id = ?", (photo_id,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({'error': '照片不存在'}), 404
+    tags = get_photo_tags(photo_id)
+    conn.close()
+    return jsonify({
+        'id': row['id'],
+        'file_path': row['file_path'],
+        'caption': row['caption'],
+        'tags': tags
+    })
+
+
+@app.route('/api/photos/<int:photo_id>/tags', methods=['PUT'])
+def api_set_photo_tags(photo_id):
+    """设置照片标签，body: {tag_ids: [1, 2, 3]}。"""
+    data = request.get_json()
+    if not data or 'tag_ids' not in data:
+        return jsonify({'success': False, 'error': '缺少 tag_ids 参数'}), 400
+    tag_ids = data['tag_ids']
+    if not isinstance(tag_ids, list):
+        return jsonify({'success': False, 'error': 'tag_ids 必须是数组'}), 400
+    set_photo_tags(photo_id, tag_ids)
+    tags = get_photo_tags(photo_id)
+    return jsonify({'success': True, 'tags': tags})
+
+
+@app.route('/api/photos/<int:photo_id>/caption', methods=['PUT'])
+def api_update_photo_caption(photo_id):
+    """更新照片注释，body: {caption: "..."}。"""
+    data = request.get_json()
+    if not data or 'caption' not in data:
+        return jsonify({'success': False, 'error': '缺少 caption 参数'}), 400
+    caption = data['caption']
+    from database import get_db
+    conn = get_db()
+    conn.execute("UPDATE photo SET caption = ? WHERE id = ?", (caption, photo_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'success': True, 'caption': caption})
+
+
+@app.route('/api/photos/by-tag/<int:tag_id>', methods=['GET'])
+def api_photos_by_tag(tag_id):
+    """按单个标签筛选照片，支持排序。"""
+    order = request.args.get('order', 'desc')
+    photos = get_photos_by_tag(tag_id, order=order)
+    return jsonify({'photos': photos})
+
+
+@app.route('/api/photos/by-tags', methods=['GET'])
+def api_photos_by_tags():
+    """按多个标签交集筛选照片，query: ?tag_ids=1,2,3&order=desc"""
+    tag_ids_str = request.args.get('tag_ids', '')
+    order = request.args.get('order', 'desc')
+    tag_ids = [int(x) for x in tag_ids_str.split(',') if x.strip().isdigit()]
+    if not tag_ids:
+        return jsonify({'photos': []})
+    photos = get_photos_by_tags_intersection(tag_ids, order=order)
+    return jsonify({'photos': photos})
+
+
+# ========== 黑板留言 API ==========
+
+@app.route('/api/board', methods=['GET'])
+def api_get_board():
+    """获取黑板留言列表，支持分页和搜索。"""
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 20, type=int)
+    keyword = request.args.get('keyword', '').strip()
+    offset = (page - 1) * limit
+    messages, total = get_board_messages(limit=limit, offset=offset, keyword=keyword)
+    return jsonify({
+        'messages': messages,
+        'total': total,
+        'page': page,
+        'limit': limit,
+        'has_more': offset + limit < total
+    })
+
+
+@app.route('/api/board', methods=['POST'])
+def api_post_board():
+    """发布黑板留言，body: {author, content, color}。"""
+    data = request.get_json()
+    if not data or not data.get('content', '').strip():
+        return jsonify({'success': False, 'error': '留言内容不能为空'}), 400
+    author = data.get('author', '匿名').strip() or '匿名'
+    content = data['content'].strip()
+    color = data.get('color', '#2c2416')
+    msg_id = add_board_message(author, content, color)
+    return jsonify({'success': True, 'msg_id': msg_id})
+
+
+@app.route('/api/board/<int:msg_id>', methods=['DELETE'])
+def api_delete_board(msg_id):
+    """删除黑板留言。"""
+    delete_board_message(msg_id)
+    return jsonify({'success': True, 'message': '留言已删除'})
+
+
+# ========== 照片留言 API ==========
+
+@app.route('/api/photos/<int:photo_id>/comments', methods=['GET'])
+def api_get_photo_comments(photo_id):
+    """获取照片的留言列表。"""
+    comments = get_photo_comments(photo_id)
+    return jsonify({'comments': comments})
+
+
+@app.route('/api/photos/<int:photo_id>/comments', methods=['POST'])
+def api_add_photo_comment(photo_id):
+    """给照片添加留言，body: {author, content}。"""
+    data = request.get_json()
+    if not data or not data.get('content', '').strip():
+        return jsonify({'success': False, 'error': '留言内容不能为空'}), 400
+    author = data.get('author', '匿名').strip() or '匿名'
+    content = data['content'].strip()
+    comment_id = add_photo_comment(photo_id, author, content)
+    return jsonify({'success': True, 'comment_id': comment_id})
+
+
+@app.route('/api/photos/<int:photo_id>/comments/<int:comment_id>', methods=['DELETE'])
+def api_delete_photo_comment(photo_id, comment_id):
+    """删除照片留言。"""
+    delete_photo_comment(comment_id)
+    return jsonify({'success': True, 'message': '留言已删除'})
+
+
+# ========== 签到点赞 API ==========
+
+@app.route('/api/logs/<int:log_id>/like', methods=['POST'])
+def api_like_log(log_id):
+    """点赞签到记录，body: {author}。"""
+    data = request.get_json()
+    if not data or not data.get('author', '').strip():
+        return jsonify({'success': False, 'error': '缺少 author 参数'}), 400
+    author = data['author'].strip()
+    added = add_log_like(log_id, author)
+    count = get_log_like_count(log_id)
+    return jsonify({'success': True, 'added': added, 'like_count': count})
+
+
+@app.route('/api/logs/<int:log_id>/like', methods=['DELETE'])
+def api_unlike_log(log_id):
+    """取消点赞，body: {author}。"""
+    data = request.get_json()
+    if not data or not data.get('author', '').strip():
+        return jsonify({'success': False, 'error': '缺少 author 参数'}), 400
+    author = data['author'].strip()
+    remove_log_like(log_id, author)
+    count = get_log_like_count(log_id)
+    return jsonify({'success': True, 'like_count': count})
+
+
+@app.route('/api/logs/<int:log_id>/likes', methods=['GET'])
+def api_get_log_likes(log_id):
+    """获取签到记录的点赞列表和数量。"""
+    likes = get_log_likes(log_id)
+    count = get_log_like_count(log_id)
+    return jsonify({'likes': likes, 'like_count': count})
+
+
+# ========== 黑板页面路由 ==========
+
+@app.route('/board')
+def board_page():
+    """黑板留言板页面。"""
+    return render_template('board.html')
 
 
 @app.route('/uploads/<path:filename>')
@@ -203,7 +449,92 @@ def export_csv():
     )
 
 
-if __name__ == '__main__':
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# ========== 备份 / 恢复 (admin) ==========
+
+def _check_admin(req):
+    """校验管理员密码（从 header / form / args 中读取）。"""
+    pwd = req.headers.get('X-Admin-Password') or req.form.get('admin_password') or req.args.get('admin_password')
+    if not backup.has_admin_password():
+        return False, '后端未配置 BACKUP_ADMIN_PASSWORD'
+    if not backup.admin_password_ok(pwd):
+        return False, '管理员密码错误'
+    return True, ''
+
+
+@app.route('/api/backup/status', methods=['GET'])
+def backup_status():
+    """前端查询是否启用了备份功能（不暴露任何敏感信息）。"""
+    return jsonify({
+        'configured': backup.is_configured(),
+        'has_password': backup.has_admin_password(),
+    })
+
+
+@app.route('/admin/backup', methods=['POST'])
+def admin_backup_download():
+    """下载完整备份 zip。"""
+    ok, msg = _check_admin(request)
+    if not ok:
+        return jsonify({'success': False, 'error': msg}), 401
+    try:
+        data = backup.get_zip_bytes()
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+    ts = _dt.now(_tz(_td(hours=8))).strftime('%Y%m%d_%H%M%S')
+    return send_file(
+        io.BytesIO(data),
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=f'plant-watering-backup-{ts}.zip'
+    )
+
+
+@app.route('/admin/backup/push', methods=['POST'])
+def admin_backup_push():
+    """立即推送一次备份到 GitHub。"""
+    ok, msg = _check_admin(request)
+    if not ok:
+        return jsonify({'success': False, 'error': msg}), 401
+    if not backup.is_configured():
+        return jsonify({'success': False, 'error': '后端未配置 BACKUP_GITHUB_TOKEN/REPO'}), 400
+    try:
+        info = backup.push_now()
+        return jsonify({'success': True, 'info': info})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/admin/restore', methods=['POST'])
+def admin_restore():
+    """从上传的 zip 恢复数据。"""
+    ok, msg = _check_admin(request)
+    if not ok:
+        return jsonify({'success': False, 'error': msg}), 401
+    f = request.files.get('backup_file')
+    if not f:
+        return jsonify({'success': False, 'error': '请上传备份 zip 文件'}), 400
+    try:
+        data = f.read()
+        backup.restore_from_zip(data)
+        return jsonify({'success': True, 'message': '恢复成功，请刷新页面'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ========== 启动逻辑 ==========
+
+# 在模块加载时执行：先建表，再尝试从 GitHub 恢复（如果库为空且远端有备份）
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+init_db()
+try:
+    backup.restore_on_startup_if_empty()
+    # 恢复后表结构可能来自旧版本，重新 init_db 不会破坏已有表
     init_db()
+except Exception as _e:
+    import logging as _logging
+    _logging.getLogger(__name__).warning('Startup restore error: %s', _e)
+
+
+if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=PORT)

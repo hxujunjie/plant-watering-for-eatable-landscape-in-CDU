@@ -953,8 +953,10 @@ body {
 
 .record-photos {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.3rem;
   margin-top: 0.4rem;
+  align-items: flex-start;
 }
 
 /* ---------- 23. 记录缩略图 ---------- */
@@ -1244,6 +1246,35 @@ body {
 .photo-group {
   padding: 0 1.2rem;
   margin-bottom: 1.2rem;
+}
+
+/* ---------- 照片集排序栏 ---------- */
+.photos-sort-bar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1.2rem 0.8rem;
+}
+
+.sort-btn {
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--pencil);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--pencil);
+  font-family: 'KaiTi', 'STKaiti', serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sort-btn:hover {
+  background: rgba(255, 254, 248, 0.5);
+}
+
+.sort-btn.active {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
 }
 
 .photo-date {
@@ -1607,6 +1638,107 @@ body {
   cursor: not-allowed;
 }
 
+/* ---------- 查看器头部操作按钮 ---------- */
+.viewer-header-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.viewer-edit-tags,
+.viewer-edit-caption {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  font-family: 'Noto Serif SC', serif;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+}
+
+.viewer-edit-tags:hover,
+.viewer-edit-caption:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ---------- 查看器注释编辑弹层 ---------- */
+.viewer-caption-editor {
+  position: absolute;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  padding: 12px;
+  border-radius: 12px;
+  width: 80%;
+  max-width: 300px;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.viewer-caption-editor textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 0.85rem;
+  resize: none;
+  font-family: 'Noto Serif SC', serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.viewer-caption-editor textarea::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+  font-style: italic;
+}
+
+.viewer-caption-editor textarea:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.viewer-caption-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
+.viewer-caption-btns button {
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-family: 'Noto Serif SC', serif;
+  transition: all 0.2s;
+}
+
+.viewer-caption-btns button:first-child {
+  background: var(--accent);
+  color: #fff;
+}
+
+.viewer-caption-btns button:first-child:hover {
+  opacity: 0.85;
+}
+
+.viewer-caption-btns button:last-child {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.viewer-caption-btns button:last-child:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 /* ---------- 34. 设置面板 ---------- */
 .settings-overlay {
   position: fixed;
@@ -1729,6 +1861,25 @@ body {
   color: var(--accent);
 }
 
+/* ---------- 排序选项按钮 ---------- */
+.sort-option {
+  flex: 1;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.85rem;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.sort-option:not(.active) {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.sort-option:not(.active):hover {
+  background: rgba(45, 80, 22, 0.08);
+}
+
 /* ---------- 35. 植物线描装饰 SVG ---------- */
 .plant-deco {
   position: fixed;
@@ -1774,6 +1925,559 @@ body {
 
   .settings-panel {
     max-width: 100%;
+  }
+}
+
+/* ============================================================
+   黑板留言板样式
+   遵循手绘植物志风格 - 便利贴墙 + 软木板背景
+   ============================================================ */
+
+/* ---------- 黑板容器 ---------- */
+.board-container {
+  padding-bottom: 1rem;
+}
+
+/* ---------- 黑板头部 ---------- */
+.board-header {
+  text-align: center;
+  padding: 1.5rem 1.5rem 1rem;
+  position: relative;
+}
+
+.board-header::before {
+  content: '';
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.board-badge {
+  display: inline-block;
+  border: 1px solid var(--pencil);
+  padding: 0.2rem 0.8rem;
+  border-radius: 2px;
+  font-size: 0.65rem;
+  color: var(--pencil);
+  margin-bottom: 1rem;
+  letter-spacing: 3px;
+  font-family: 'ZCOOL XiaoWei', serif;
+}
+
+.board-header h1 {
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+  letter-spacing: 4px;
+}
+
+.board-subtitle {
+  font-size: 0.8rem;
+  color: var(--pencil);
+  font-style: italic;
+  letter-spacing: 1px;
+}
+
+/* ---------- 软木板背景墙 ---------- */
+.board-wall {
+  background: #3a2f28;
+  /* 软木板纹理效果 */
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(80, 60, 40, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(90, 70, 45, 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(70, 55, 35, 0.2) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: cover;
+  margin: 0 1.2rem 1rem;
+  padding: 1rem;
+  border-radius: 2px;
+  min-height: 200px;
+  /* 手绘边框 */
+  border: 2px solid #5c4a38;
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.2),
+    2px 3px 0 var(--shadow);
+  /* 瀑布流布局（行优先，从新到旧从上到下、从左到右） */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  align-items: start;
+}
+
+/* ---------- 便利贴卡片 ---------- */
+.sticky-note {
+  margin-bottom: 0;
+  padding: 1rem 0.8rem 0.8rem;
+  border-radius: 1px;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.3s ease;
+  box-shadow:
+    2px 3px 6px rgba(0, 0, 0, 0.15),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  /* 手绘纸张效果 */
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  animation: noteAppear 0.4s ease-out;
+}
+
+@keyframes noteAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* hover放大效果 */
+.sticky-note:hover {
+  transform: scale(1.05) !important;
+  box-shadow:
+    3px 5px 12px rgba(0, 0, 0, 0.2),
+    0 2px 6px rgba(0, 0, 0, 0.15);
+  z-index: 2;
+}
+
+/* ---------- 未读高亮状态 ---------- */
+.sticky-note.unread {
+  border: 2px solid rgba(255, 193, 7, 0.6);
+  box-shadow:
+    2px 3px 6px rgba(0, 0, 0, 0.15),
+    0 0 8px rgba(255, 193, 7, 0.2);
+}
+
+/* ---------- 已读状态（变暗） ---------- */
+.sticky-note.read {
+  opacity: 0.85;
+}
+
+.sticky-note.read:hover {
+  opacity: 1;
+}
+
+/* ---------- 红色图钉效果 ---------- */
+.sticky-pin {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #ff6b6b, #cc3333);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  z-index: 3;
+}
+
+/* 图钉高光 */
+.sticky-pin::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  width: 4px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* ---------- 便利贴删除按钮 ---------- */
+.sticky-delete {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.3);
+  font-size: 1rem;
+  line-height: 18px;
+  text-align: center;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  z-index: 4;
+  padding: 0;
+}
+
+.sticky-note:hover .sticky-delete {
+  opacity: 1;
+}
+
+.sticky-delete:hover {
+  background: rgba(204, 51, 51, 0.15);
+  color: #cc3333;
+}
+
+/* ---------- 便利贴内容 ---------- */
+.sticky-author {
+  font-weight: 700;
+  font-size: 0.8rem;
+  margin-bottom: 0.4rem;
+  letter-spacing: 1px;
+  font-family: 'ZCOOL XiaoWei', serif;
+}
+
+.sticky-text {
+  font-size: 0.85rem;
+  color: var(--ink);
+  line-height: 1.6;
+  word-break: break-all;
+  margin-bottom: 0.5rem;
+}
+
+.sticky-time {
+  font-size: 0.65rem;
+  color: var(--pencil);
+  font-style: italic;
+  text-align: right;
+}
+
+/* ---------- 便利贴放大遮罩 ---------- */
+.note-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(44, 36, 22, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 1.5rem;
+}
+
+.note-overlay.show {
+  display: flex;
+}
+
+/* ---------- 放大后的便利贴 ---------- */
+.note-zoomed {
+  position: relative;
+  max-width: 340px;
+  width: 100%;
+  padding: 2rem 1.5rem 1.5rem;
+  border-radius: 2px;
+  box-shadow:
+    4px 6px 20px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: zoomIn 0.3s ease-out;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+@keyframes zoomIn {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.note-zoomed-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.4);
+  font-size: 1.3rem;
+  line-height: 26px;
+  text-align: center;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.note-zoomed-close:hover {
+  background: rgba(204, 51, 51, 0.15);
+  color: #cc3333;
+}
+
+.note-zoomed-author {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.8rem;
+  letter-spacing: 2px;
+  font-family: 'ZCOOL XiaoWei', serif;
+}
+
+.note-zoomed-text {
+  font-size: 1.05rem;
+  color: var(--ink);
+  line-height: 1.8;
+  word-break: break-all;
+  margin-bottom: 1rem;
+}
+
+.note-zoomed-time {
+  font-size: 0.75rem;
+  color: var(--pencil);
+  font-style: italic;
+  text-align: right;
+}
+
+/* ---------- 黑板空状态 ---------- */
+.board-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+/* ---------- 搜索栏 ---------- */
+.board-search {
+  margin: 0 1.2rem 0.8rem;
+}
+
+.board-search input {
+  width: 100%;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--pencil);
+  border-radius: 2px;
+  background: rgba(255, 254, 248, 0.6);
+  font-family: 'KaiTi', 'STKaiti', serif;
+  font-size: 0.85rem;
+  color: var(--ink);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.board-search input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.board-search input::placeholder {
+  color: var(--pencil);
+}
+
+/* ---------- 加载更多 ---------- */
+.board-load-more {
+  text-align: center;
+  padding: 0.8rem 0 1.5rem;
+}
+
+.board-load-more-btn {
+  padding: 0.5rem 1.5rem;
+  border: 1px solid var(--pencil);
+  border-radius: 2px;
+  background: rgba(255, 254, 248, 0.5);
+  color: var(--ink);
+  font-family: 'KaiTi', 'STKaiti', serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.board-load-more-btn:hover {
+  background: rgba(255, 254, 248, 0.9);
+}
+
+.board-load-more-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---------- 输入区域 ---------- */
+.board-input {
+  margin: 0 1.2rem 1rem;
+}
+
+.board-input-card {
+  background: #fff;
+  border-radius: 2px;
+  padding: 1.2rem;
+  position: relative;
+  box-shadow: 2px 3px 0 var(--shadow);
+}
+
+/* 手绘双边框 */
+.board-input-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: 2px;
+  bottom: 2px;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.board-input-card::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: -2px;
+  bottom: -2px;
+  border: 1px solid var(--pencil);
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+/* ---------- 昵称输入框 ---------- */
+.board-author-input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: none;
+  border-bottom: 2px solid var(--paper-dark);
+  font-size: 0.95rem;
+  font-family: 'Noto Serif SC', serif;
+  background: transparent;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.3s;
+  margin-bottom: 0.8rem;
+}
+
+.board-author-input::placeholder {
+  color: #c4b8a3;
+  font-style: italic;
+}
+
+.board-author-input:focus {
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- 留言输入框 ---------- */
+.board-content-input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: none;
+  border-bottom: 2px solid var(--paper-dark);
+  font-size: 0.95rem;
+  font-family: 'Noto Serif SC', serif;
+  background: transparent;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.3s;
+  resize: none;
+  line-height: 1.6;
+}
+
+.board-content-input::placeholder {
+  color: #c4b8a3;
+  font-style: italic;
+}
+
+.board-content-input:focus {
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- 输入底部区域 ---------- */
+.board-input-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  gap: 0.8rem;
+}
+
+/* ---------- 颜色选择器 ---------- */
+.board-colors {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.color-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--paper-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* 白色按钮需要特殊边框 */
+.color-btn[data-color="#ffffff"] {
+  border-color: #c4b8a3;
+}
+
+.color-btn:hover {
+  transform: scale(1.15);
+}
+
+.color-btn.active {
+  border-color: var(--ink);
+  box-shadow:
+    0 0 0 2px var(--paper),
+    0 0 0 3px var(--ink);
+  transform: scale(1.1);
+}
+
+/* ---------- 发布按钮 ---------- */
+.board-submit {
+  padding: 0.6rem 1.2rem;
+  border: 2px solid var(--accent);
+  border-radius: 2px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: 'ZCOOL XiaoWei', serif;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.board-submit:hover {
+  background: transparent;
+  color: var(--accent);
+}
+
+.board-submit:active {
+  transform: scale(0.97);
+}
+
+/* ---------- 响应式适配 ---------- */
+@media (max-width: 480px) {
+  .board-wall {
+    margin: 0 0.8rem 0.8rem;
+    padding: 0.8rem;
+    column-gap: 0.6rem;
+  }
+
+  .board-input {
+    margin: 0 0.8rem 0.8rem;
+  }
+
+  .board-input-footer {
+    flex-wrap: wrap;
+  }
+
+  .board-submit {
+    width: 100%;
+    text-align: center;
   }
 }
 
@@ -1835,4 +2539,737 @@ body {
   flex-shrink: 0;
   font-family: 'ZCOOL XiaoWei', serif;
   line-height: 1;
+}
+
+/* ============================================================
+   照片注释 + Tag标签系统 样式
+   遵循手绘植物志风格
+   ============================================================ */
+
+/* ---------- Tag选择弹层（遮罩层） ---------- */
+.tag-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(44, 36, 22, 0.5);
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 400;
+}
+
+/* ---------- Tag选择面板（底部弹出） ---------- */
+.tag-picker-panel {
+  background: #fff;
+  border-radius: 2px 2px 0 0;
+  width: 100%;
+  max-width: 420px;
+  max-height: 70vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.35s ease-out;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  border-top: 1px solid var(--paper-dark);
+  box-shadow: 0 -2px 0 var(--shadow);
+}
+
+/* ---------- Tag选择器头部 ---------- */
+.tag-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.5rem 0.8rem;
+  border-bottom: 1px solid var(--paper-dark);
+}
+
+.tag-picker-header h3 {
+  font-family: 'ZCOOL XiaoWei', serif;
+  font-size: 1.1rem;
+  color: var(--ink);
+  letter-spacing: 2px;
+  margin: 0;
+}
+
+.tag-picker-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 2px;
+  border: 1px solid var(--paper-dark);
+  background: transparent;
+  color: var(--pencil);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.tag-picker-close:hover {
+  background: var(--paper-dark);
+  color: var(--ink);
+}
+
+/* ---------- Tag搜索框 ---------- */
+.tag-picker-search {
+  padding: 0.8rem 1.5rem;
+  border-bottom: 1px dashed var(--paper-dark);
+}
+
+.tag-picker-search input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--paper-dark);
+  border-radius: 2px;
+  font-size: 0.9rem;
+  font-family: 'Noto Serif SC', serif;
+  background: var(--paper);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.tag-picker-search input::placeholder {
+  color: #c4b8a3;
+  font-style: italic;
+}
+
+.tag-picker-search input:focus {
+  border-color: var(--accent);
+}
+
+/* ---------- Tag列表 ---------- */
+.tag-picker-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+  min-height: 120px;
+}
+
+/* ---------- 单个Tag选项 ---------- */
+.tag-picker-item {
+  display: flex;
+  align-items: center;
+  padding: 0.7rem 1.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px dashed var(--paper-dark);
+  gap: 0.6rem;
+}
+
+.tag-picker-item:last-child {
+  border-bottom: none;
+}
+
+.tag-picker-item:hover {
+  background: rgba(74, 124, 89, 0.03);
+}
+
+.tag-picker-item.selected {
+  background: rgba(74, 124, 89, 0.08);
+}
+
+.tag-picker-item-name {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--ink);
+  font-family: 'Noto Serif SC', serif;
+}
+
+.tag-picker-item-count {
+  font-size: 0.7rem;
+  color: var(--pencil);
+  background: var(--paper);
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+  border: 1px solid var(--paper-dark);
+}
+
+.tag-picker-item-check {
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--paper-dark);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: var(--accent);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.tag-picker-item.selected .tag-picker-item-check {
+  border-color: var(--accent);
+  background: rgba(74, 124, 89, 0.1);
+}
+
+/* ---------- 创建新Tag ---------- */
+.tag-picker-create {
+  padding: 0.6rem 1.5rem;
+  border-top: 1px dashed var(--paper-dark);
+}
+
+.tag-picker-create button {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px dashed var(--accent);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-family: 'Noto Serif SC', serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 1px;
+}
+
+.tag-picker-create button:hover {
+  background: rgba(74, 124, 89, 0.05);
+}
+
+/* ---------- Tag选择器底部确认按钮 ---------- */
+.tag-picker-footer {
+  padding: 0.8rem 1.5rem 1.2rem;
+  border-top: 1px solid var(--paper-dark);
+}
+
+.tag-picker-confirm {
+  width: 100%;
+  padding: 0.8rem;
+  border: 2px solid var(--accent);
+  border-radius: 2px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: 'ZCOOL XiaoWei', serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 3px;
+}
+
+.tag-picker-confirm:hover {
+  background: transparent;
+  color: var(--accent);
+}
+
+/* ---------- 照片预览增强 ---------- */
+
+/* 预览项需要更多高度来容纳注释和标签 */
+.preview-item {
+  aspect-ratio: auto;
+  min-height: 100px;
+}
+
+.preview-item img {
+  width: 100%;
+  height: auto;
+  max-height: 140px;
+  object-fit: cover;
+}
+
+/* 注释输入框 */
+.preview-caption {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: none;
+  border-bottom: 1px solid var(--paper-dark);
+  font-size: 0.75rem;
+  font-family: 'Noto Serif SC', serif;
+  background: transparent;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.preview-caption::placeholder {
+  color: #c4b8a3;
+  font-style: italic;
+  font-size: 0.7rem;
+}
+
+.preview-caption:focus {
+  border-bottom-color: var(--accent);
+}
+
+/* 标签展示区 */
+.preview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.3rem 0.2rem;
+  align-items: center;
+}
+
+/* 单个标签徽章 */
+.preview-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  font-size: 0.65rem;
+  color: var(--accent);
+  background: rgba(74, 124, 89, 0.06);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Serif SC', serif;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.preview-tag:hover {
+  background: rgba(160, 82, 45, 0.08);
+  border-color: var(--accent-rose);
+  color: var(--accent-rose);
+}
+
+/* 添加标签按钮 */
+.preview-add-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border: 1px dashed var(--paper-dark);
+  border-radius: 2px;
+  font-size: 0.65rem;
+  color: var(--pencil);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Serif SC', serif;
+  letter-spacing: 0.5px;
+}
+
+.preview-add-tag:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------- 记录项增强 ---------- */
+
+/* 缩略图包裹容器 */
+.record-thumb-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+/* 照片上叠加的注释 */
+.photo-caption-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(44, 36, 22, 0.75));
+  color: #fff;
+  font-size: 0.55rem;
+  padding: 0.8rem 0.2rem 0.2rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* 照片上叠加的tag标签容器 */
+.photo-tag-overlay {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  pointer-events: none;
+}
+
+/* 照片上的tag小标签 */
+.photo-tag-badge {
+  display: inline-block;
+  padding: 0 0.25rem;
+  background: rgba(74, 124, 89, 0.85);
+  color: #fff;
+  font-size: 0.5rem;
+  border-radius: 1px;
+  line-height: 1.5;
+  letter-spacing: 0.3px;
+  font-family: 'Noto Serif SC', serif;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- 标签筛选Tab ---------- */
+
+/* 标签云容器 */
+.tags-cloud {
+  padding: 1rem 1.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* 单个标签云项 */
+.tag-cloud-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--paper-dark);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink-light);
+  font-size: 0.8rem;
+  font-family: 'Noto Serif SC', serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+
+.tag-cloud-item:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(74, 124, 89, 0.03);
+}
+
+/* 选中状态 */
+.tag-cloud-item.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.tag-cloud-item.active .tag-cloud-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 标签名称 */
+.tag-cloud-name {
+  font-weight: 600;
+}
+
+/* 标签计数 */
+.tag-cloud-count {
+  font-size: 0.65rem;
+  color: var(--pencil);
+  background: var(--paper);
+  padding: 0.05rem 0.3rem;
+  border-radius: 2px;
+  border: 1px solid var(--paper-dark);
+}
+
+/* 标签筛选结果 */
+.tag-filter-result {
+  padding: 0 1.2rem 1.2rem;
+}
+
+/* ---------- 响应式适配 ---------- */
+@media (max-width: 480px) {
+  .tag-picker-panel {
+    max-width: 100%;
+  }
+
+  .photo-caption-overlay {
+    font-size: 0.5rem;
+  }
+
+  .photo-tag-badge {
+    font-size: 0.45rem;
+  }
+}
+
+/* ============================================================
+   点赞按钮 + 照片留言功能样式
+   遵循手绘植物志风格
+   ============================================================ */
+
+/* ---------- 点赞按钮容器 ---------- */
+.record-like {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-left: 0.2rem;
+}
+
+/* ---------- 点赞按钮 ---------- */
+.like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--paper-dark);
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  line-height: 1;
+}
+
+.like-btn:hover {
+  border-color: var(--accent-rose);
+  background: rgba(160, 82, 45, 0.04);
+}
+
+/* 已点赞状态 */
+.like-btn.liked {
+  border-color: var(--accent-rose);
+  background: rgba(160, 82, 45, 0.06);
+}
+
+/* 点赞图标 */
+.like-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.like-btn:active .like-icon {
+  transform: scale(1.3);
+}
+
+/* 点赞计数 */
+.like-count {
+  font-size: 0.7rem;
+  color: var(--pencil);
+  font-weight: 600;
+  min-width: 0.8rem;
+  text-align: center;
+}
+
+.like-btn.liked .like-count {
+  color: var(--accent-rose);
+}
+
+/* ---------- 照片留言预览（记录列表中照片下方） ---------- */
+.photo-comment-preview {
+  font-size: 0.6rem;
+  color: var(--pencil);
+  line-height: 1.4;
+  padding: 0.1rem 0;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.photo-comment-count {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.photo-comment-latest {
+  color: var(--pencil);
+  font-style: italic;
+}
+
+.photo-comment-loading {
+  color: var(--paper-dark);
+  font-style: italic;
+}
+
+/* ---------- 照片查看器留言区域 ---------- */
+.viewer-comments {
+  flex-shrink: 0;
+  max-height: 35vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(44, 36, 22, 0.6);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 留言列表区域 */
+.viewer-comments-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.6rem 1rem;
+  min-height: 60px;
+}
+
+/* 留言加载中 */
+.viewer-comments-loading {
+  text-align: center;
+  padding: 1rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* 无留言提示 */
+.viewer-comments-empty {
+  text-align: center;
+  padding: 1rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* 单条留言 */
+.viewer-comment-item {
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.5rem;
+  align-items: baseline;
+  animation: commentFadeIn 0.3s ease-out;
+}
+
+.viewer-comment-item:last-child {
+  border-bottom: none;
+}
+
+@keyframes commentFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 留言作者 */
+.viewer-comment-author {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: 'ZCOOL XiaoWei', serif;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+/* 留言内容 */
+.viewer-comment-text {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+
+/* 留言时间 */
+.viewer-comment-time {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+  width: 100%;
+  text-align: right;
+}
+
+/* ---------- 留言输入区域 ---------- */
+.viewer-comment-input {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+/* 昵称输入框 */
+.comment-author-input {
+  width: 70px;
+  flex-shrink: 0;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.75rem;
+  font-family: 'Noto Serif SC', serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.comment-author-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+  font-size: 0.7rem;
+}
+
+.comment-author-input:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* 留言内容输入框 */
+.comment-content-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.8rem;
+  font-family: 'Noto Serif SC', serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.comment-content-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+}
+
+.comment-content-input:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* 发送按钮 */
+.comment-submit-btn {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'ZCOOL XiaoWei', serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+.comment-submit-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.comment-submit-btn:active {
+  transform: scale(0.96);
+}
+
+/* ---------- 查看器留言区域响应式 ---------- */
+@media (max-width: 480px) {
+  .viewer-comments {
+    max-height: 30vh;
+  }
+
+  .viewer-comment-input {
+    flex-wrap: wrap;
+  }
+
+  .comment-author-input {
+    width: 100%;
+  }
+
+  .comment-content-input {
+    flex: 1;
+  }
+
+  .comment-submit-btn {
+    width: 100%;
+    text-align: center;
+  }
 }

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}植物浇水志{% endblock %}
+{% block title %}植物日志{% endblock %}
 
 {% block content %}
 <!-- 页面头部 - 植物志封面风格 -->
 <div class="header">
     <div class="header-badge">BOTANICAL JOURNAL</div>
-    <h1>植物浇水志</h1>
+    <h1>植物日志</h1>
     <div class="subtitle">记录每一次与植物的相遇</div>
     <div class="header-divider">
         <div class="line"></div>
@@ -151,6 +151,9 @@
     var photoInput = document.getElementById('photoInput');
     var photoPreview = document.getElementById('photoPreview');
     var selectedFiles = [];
+    // 每张照片的注释和标签数据（索引对应 selectedFiles）
+    var photoCaptions = [];   // 注释文字数组
+    var photoTagIds = [];     // 标签ID数组（每个元素是数组）
 
     uploadZone.addEventListener('click', function() {
         photoInput.click();
@@ -160,30 +163,86 @@
         var files = Array.from(photoInput.files);
         files.forEach(function(file) {
             if (!file.type.startsWith('image/')) return;
+            var fileIndex = selectedFiles.length;
             selectedFiles.push(file);
+            photoCaptions.push('');
+            photoTagIds.push([]);
             var reader = new FileReader();
             reader.onload = function(e) {
                 var wrapper = document.createElement('div');
                 wrapper.className = 'preview-item';
+                wrapper.setAttribute('data-index', fileIndex);
+
                 var img = document.createElement('img');
                 img.src = e.target.result;
+
                 var removeBtn = document.createElement('button');
                 removeBtn.type = 'button';
                 removeBtn.className = 'preview-remove';
-                removeBtn.textContent = '✕';
+                removeBtn.textContent = '\u2715';
                 removeBtn.addEventListener('click', function() {
                     var idx = selectedFiles.indexOf(file);
-                    if (idx > -1) selectedFiles.splice(idx, 1);
+                    if (idx > -1) {
+                        selectedFiles.splice(idx, 1);
+                        photoCaptions.splice(idx, 1);
+                        photoTagIds.splice(idx, 1);
+                        // 重建索引映射
+                        rebuildPreviewIndices();
+                    }
                     wrapper.remove();
                 });
+
+                // 注释输入框
+                var captionInput = document.createElement('input');
+                captionInput.type = 'text';
+                captionInput.className = 'preview-caption';
+                captionInput.placeholder = '照片注释...';
+                captionInput.setAttribute('data-index', fileIndex);
+                captionInput.addEventListener('input', function() {
+                    var ci = parseInt(this.getAttribute('data-index'), 10);
+                    photoCaptions[ci] = this.value;
+                });
+
+                // 标签展示区
+                var tagsDiv = document.createElement('div');
+                tagsDiv.className = 'preview-tags';
+                tagsDiv.setAttribute('data-index', fileIndex);
+
+                var addTagBtn = document.createElement('button');
+                addTagBtn.type = 'button';
+                addTagBtn.className = 'preview-add-tag';
+                addTagBtn.textContent = '+标签';
+                addTagBtn.setAttribute('data-index', fileIndex);
+                addTagBtn.addEventListener('click', function() {
+                    var ti = parseInt(this.getAttribute('data-index'), 10);
+                    openTagPickerForPhoto(ti);
+                });
+                tagsDiv.appendChild(addTagBtn);
+
                 wrapper.appendChild(img);
                 wrapper.appendChild(removeBtn);
+                wrapper.appendChild(captionInput);
+                wrapper.appendChild(tagsDiv);
                 photoPreview.appendChild(wrapper);
             };
             reader.readAsDataURL(file);
         });
         photoInput.value = '';
     });
+
+    // 重建预览项的 data-index 映射（删除照片后调用）
+    function rebuildPreviewIndices() {
+        var items = photoPreview.querySelectorAll('.preview-item');
+        items.forEach(function(item, i) {
+            item.setAttribute('data-index', i);
+            var caption = item.querySelector('.preview-caption');
+            if (caption) caption.setAttribute('data-index', i);
+            var addBtn = item.querySelector('.preview-add-tag');
+            if (addBtn) addBtn.setAttribute('data-index', i);
+            var tagsDiv = item.querySelector('.preview-tags');
+            if (tagsDiv) tagsDiv.setAttribute('data-index', i);
+        });
+    }
 
     // ========== 签到提交 ==========
     var checkinForm = document.getElementById('checkinForm');
@@ -193,8 +252,11 @@
         e.preventDefault();
         var formData = new FormData();
         formData.append('name', nameInput.value.trim());
-        selectedFiles.forEach(function(file) {
+        selectedFiles.forEach(function(file, idx) {
             formData.append('photos', file);
+            // 追加每张照片的注释和标签
+            formData.append('caption_' + idx, photoCaptions[idx] || '');
+            formData.append('tags_' + idx, JSON.stringify(photoTagIds[idx] || []));
         });
 
         checkinBtn.disabled = true;
@@ -237,6 +299,8 @@
                 nameInput.value = '';
                 photoPreview.innerHTML = '';
                 selectedFiles = [];
+                photoCaptions = [];
+                photoTagIds = [];
             } else {
                 showToast(data.message || '记录失败，请重试');
             }

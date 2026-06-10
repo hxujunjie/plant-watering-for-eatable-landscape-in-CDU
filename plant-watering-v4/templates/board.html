@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+{% block title %}留言黑板{% endblock %}
+{% block content %}
+<div class="board-container">
+    <!-- 头部区域 -->
+    <div class="board-header">
+        <div class="board-badge">BLACKBOARD</div>
+        <h1>留言黑板</h1>
+        <div class="board-subtitle">写下你的植物心得</div>
+        <div class="header-divider">
+            <span class="line"></span>
+            <span class="leaf">🌿</span>
+            <span class="line"></span>
+        </div>
+    </div>
+
+    <!-- 搜索栏 -->
+    <div class="board-search">
+        <input type="text" id="boardSearchInput" placeholder="搜索留言..." maxlength="50">
+    </div>
+
+    <!-- 便利贴墙 -->
+    <div class="board-wall" id="boardWall">
+        <!-- 便利贴由JS动态渲染 -->
+    </div>
+
+    <!-- 加载更多 -->
+    <div class="board-load-more" id="boardLoadMore" style="display:none;">
+        <button id="boardLoadMoreBtn" class="board-load-more-btn">加载更多</button>
+    </div>
+
+    <!-- 空状态提示 -->
+    <div class="board-empty" id="boardEmpty" style="display:none;">
+        <div class="empty-icon">📝</div>
+        <div class="empty-title">还没有留言</div>
+        <div class="empty-desc">在黑板上留下你的第一条植物心得吧</div>
+    </div>
+
+    <!-- 输入区域 -->
+    <div class="board-input">
+        <div class="board-input-card">
+            <input type="text" id="boardAuthor" class="board-author-input" placeholder="你的名字" maxlength="20">
+            <textarea id="boardContent" class="board-content-input" placeholder="写下你的留言..." rows="2" maxlength="200"></textarea>
+            <div class="board-input-footer">
+                <div class="board-colors" id="boardColors">
+                    <!-- 颜色选择按钮由JS渲染 -->
+                </div>
+                <button class="board-submit" id="boardSubmitBtn">发布留言</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 便利贴放大遮罩 -->
+<div class="note-overlay" id="noteOverlay">
+    <div class="note-zoomed" id="noteZoomed">
+        <button class="note-zoomed-close" id="noteZoomedClose">&times;</button>
+        <div class="note-zoomed-content" id="noteZoomedContent"></div>
+    </div>
+</div>
+
+<script>
+(function() {
+    /* ========== 配置 ========== */
+    // 便利贴背景颜色
+    var noteColors = ['#fffef8', '#fff9c4', '#e3f2fd', '#fce4ec', '#e8f5e9'];
+    // 粉笔颜色选择器
+    var chalkColors = [
+        { color: '#ffffff', label: '白色' },
+        { color: '#ffeb3b', label: '黄色' },
+        { color: '#f48fb1', label: '粉色' },
+        { color: '#81d4fa', label: '蓝色' },
+        { color: '#a5d6a7', label: '绿色' },
+        { color: '#ffcc80', label: '橙色' }
+    ];
+
+    /* ========== DOM元素 ========== */
+    var boardWall = document.getElementById('boardWall');
+    var boardEmpty = document.getElementById('boardEmpty');
+    var boardAuthor = document.getElementById('boardAuthor');
+    var boardContent = document.getElementById('boardContent');
+    var boardColors = document.getElementById('boardColors');
+    var boardSubmitBtn = document.getElementById('boardSubmitBtn');
+    var noteOverlay = document.getElementById('noteOverlay');
+    var noteZoomed = document.getElementById('noteZoomed');
+    var noteZoomedClose = document.getElementById('noteZoomedClose');
+    var noteZoomedContent = document.getElementById('noteZoomedContent');
+
+    var selectedChalkColor = chalkColors[0].color; // 默认白色
+    var messages = []; // 留言数据
+    var currentPage = 1;
+    var hasMore = false;
+    var currentKeyword = '';
+    var isLoading = false;
+
+    /* ========== 初始化 ========== */
+    function init() {
+        // 从localStorage恢复昵称
+        var savedAuthor = localStorage.getItem('board_author');
+        if (savedAuthor) {
+            boardAuthor.value = savedAuthor;
+        }
+
+        // 渲染颜色选择器
+        renderColorPicker();
+
+        // 加载留言
+        loadMessages();
+
+        // 绑定事件
+        boardSubmitBtn.addEventListener('click', submitMessage);
+        noteZoomedClose.addEventListener('click', closeZoom);
+        noteOverlay.addEventListener('click', function(e) {
+            if (e.target === noteOverlay) closeZoom();
+        });
+
+        // 搜索框：输入防抖搜索
+        var searchTimer = null;
+        var searchInput = document.getElementById('boardSearchInput');
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(function() {
+                currentKeyword = searchInput.value.trim();
+                currentPage = 1;
+                messages = [];
+                loadMessages(false);
+            }, 400);
+        });
+
+        // 加载更多按钮
+        document.getElementById('boardLoadMoreBtn').addEventListener('click', function() {
+            currentPage++;
+            loadMessages(true);
+        });
+    }
+
+    /* ========== 颜色选择器 ========== */
+    function renderColorPicker() {
+        var html = '';
+        chalkColors.forEach(function(item, i) {
+            var activeClass = i === 0 ? ' active' : '';
+            html += '<button class="color-btn' + activeClass + '" data-color="' + item.color + '" title="' + item.label + '"></button>';
+        });
+        boardColors.innerHTML = html;
+
+        // 绑定颜色选择事件
+        var btns = boardColors.querySelectorAll('.color-btn');
+        btns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                btns.forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                selectedChalkColor = btn.getAttribute('data-color');
+            });
+        });
+    }
+
+    /* ========== 加载留言（从后端API，支持分页和搜索） ========== */
+    function loadMessages(append) {
+        if (isLoading) return;
+        isLoading = true;
+
+        var url = '/api/board?page=' + currentPage + '&limit=20';
+        if (currentKeyword) url += '&keyword=' + encodeURIComponent(currentKeyword);
+
+        if (!append) {
+            boardWall.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--pencil);font-size:0.85rem;">加载中...</div>';
+        } else {
+            document.getElementById('boardLoadMoreBtn').textContent = '加载中...';
+        }
+
+        fetch(url)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                isLoading = false;
+                var newMessages = data.messages || [];
+                hasMore = data.has_more || false;
+
+                if (append) {
+                    messages = messages.concat(newMessages);
+                } else {
+                    messages = newMessages;
+                }
+                renderNotes(append);
+
+                // 更新加载更多按钮
+                var loadMoreDiv = document.getElementById('boardLoadMore');
+                if (hasMore) {
+                    loadMoreDiv.style.display = 'block';
+                    document.getElementById('boardLoadMoreBtn').textContent = '加载更多';
+                } else {
+                    loadMoreDiv.style.display = 'none';
+                }
+            })
+            .catch(function(err) {
+                isLoading = false;
+                console.error('加载留言失败:', err);
+                if (!append) {
+                    boardWall.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--accent-rose);font-size:0.85rem;">加载失败</div>';
+                }
+            });
+    }
+
+    /* ========== 渲染便利贴 ========== */
+    function renderNotes(append) {
+        if (messages.length === 0) {
+            boardWall.style.display = 'none';
+            boardEmpty.style.display = 'flex';
+            return;
+        }
+        boardWall.style.display = 'block';
+        boardEmpty.style.display = 'none';
+
+        var html = '';
+        if (append) {
+            html = boardWall.innerHTML; // 保留已有便利贴
+        }
+
+        // 只渲染新增的消息（append时）或全部（首次）
+        var toRender = append
+            ? messages.slice(messages.length - (messages.length - (currentPage - 1) * 20))
+            : messages;
+
+        // 按时间倒序排列
+        var sorted = toRender.slice().sort(function(a, b) {
+            return (b.created_at || '').localeCompare(a.created_at || '');
+        });
+
+        sorted.forEach(function(msg) {
+            // 跳过已渲染的（避免append时重复）
+            if (append && boardWall.querySelector('.sticky-note[data-id="' + msg.id + '"]')) return;
+
+            var isRead = isMessageRead(msg.id);
+            var readClass = isRead ? 'read' : 'unread';
+            var bgColor = noteColors[Math.abs(hashCode(msg.id)) % noteColors.length];
+            var rotation = (Math.random() * 6 - 3).toFixed(1); // -3deg ~ 3deg
+
+            html += '<div class="sticky-note ' + readClass + '" data-id="' + msg.id + '" '
+                + 'style="background:' + bgColor + '; transform:rotate(' + rotation + 'deg); --note-color:' + msg.chalkColor + ';">'
+                + '<div class="sticky-pin"></div>'
+                + '<button class="sticky-delete" data-id="' + msg.id + '" title="删除">&times;</button>'
+                + '<div class="sticky-author" style="color:' + msg.chalkColor + ';">' + escapeHtml(msg.author) + '</div>'
+                + '<div class="sticky-text">' + escapeHtml(msg.content) + '</div>'
+                + '<div class="sticky-time">' + formatTime(msg.created_at) + '</div>'
+                + '</div>';
+        });
+        boardWall.innerHTML = html;
+
+        // 绑定便利贴事件
+        bindNoteEvents();
+    }
+
+    /* ========== 绑定便利贴事件 ========== */
+    function bindNoteEvents() {
+        var notes = boardWall.querySelectorAll('.sticky-note');
+
+        notes.forEach(function(note) {
+            // 点击便利贴 -> 放大查看 + 标记已读
+            note.addEventListener('click', function(e) {
+                // 如果点击的是删除按钮，不放大
+                if (e.target.classList.contains('sticky-delete')) return;
+
+                var id = note.getAttribute('data-id');
+                markAsRead(id);
+                note.classList.remove('unread');
+                note.classList.add('read');
+                zoomNote(note);
+            });
+
+            // 删除按钮
+            var deleteBtn = note.querySelector('.sticky-delete');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var id = deleteBtn.getAttribute('data-id');
+                    deleteMessage(id);
+                });
+            }
+        });
+    }
+
+    /* ========== 发布留言（通过后端API） ========== */
+    function submitMessage() {
+        var author = boardAuthor.value.trim() || '匿名';
+        var content = boardContent.value.trim();
+        var color = selectedChalkColor;
+
+        if (!content) {
+            showToast('请输入留言内容', 'error');
+            return;
+        }
+
+        fetch('/api/board', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({author: author, content: content, color: color})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                boardContent.value = '';
+                localStorage.setItem('board_author', author);
+                currentPage = 1;
+                messages = [];
+                loadMessages(false);
+                showToast('留言发布成功', 'success');
+            } else {
+                showToast(data.message || '发布失败', 'error');
+            }
+        })
+        .catch(function(err) {
+            showToast('网络错误', 'error');
+        });
+    }
+
+    /* ========== 删除留言（通过后端API） ========== */
+    function deleteMessage(id) {
+        showModal('确认删除', '确定要删除这条留言吗？', function() {
+            fetch('/api/board/' + id, {method: 'DELETE'})
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        currentPage = 1;
+                        messages = [];
+                        loadMessages(false);
+                        showToast('已删除', 'success');
+                    }
+                });
+        });
+    }
+
+    /* ========== 放大便利贴 ========== */
+    function zoomNote(noteEl) {
+        var id = noteEl.getAttribute('data-id');
+        var msg = messages.find(function(m) { return m.id == id; });
+        if (!msg) return;
+
+        var bgColor = noteColors[Math.abs(hashCode(msg.id)) % noteColors.length];
+
+        noteZoomedContent.innerHTML =
+            '<div class="note-zoomed-author" style="color:' + msg.chalkColor + ';">' + escapeHtml(msg.author) + '</div>'
+            + '<div class="note-zoomed-text">' + escapeHtml(msg.content) + '</div>'
+            + '<div class="note-zoomed-time">' + formatTime(msg.created_at) + '</div>';
+
+        noteZoomed.style.background = bgColor;
+        noteOverlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    /* ========== 关闭放大 ========== */
+    function closeZoom() {
+        noteOverlay.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+
+    /* ========== 已读/未读状态（保留localStorage，客户端状态） ========== */
+    var readIds = JSON.parse(localStorage.getItem('board_read_ids') || '[]');
+
+    function isMessageRead(id) {
+        return readIds.indexOf(id) !== -1;
+    }
+
+    function markAsRead(id) {
+        if (readIds.indexOf(id) === -1) {
+            readIds.push(id);
+            localStorage.setItem('board_read_ids', JSON.stringify(readIds));
+        }
+    }
+
+    /* ========== 工具函数 ========== */
+    function generateId() {
+        return 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    }
+
+    function hashCode(str) {
+        var hash = 0;
+        for (var i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash |= 0;
+        }
+        return hash;
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatTime(ts) {
+        var d = new Date(ts);
+        var month = d.getMonth() + 1;
+        var day = d.getDate();
+        var hour = d.getHours().toString().padStart(2, '0');
+        var min = d.getMinutes().toString().padStart(2, '0');
+        return month + '月' + day + '日 ' + hour + ':' + min;
+    }
+
+    /* ========== 确认弹窗（替代原生confirm） ========== */
+    function showModal(title, message, onConfirm) {
+        // 如果页面已有自定义弹窗组件则复用，否则用原生confirm兜底
+        var modal = document.getElementById('confirmModal');
+        if (modal) {
+            document.getElementById('confirmModalTitle').textContent = title;
+            document.getElementById('confirmModalMessage').textContent = message;
+            modal.classList.add('show');
+            var confirmBtn = document.getElementById('confirmModalOk');
+            var cancelBtn = document.getElementById('confirmModalCancel');
+            // 移除旧的事件监听（克隆节点方式）
+            var newConfirm = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+            var newCancel = cancelBtn.cloneNode(true);
+            cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+            newConfirm.addEventListener('click', function() {
+                modal.classList.remove('show');
+                onConfirm();
+            });
+            newCancel.addEventListener('click', function() {
+                modal.classList.remove('show');
+            });
+        } else {
+            // 兜底：使用原生confirm
+            if (confirm(message)) {
+                onConfirm();
+            }
+        }
+    }
+
+    /* ========== Toast提示（复用全局toast） ========== */
+    function showToast(msg, type) {
+        var toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.className = 'toast ' + (type || 'success');
+        // 强制重排后添加show
+        void toast.offsetWidth;
+        toast.classList.add('show');
+        setTimeout(function() {
+            toast.classList.remove('show');
+        }, 2000);
+    }
+
+    /* ========== 启动 ========== */
+    init();
+})();
+</script>
+{% endblock %}
