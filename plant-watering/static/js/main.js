@@ -535,4 +535,156 @@
     }
   })();
 
+  /* ---------- I8. 备份与恢复 ---------- */
+  (function initBackupPanel() {
+    var panel = document.getElementById("backupPanel");
+    if (!panel) return;
+
+    fetch("/api/backup/status")
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data && data.has_password) {
+          panel.style.display = "";
+          bindBackupHandlers(data);
+        }
+      })
+      .catch(function () {});
+
+    function bindBackupHandlers(status) {
+      var pwdInput = document.getElementById("adminPwd");
+      var statusBox = document.getElementById("backupStatus");
+      var fileInput = document.getElementById("restoreFile");
+      var fileName = document.getElementById("restoreFileName");
+      var btnDownload = document.getElementById("btnDownloadBackup");
+      var btnPush = document.getElementById("btnPushBackup");
+      var btnRestore = document.getElementById("btnRestore");
+
+      if (!pwdInput || !statusBox || !fileInput || !fileName || !btnDownload || !btnPush || !btnRestore) {
+        return;
+      }
+
+      function setStatus(text, isErr) {
+        statusBox.textContent = text || "";
+        statusBox.className = "backup-status" + (isErr ? " err" : "");
+      }
+
+      function getPwd() {
+        var v = (pwdInput.value || "").trim();
+        if (!v) {
+          setStatus("请先输入管理员密码", true);
+          pwdInput.focus();
+        }
+        return v;
+      }
+
+      if (!status.configured) {
+        btnPush.disabled = true;
+        btnPush.title = "后端未配置 GitHub Token/Repo";
+      }
+
+      btnDownload.addEventListener("click", function () {
+        var pwd = getPwd();
+        if (!pwd) return;
+        setStatus("正在打包…");
+
+        var fd = new FormData();
+        fd.append("admin_password", pwd);
+
+        fetch("/admin/backup", { method: "POST", body: fd })
+          .then(function (res) {
+            if (!res.ok) {
+              return res.json().then(function (j) {
+                throw new Error(j.error || "失败");
+              });
+            }
+            var disp = res.headers.get("Content-Disposition") || "";
+            var m = disp.match(/filename="?([^";]+)"?/);
+            var name = m ? m[1] : "backup.zip";
+            return res.blob().then(function (blob) {
+              return { blob: blob, name: name };
+            });
+          })
+          .then(function (obj) {
+            var url = URL.createObjectURL(obj.blob);
+            var a = document.createElement("a");
+            a.href = url;
+            a.download = obj.name;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+            setStatus("下载完成 " + obj.name);
+          })
+          .catch(function (e) {
+            setStatus(e.message || "下载失败", true);
+          });
+      });
+
+      btnPush.addEventListener("click", function () {
+        var pwd = getPwd();
+        if (!pwd) return;
+        setStatus("正在推送到 GitHub，可能需要几秒…");
+        btnPush.disabled = true;
+
+        var fd = new FormData();
+        fd.append("admin_password", pwd);
+
+        fetch("/admin/backup/push", { method: "POST", body: fd })
+          .then(function (res) { return res.json(); })
+          .then(function (j) {
+            if (j.success) {
+              var info = j.info || {};
+              setStatus("推送成功 " + (info.snapshot || "") + "（" + Math.round((info.size || 0) / 1024) + " KB）");
+            } else {
+              setStatus(j.error || "推送失败", true);
+            }
+          })
+          .catch(function () {
+            setStatus("网络错误", true);
+          })
+          .finally(function () {
+            btnPush.disabled = !status.configured;
+          });
+      });
+
+      fileInput.addEventListener("change", function () {
+        if (fileInput.files && fileInput.files[0]) {
+          fileName.textContent = fileInput.files[0].name;
+        } else {
+          fileName.textContent = "选择备份 zip 文件…";
+        }
+      });
+
+      btnRestore.addEventListener("click", function () {
+        var pwd = getPwd();
+        if (!pwd) return;
+        if (!fileInput.files || !fileInput.files[0]) {
+          setStatus("请先选择备份 zip", true);
+          return;
+        }
+
+        showModal("确认恢复", "恢复会覆盖当前的全部数据，确定继续吗？", function () {
+          setStatus("正在恢复…");
+          var fd = new FormData();
+          fd.append("admin_password", pwd);
+          fd.append("backup_file", fileInput.files[0]);
+
+          fetch("/admin/restore", { method: "POST", body: fd })
+            .then(function (res) { return res.json(); })
+            .then(function (j) {
+              if (j.success) {
+                setStatus("恢复成功，2 秒后刷新页面…");
+                setTimeout(function () { location.reload(); }, 2000);
+              } else {
+                setStatus(j.error || "恢复失败", true);
+              }
+            })
+            .catch(function () {
+              setStatus("网络错误", true);
+            });
+        });
+      });
+    }
+  })();
+
 })();

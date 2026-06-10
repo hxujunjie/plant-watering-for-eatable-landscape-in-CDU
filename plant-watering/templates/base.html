@@ -81,6 +81,27 @@
                         <a href="/export/csv" class="btn-export">导出 CSV</a>
                     </div>
                 </div>
+                <div class="settings-section backup-panel" id="backupPanel" style="display:none;">
+                    <h3>完整备份与恢复</h3>
+                    <p>备份包含所有签到记录、时间、姓名和图片，可推送到 GitHub 私有仓库。</p>
+                    <div class="backup-body">
+                        <div class="backup-row">
+                            <input type="password" id="adminPwd" class="backup-input" placeholder="管理员密码" autocomplete="off">
+                        </div>
+                        <div class="backup-row backup-actions">
+                            <button type="button" class="btn-backup" id="btnDownloadBackup">下载完整备份</button>
+                            <button type="button" class="btn-backup" id="btnPushBackup">立即推送到 GitHub</button>
+                        </div>
+                        <div class="backup-row">
+                            <label class="backup-file-label">
+                                <input type="file" id="restoreFile" accept=".zip" style="display:none;">
+                                <span id="restoreFileName">选择备份 zip 文件…</span>
+                            </label>
+                            <button type="button" class="btn-backup btn-restore" id="btnRestore">从备份恢复</button>
+                        </div>
+                        <div class="backup-status" id="backupStatus"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

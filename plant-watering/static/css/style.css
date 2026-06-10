@@ -1409,6 +1409,18 @@ body {
   margin-bottom: 1.2rem;
 }
 
+.settings-section h3 {
+  font-size: 1rem;
+  color: var(--ink);
+  margin-bottom: 0.35rem;
+}
+
+.settings-section p {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .settings-section .settings-section-title {
   font-size: 0.85rem;
   font-weight: 600;
@@ -1526,15 +1538,8 @@ body {
 
 /* ---------- 35. 备份与恢复面板 ---------- */
 .backup-panel {
-  margin: 1rem;
-  padding: 0;
-  background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: var(--radius);
-  border: 1px solid rgba(165, 214, 167, 0.3);
-  box-shadow: 0 2px 12px var(--shadow);
-  overflow: hidden;
+  padding-top: 1rem;
+  border-top: 1px solid #e8f5e9;
 }
 
 .backup-panel > summary {
@@ -1563,8 +1568,7 @@ body {
 }
 
 .backup-body {
-  padding: 0.4rem 1rem 1rem;
-  border-top: 1px solid rgba(165, 214, 167, 0.25);
+  padding-top: 0.8rem;
 }
 
 .backup-tip {
