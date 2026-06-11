@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- 手绘蝴蝶 - 手绘风格 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 身体 -->
+    <ellipse cx="40" cy="40" rx="2" ry="12" fill="#2c2c2c"/>
+    <!-- 触角 -->
+    <path d="M39,28 Q34,18 30,16" stroke="#2c2c2c" stroke-width="1.5" fill="none"/>
+    <path d="M41,28 Q46,18 50,16" stroke="#2c2c2c" stroke-width="1.5" fill="none"/>
+    <circle cx="30" cy="15" r="1.5" fill="#2c2c2c"/>
+    <circle cx="50" cy="15" r="1.5" fill="#2c2c2c"/>
+    <!-- 左上翅 -->
+    <path d="M38,34 Q22,20 18,30 Q14,40 28,42 Q34,42 38,38Z" fill="#e8f0e0" stroke="#2c2c2c"/>
+    <path d="M24,30 Q28,34 26,38" stroke="#5a9e5a" stroke-width="0.8" fill="none" opacity="0.6"/>
+    <!-- 右上翅 -->
+    <path d="M42,34 Q58,20 62,30 Q66,40 52,42 Q46,42 42,38Z" fill="#e8f0e0" stroke="#2c2c2c"/>
+    <path d="M56,30 Q52,34 54,38" stroke="#5a9e5a" stroke-width="0.8" fill="none" opacity="0.6"/>
+    <!-- 左下翅 -->
+    <path d="M38,42 Q24,46 22,52 Q22,58 32,54 Q36,52 38,46Z" fill="#d8e8d0" stroke="#2c2c2c"/>
+    <!-- 右下翅 -->
+    <path d="M42,42 Q56,46 58,52 Q58,58 48,54 Q44,52 42,46Z" fill="#d8e8d0" stroke="#2c2c2c"/>
+    <!-- 翅膀上的叶脉纹理 -->
+    <path d="M30,28 Q26,32 28,36" stroke="#8fc48a" stroke-width="0.6" fill="none" opacity="0.5"/>
+    <path d="M50,28 Q54,32 52,36" stroke="#8fc48a" stroke-width="0.6" fill="none" opacity="0.5"/>
+  </g>
+</svg>

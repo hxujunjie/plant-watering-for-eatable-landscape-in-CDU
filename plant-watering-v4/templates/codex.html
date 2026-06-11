@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}植物图鉴{% endblock %}
+
+{% block content %}
+<div class="header header-compact">
+    <div class="header-badge">CODEX</div>
+    <h1>植物图鉴</h1>
+    <div class="header-divider">
+        <div class="line"></div>
+        <div class="leaf">📖</div>
+        <div class="line"></div>
+    </div>
+</div>
+
+<!-- 收集进度 -->
+<div class="codex-progress-bar" id="codexProgress">
+    <div class="codex-progress-text" id="codexProgressText">你的植物园已有 <strong>0</strong> 位住客，还有 <strong>0</strong> 位在路上</div>
+    <div class="codex-progress-track">
+        <div class="codex-progress-fill" id="codexProgressFill" style="width:0%"></div>
+    </div>
+</div>
+
+<!-- 分类筛选 -->
+<div class="codex-category-tabs" id="codexCategoryTabs">
+    <button class="codex-cat-tab active" data-category="all">全部</button>
+    <button class="codex-cat-tab" data-category="观叶">观叶</button>
+    <button class="codex-cat-tab" data-category="多肉">多肉</button>
+    <button class="codex-cat-tab" data-category="花卉">花卉</button>
+    <button class="codex-cat-tab" data-category="蔬果">蔬果</button>
+    <button class="codex-cat-tab" data-category="自定义">自定义</button>
+</div>
+
+<!-- 植物卡片网格 -->
+<div class="codex-grid" id="codexGrid">
+    <!-- 由JS动态渲染 -->
+</div>
+
+<!-- 空状态 -->
+<div class="codex-empty" id="codexEmpty" style="display:none;">
+    <div class="empty-icon">🌱</div>
+    <div class="empty-title">这片土壤还在等待第一颗种子</div>
+    <div class="empty-desc">去记录你的植物，它们就会出现在这里</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var codexGrid = document.getElementById('codexGrid');
+    var codexEmpty = document.getElementById('codexEmpty');
+    var codexProgressText = document.getElementById('codexProgressText');
+    var codexProgressFill = document.getElementById('codexProgressFill');
+    var categoryTabs = document.querySelectorAll('.codex-cat-tab');
+    var currentCategory = 'all';
+    var allEntries = [];
+
+    // 加载图鉴数据
+    function loadCodex() {
+        fetch('/api/codex')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                allEntries = data.entries || [];
+                // 更新进度
+                var unlocked = allEntries.filter(function(e) { return e.unlocked; }).length;
+                var total = allEntries.length;
+                codexProgressText.innerHTML = '你的植物园已有 <strong>' + unlocked + '</strong> 位住客，还有 <strong>' + (total - unlocked) + '</strong> 位在路上';
+                var pct = total > 0 ? Math.round(unlocked / total * 100) : 0;
+                codexProgressFill.style.width = pct + '%';
+                // 加载提醒数据
+                loadReminders();
+                renderGrid();
+            })
+            .catch(function() {
+                codexGrid.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--accent-rose);font-size:0.85rem;">加载失败</div>';
+            });
+    }
+
+    // 加载提醒数据
+    var reminderMap = {};
+    function loadReminders() {
+        fetch('/api/codex/reminders')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var reminders = data.reminders || [];
+                reminderMap = {};
+                reminders.forEach(function(r) {
+                    reminderMap[r.plant_lib_id] = r.days_since_last;
+                });
+                renderGrid();
+            })
+            .catch(function() {});
+    }
+
+    // 渲染卡片网格
+    function renderGrid() {
+        var filtered = currentCategory === 'all'
+            ? allEntries
+            : allEntries.filter(function(e) { return e.category === currentCategory; });
+
+        if (filtered.length === 0) {
+            codexGrid.style.display = 'none';
+            codexEmpty.style.display = 'flex';
+            return;
+        }
+        codexGrid.style.display = '';
+        codexEmpty.style.display = 'none';
+
+        var redDays = parseInt(localStorage.getItem('reminderRedDays')) || 10;
+        var html = '';
+        filtered.forEach(function(entry) {
+            var lockedClass = entry.unlocked ? '' : ' locked';
+            var clickAttr = entry.unlocked ? ' onclick="location.href=\'/codex/' + entry.id + '\'"' : '';
+            html += '<div class="codex-card' + lockedClass + '"' + clickAttr + '>';
+            if (entry.unlocked) {
+                // 星星标识（培育等级）
+                var cl = entry.cultivation_level || 0;
+                if (cl > 0) {
+                    html += '<div class="codex-card-stars">';
+                    for (var s = 0; s < 5; s++) {
+                        html += '<span class="codex-card-star' + (s < cl ? '' : ' empty') + '">&#9733;</span>';
+                    }
+                    html += '</div>';
+                }
+                html += '<div class="codex-card-cover">' +
+                    (entry.cover_url ? '<img src="' + entry.cover_url + '" alt="' + entry.name + '">' : (entry.illustration_url ? '<img src="' + entry.illustration_url + '" alt="' + entry.name + '">' : '<div class="codex-card-placeholder">🌿</div>')) +
+                    '</div>';
+                html += '<div class="codex-card-name">' + escapeHtml(entry.name) + '</div>';
+                html += '<div class="codex-card-stats">' + entry.record_count + '次记录 · ' + entry.care_days + '天</div>';
+                // 提醒文字
+                var daysSince = reminderMap[entry.id];
+                if (daysSince !== undefined && daysSince > 0) {
+                    var overdueClass = daysSince >= redDays ? ' overdue' : '';
+                    html += '<div class="codex-card-reminder' + overdueClass + '">你的植物想你了，已经' + daysSince + '天没去看它了</div>';
+                }
+            } else {
+                html += '<div class="codex-card-silhouette">' +
+                    (entry.silhouette_url ? '<img src="' + entry.silhouette_url + '" alt="' + entry.name + '">' : '?') +
+                    '</div>';
+                html += '<div class="codex-card-name">' + escapeHtml(entry.name) + '</div>';
+                html += '<div class="codex-card-hint">这株植物还在路上，等你去发现</div>';
+            }
+            html += '</div>';
+        });
+        codexGrid.innerHTML = html;
+    }
+
+    // 分类筛选
+    categoryTabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            categoryTabs.forEach(function(t) { t.classList.remove('active'); });
+            this.classList.add('active');
+            currentCategory = this.getAttribute('data-category');
+            renderGrid();
+        });
+    });
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    loadCodex();
+})();
+</script>
+{% endblock %}

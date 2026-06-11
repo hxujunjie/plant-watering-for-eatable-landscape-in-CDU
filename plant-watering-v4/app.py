@@ -4,7 +4,7 @@ import json
 import csv
 import uuid
 import tempfile
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, redirect
 from PIL import Image
 from database import (
     get_db, init_db, add_watering_log, add_photo, get_recent_logs, \
@@ -479,6 +479,107 @@ def board_page():
     return render_template('board.html')
 
 
+@app.route('/codex')
+def codex_page():
+    """植物图鉴页面。"""
+    return render_template('codex.html')
+
+
+@app.route('/api/codex')
+def api_codex():
+    """获取图鉴列表数据（全部植物+解锁状态）。"""
+    from database import get_all_codex_entries
+    entries = get_all_codex_entries()
+    return jsonify({'entries': entries})
+
+
+@app.route('/codex/<int:plant_id>')
+def codex_detail(plant_id):
+    """植物图鉴详情页。"""
+    from database import get_plant_detail
+    detail = get_plant_detail(plant_id)
+    if not detail:
+        return redirect('/codex')
+    return render_template('codex_detail.html', plant_id=plant_id, detail=detail)
+
+
+@app.route('/api/codex/<int:plant_id>/timeline')
+def api_codex_timeline(plant_id):
+    """获取植物的时间线照片。"""
+    from database import get_plant_timeline
+    photos = get_plant_timeline(plant_id)
+    return jsonify({'photos': photos})
+
+
+@app.route('/api/codex/<int:plant_id>/stats')
+def api_codex_stats(plant_id):
+    """获取植物的月度统计数据。"""
+    from database import get_plant_monthly_stats
+    stats = get_plant_monthly_stats(plant_id)
+    return jsonify({'stats': stats})
+
+
+@app.route('/api/codex/reminders')
+def api_codex_reminders():
+    """获取已解锁植物的提醒信息。"""
+    from database import get_plant_reminders
+    reminders = get_plant_reminders()
+    return jsonify({'reminders': reminders})
+
+
+@app.route('/api/codex/<int:plant_id>/plans', methods=['GET', 'POST'])
+def api_plant_plans(plant_id):
+    """获取或新增某植物的计划。"""
+    from database import get_plans, add_plan
+    if request.method == 'POST':
+        data = request.get_json()
+        if not data or not data.get('content', '').strip():
+            return jsonify({'success': False, 'error': '计划内容不能为空'}), 400
+        plan_type = data.get('type', 'todo')
+        custom_plant_name = data.get('custom_plant_name', '')
+        content = data['content'].strip()
+        due_date = data.get('due_date', '')
+        plan_id = add_plan(plan_type, plant_id, custom_plant_name, content, due_date)
+        return jsonify({'success': True, 'plan_id': plan_id})
+    else:
+        plans = get_plans(plant_id)
+        return jsonify({'plans': plans})
+
+
+@app.route('/api/plans/<int:plan_id>/complete', methods=['PUT'])
+def api_complete_plan(plan_id):
+    """将计划标记为已完成。"""
+    from database import complete_plan
+    complete_plan(plan_id)
+    return jsonify({'success': True})
+
+
+@app.route('/api/plans/<int:plan_id>', methods=['DELETE'])
+def api_delete_plan(plan_id):
+    """删除一条计划。"""
+    from database import delete_plan
+    delete_plan(plan_id)
+    return jsonify({'success': True})
+
+
+@app.route('/api/plans/pending-count')
+def api_pending_plan_count():
+    """获取所有未完成计划的总数。"""
+    from database import get_pending_plan_count
+    count = get_pending_plan_count()
+    return jsonify({'count': count})
+
+
+@app.route('/api/codex/<int:plant_id>/cultivation')
+def api_codex_cultivation(plant_id):
+    """获取某植物的培育等级。"""
+    from database import get_plant_cultivation
+    cultivation = get_plant_cultivation(plant_id)
+    if not cultivation:
+        return jsonify({'error': '植物不存在'}), 404
+    return jsonify(cultivation)
+
+
 @app.route('/uploads/<path:filename>')
 def serve_upload(filename):
     """提供上传文件的访问路由。"""
@@ -613,7 +714,112 @@ def api_stats():
     """获取用户成就统计数据。"""
     stats = get_user_stats()
     monthly = get_monthly_summary()
-    return jsonify({'stats': stats, 'monthly': monthly})
+
+    # 查询最擅长植物（培育等级最高且记录次数最多的已解锁植物）
+    top_plant = None
+    from database import sync_plant_unlocks, get_plant_by_id, calc_cultivation_level
+    sync_plant_unlocks()
+    db = get_db()
+    unlocks = db.execute('''
+        SELECT plant_lib_id, record_count, care_days
+        FROM plant_unlock
+        WHERE plant_lib_id IS NOT NULL
+    ''').fetchall()
+    db.close()
+
+    if unlocks:
+        best = None
+        for u in unlocks:
+            rc = u['record_count'] or 0
+            cd = u['care_days'] or 0
+            if rc > 0:
+                cl = calc_cultivation_level(rc, cd)
+                if best is None or cl['level'] > best['level'] or (cl['level'] == best['level'] and rc > best['rc']):
+                    best = {'level': cl['level'], 'rc': rc, 'plant_lib_id': u['plant_lib_id']}
+        if best:
+            plant = get_plant_by_id(best['plant_lib_id'])
+            if plant:
+                top_plant = {
+                    'name': plant['name'],
+                    'level': best['level'],
+                    'level_name': cl.get('level_name', ''),
+                    'plant_lib_id': best['plant_lib_id']
+                }
+
+    return jsonify({'stats': stats, 'monthly': monthly, 'top_plant': top_plant})
+
+
+@app.route('/api/achievements')
+def api_achievements():
+    """获取里程碑成就列表。"""
+    from database import check_milestones
+    achievements = check_milestones()
+    return jsonify({'achievements': achievements})
+
+
+@app.route('/profile')
+def profile_page():
+    """个人档案页。"""
+    return render_template('profile.html')
+
+
+@app.route('/api/profile')
+def api_profile():
+    """获取个人档案聚合数据。"""
+    from database import check_milestones, sync_plant_unlocks, get_plant_by_id, calc_cultivation_level, PLANT_LIBRARY
+
+    stats = get_user_stats()
+    achievements = check_milestones()
+
+    # 图鉴进度
+    sync_plant_unlocks()
+    db = get_db()
+    unlocked_count = db.execute('SELECT COUNT(*) FROM plant_unlock WHERE plant_lib_id IS NOT NULL').fetchone()[0]
+    total_count = len(PLANT_LIBRARY)
+    db.close()
+
+    # 培育排行 TOP5（按培育等级排序）
+    db = get_db()
+    unlocks = db.execute('''
+        SELECT plant_lib_id, record_count, care_days
+        FROM plant_unlock
+        WHERE plant_lib_id IS NOT NULL AND record_count > 0
+    ''').fetchall()
+    db.close()
+
+    rank_list = []
+    for u in unlocks:
+        rc = u['record_count'] or 0
+        cd = u['care_days'] or 0
+        cl = calc_cultivation_level(rc, cd)
+        plant = get_plant_by_id(u['plant_lib_id'])
+        if plant:
+            rank_list.append({
+                'name': plant['name'],
+                'level': cl['level'],
+                'level_name': cl.get('level_name', ''),
+                'plant_lib_id': u['plant_lib_id'],
+                'record_count': rc,
+            })
+    rank_list.sort(key=lambda x: (-x['level'], -x['record_count']))
+    rank_list = rank_list[:5]
+
+    # 最爱记录的植物 TOP3（按签到记录中 name 出现次数）
+    db = get_db()
+    top_names = db.execute('''
+        SELECT name, COUNT(*) as cnt FROM watering_log
+        GROUP BY name ORDER BY cnt DESC LIMIT 3
+    ''').fetchall()
+    db.close()
+    top_plants = [{'name': r['name'], 'count': r['cnt']} for r in top_names]
+
+    return jsonify({
+        'stats': stats,
+        'achievements': achievements,
+        'codex_progress': {'unlocked': unlocked_count, 'total': total_count},
+        'rank_list': rank_list,
+        'top_plants': top_plants,
+    })
 
 
 # ========== 启动逻辑 ==========

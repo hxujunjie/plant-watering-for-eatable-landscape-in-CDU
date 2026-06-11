@@ -28,15 +28,20 @@
                 <span class="status-water-value" id="lastWaterValue"></span>
                 <span class="days-tag" id="daysDiff"></span>
             {% else %}
-                <span class="status-water-empty">尚无记录</span>
+                <span class="status-water-empty">这片土壤还在等待第一颗种子</span>
             {% endif %}
         </div>
+        <span class="status-reminder-badge" id="reminderBadge" style="display:none;"></span>
     </div>
 </div>
 
 <!-- 区块2: 签到表单（核心操作） -->
 <div class="sketch-card">
     <form id="checkinForm" enctype="multipart/form-data">
+        <div class="checkin-mode-tabs">
+            <button type="button" class="checkin-mode-tab active" data-mode="photo">影像</button>
+            <button type="button" class="checkin-mode-tab" data-mode="text">文字</button>
+        </div>
         <div class="field">
             <div class="field-label">
                 <span class="field-number-circle">1</span>
@@ -45,6 +50,7 @@
             <input type="text" id="nameInput" class="field-input" name="name" placeholder="请写下你的名字..." autocomplete="off" required>
             <div class="name-dropdown" id="nameDropdown"></div>
         </div>
+        <div id="photoMode">
         <div class="field">
             <div class="field-label">
                 <span class="field-number-circle">2</span>
@@ -57,6 +63,16 @@
             </div>
             <input type="file" id="photoInput" name="photos" accept="image/*" multiple hidden>
             <div class="photo-preview" id="photoPreview"></div>
+        </div>
+        </div>
+        <div id="textMode" style="display:none;">
+            <div class="field">
+                <div class="field-label">
+                    <span class="field-number-circle">2</span>
+                    写下你的观察
+                </div>
+                <textarea id="textNoteInput" class="field-textarea" placeholder="今天你的植物有什么变化..." rows="3" maxlength="500"></textarea>
+            </div>
         </div>
         <button type="submit" class="btn-checkin" id="checkinBtn">
             确认签到
@@ -85,6 +101,9 @@
                 {% endif %}
             </div>
         </div>
+    </div>
+    <div class="fun-level-top-plant" id="topPlant" style="display:none;">
+        你最擅长的是：<a href="/codex/{plant_lib_id}" id="topPlantLink"><strong id="topPlantName"></strong>（<span id="topPlantLevel"></span>）</a>
     </div>
 </div>
 
@@ -119,7 +138,7 @@
 <div class="fun-card fun-daily-card compact">
     <div class="fun-card-header">
         <span class="fun-card-title">植物日签</span>
-        <button class="fun-daily-refresh" id="dailyRefresh" type="button">换一条</button>
+        <button class="fun-daily-refresh" id="dailyRefresh" type="button">再听一个植物的秘密</button>
     </div>
     <div class="fun-daily-body" id="dailyBody">
         <div class="fun-daily-text" id="dailyText"></div>
@@ -136,7 +155,7 @@
         <div class="plant-top"></div>
         <div class="stamp-seal">志</div>
     </div>
-    <div class="celebration-text">已记录</div>
+    <div class="celebration-text">又一天的植物故事，已收录</div>
 </div>
 {% endblock %}
 
@@ -299,12 +318,73 @@
         });
     }
 
+    // ========== 签到模式切换（影像/文字） ==========
+    var currentMode = 'photo';
+    var photoMode = document.getElementById('photoMode');
+    var textMode = document.getElementById('textMode');
+    var textNoteInput = document.getElementById('textNoteInput');
+    var modeTabs = document.querySelectorAll('.checkin-mode-tab');
+
+    modeTabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            var mode = this.getAttribute('data-mode');
+            currentMode = mode;
+            modeTabs.forEach(function(t) { t.classList.remove('active'); });
+            this.classList.add('active');
+            if (mode === 'photo') {
+                photoMode.style.display = '';
+                textMode.style.display = 'none';
+                checkinBtn.innerHTML = '确认签到<div class="seal">志</div>';
+            } else {
+                photoMode.style.display = 'none';
+                textMode.style.display = '';
+                checkinBtn.innerHTML = '发布记录';
+            }
+        });
+    });
+
     // ========== 签到提交 ==========
     var checkinForm = document.getElementById('checkinForm');
     var checkinBtn = document.getElementById('checkinBtn');
 
     checkinForm.addEventListener('submit', function(e) {
         e.preventDefault();
+
+        // 文字模式：走 /api/board 接口
+        if (currentMode === 'text') {
+            var author = nameInput.value.trim();
+            var content = textNoteInput.value.trim();
+            if (!author || !content) {
+                showToast('请填写姓名和观察内容');
+                return;
+            }
+            checkinBtn.disabled = true;
+            checkinBtn.innerHTML = '...';
+            fetch('/api/board', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ author: author, content: content, color: '#ffffff' })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success || data.id) {
+                    showToast('又一天的植物故事，已收录');
+                    textNoteInput.value = '';
+                } else {
+                    showToast(data.message || '发布失败，请重试');
+                }
+            })
+            .catch(function() {
+                showToast('网络错误，请重试');
+            })
+            .finally(function() {
+                checkinBtn.disabled = false;
+                checkinBtn.innerHTML = '发布记录';
+            });
+            return;
+        }
+
+        // 影像模式：原有签到逻辑
         var formData = new FormData();
         formData.append('name', nameInput.value.trim());
         selectedFiles.forEach(function(file, idx) {
@@ -327,7 +407,7 @@
         .then(function(data) {
             if (data.success) {
                 playCelebration();
-                showToast('已记录');
+                showToast('又一天的植物故事，已收录');
                 // 更新状态条（新结构）
                 fetch('/api/last_watering').then(function(r) { return r.json(); }).then(function(d) {
                     if (d.last_watering) {
@@ -368,6 +448,16 @@
                             if (items[1]) items[1].textContent = d.stats.photo_count;
                             if (items[2]) items[2].textContent = d.stats.tag_count;
                             if (items[3]) items[3].textContent = d.stats.board_count;
+                        }
+                        // 更新最擅长植物
+                        var topPlantEl = document.getElementById('topPlant');
+                        if (d.top_plant) {
+                            document.getElementById('topPlantName').textContent = d.top_plant.name;
+                            document.getElementById('topPlantLevel').textContent = d.top_plant.level_name;
+                            document.getElementById('topPlantLink').href = '/codex/' + d.top_plant.plant_lib_id;
+                            topPlantEl.style.display = '';
+                        } else {
+                            topPlantEl.style.display = 'none';
                         }
                     }
                 });
@@ -449,6 +539,42 @@
     document.getElementById('dailyRefresh').addEventListener('click', function() {
         showDailyFact();
     });
+
+    // ========== 页面加载时初始化最擅长植物 ==========
+    (function() {
+        fetch('/api/stats').then(function(r) { return r.json(); }).then(function(d) {
+            if (d.top_plant) {
+                var topPlantEl = document.getElementById('topPlant');
+                document.getElementById('topPlantName').textContent = d.top_plant.name;
+                document.getElementById('topPlantLevel').textContent = d.top_plant.level_name;
+                document.getElementById('topPlantLink').href = '/codex/' + d.top_plant.plant_lib_id;
+                topPlantEl.style.display = '';
+            }
+        }).catch(function() {});
+    })();
+
+    // ========== 提醒角标 ==========
+    (function() {
+        var badge = document.getElementById('reminderBadge');
+        if (!badge) return;
+        var redDays = parseInt(localStorage.getItem('reminderRedDays')) || 10;
+        fetch('/api/codex/reminders')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var reminders = data.reminders || [];
+                var overdue = reminders.filter(function(r) { return r.days_since_last >= redDays; });
+                if (overdue.length > 0) {
+                    badge.textContent = overdue.length + '株待关注';
+                    badge.style.display = 'inline-block';
+                    badge.style.cursor = 'pointer';
+                    badge.title = overdue.map(function(r) { return r.name + '(' + r.days_since_last + '天)'; }).join(', ');
+                    badge.addEventListener('click', function() {
+                        location.href = '/codex';
+                    });
+                }
+            })
+            .catch(function() {});
+    })();
 
 })();
 </script>

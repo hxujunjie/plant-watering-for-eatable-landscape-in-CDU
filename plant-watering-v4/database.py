@@ -1,6 +1,7 @@
 import sqlite3
 import os
 from datetime import datetime, timezone, timedelta
+from plant_library import PLANT_LIBRARY, match_tag_to_plant, get_plant_by_id, calc_cultivation_level, CULTIVATION_QUOTES
 
 # 数据库路径，支持环境变量覆盖
 DB_PATH = os.path.join(os.path.dirname(__file__), 'watering.db')
@@ -92,6 +93,32 @@ def init_db():
             created_at DATETIME NOT NULL DEFAULT '',
             UNIQUE(watering_log_id, author),
             FOREIGN KEY (watering_log_id) REFERENCES watering_log(id) ON DELETE CASCADE
+        );
+
+        -- 植物解锁图鉴
+        CREATE TABLE IF NOT EXISTS plant_unlock (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            plant_lib_id INTEGER,
+            custom_name TEXT,
+            tag_name TEXT NOT NULL,
+            unlocked_at TEXT NOT NULL DEFAULT '',
+            record_count INTEGER DEFAULT 0,
+            care_days INTEGER DEFAULT 0,
+            last_record_at TEXT,
+            cover_photo_path TEXT
+        );
+
+        -- 园艺计划
+        CREATE TABLE IF NOT EXISTS plans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT NOT NULL DEFAULT 'todo',
+            plant_lib_id INTEGER,
+            custom_plant_name TEXT,
+            content TEXT NOT NULL,
+            due_date TEXT,
+            completed INTEGER DEFAULT 0,
+            completed_at TEXT,
+            created_at TEXT NOT NULL DEFAULT ''
         );
     ''')
     conn.commit()
@@ -775,3 +802,527 @@ def get_monthly_summary():
         'top_plant_name': top_name['name'] if top_name else None,
         'top_plant_count': top_name['cnt'] if top_name else 0,
     }
+
+
+# ========== 植物图鉴相关函数 ==========
+
+def sync_plant_unlocks():
+    """扫描所有标签，匹配植物库，同步 plant_unlock 表。
+    - 匹配到的标签：更新或创建 plant_unlock 记录（plant_lib_id 有值）
+    - 未匹配到的标签：创建自定义条目（plant_lib_id 为 NULL，custom_name = tag_name）
+    - 同时统计每个已解锁植物的 record_count 和 care_days
+    """
+    conn = get_db()
+    tags = conn.execute("SELECT id, name FROM tag ORDER BY name").fetchall()
+
+    for tag in tags:
+        tag_name = tag['name']
+        plant = match_tag_to_plant(tag_name)
+
+        if plant:
+            # 匹配到植物库：plant_lib_id 有值
+            plant_lib_id = plant['id']
+            existing = conn.execute(
+                "SELECT id FROM plant_unlock WHERE plant_lib_id = ?",
+                (plant_lib_id,)
+            ).fetchone()
+
+            if existing:
+                # 已存在，更新 tag_name（取最新的匹配标签名）
+                conn.execute(
+                    "UPDATE plant_unlock SET tag_name = ? WHERE id = ?",
+                    (tag_name, existing['id'])
+                )
+            else:
+                # 新建解锁记录
+                conn.execute(
+                    "INSERT INTO plant_unlock (plant_lib_id, tag_name, unlocked_at) VALUES (?, ?, ?)",
+                    (plant_lib_id, tag_name, current_time_str())
+                )
+        else:
+            # 未匹配到植物库：检查是否已有该标签名的自定义条目
+            existing = conn.execute(
+                "SELECT id FROM plant_unlock WHERE plant_lib_id IS NULL AND tag_name = ?",
+                (tag_name,)
+            ).fetchone()
+
+            if not existing:
+                conn.execute(
+                    "INSERT INTO plant_unlock (custom_name, tag_name, unlocked_at) VALUES (?, ?, ?)",
+                    (tag_name, tag_name, current_time_str())
+                )
+
+    conn.commit()
+
+    # 统计每个已解锁植物的 record_count、care_days、last_record_at、cover_photo_path
+    unlocks = conn.execute("SELECT id, tag_name FROM plant_unlock").fetchall()
+    for unlock in unlocks:
+        tag_name = unlock['tag_name']
+
+        # 通过 tag_name 找到 tag_id，再通过 photo_tag -> photo -> watering_log 统计
+        tag_row = conn.execute(
+            "SELECT id FROM tag WHERE name = ?", (tag_name,)
+        ).fetchone()
+
+        if tag_row:
+            tag_id = tag_row['id']
+
+            # record_count: 该标签关联的照片所属的不同签到记录数
+            count_row = conn.execute('''
+                SELECT COUNT(DISTINCT p.watering_log_id) as cnt
+                FROM photo_tag pt
+                JOIN photo p ON pt.photo_id = p.id
+                WHERE pt.tag_id = ?
+            ''', (tag_id,)).fetchone()
+            record_count = count_row['cnt'] if count_row else 0
+
+            # care_days: 该标签关联的照片所属签到记录的不同日期数
+            days_row = conn.execute('''
+                SELECT COUNT(DISTINCT date(w.created_at)) as cnt
+                FROM photo_tag pt
+                JOIN photo p ON pt.photo_id = p.id
+                JOIN watering_log w ON p.watering_log_id = w.id
+                WHERE pt.tag_id = ?
+            ''', (tag_id,)).fetchone()
+            care_days = days_row['cnt'] if days_row else 0
+
+            # last_record_at: 最近一条关联记录的时间
+            last_row = conn.execute('''
+                SELECT MAX(w.created_at) as latest
+                FROM photo_tag pt
+                JOIN photo p ON pt.photo_id = p.id
+                JOIN watering_log w ON p.watering_log_id = w.id
+                WHERE pt.tag_id = ?
+            ''', (tag_id,)).fetchone()
+            last_record_at = last_row['latest'] if last_row else None
+
+            # cover_photo_path: 该标签关联的最早一张照片路径
+            cover_row = conn.execute('''
+                SELECT p.file_path
+                FROM photo_tag pt
+                JOIN photo p ON pt.photo_id = p.id
+                WHERE pt.tag_id = ?
+                ORDER BY p.created_at ASC
+                LIMIT 1
+            ''', (tag_id,)).fetchone()
+            cover_photo_path = cover_row['file_path'] if cover_row else None
+        else:
+            record_count = 0
+            care_days = 0
+            last_record_at = None
+            cover_photo_path = None
+
+        conn.execute('''
+            UPDATE plant_unlock
+            SET record_count = ?, care_days = ?, last_record_at = ?, cover_photo_path = ?
+            WHERE id = ?
+        ''', (record_count, care_days, last_record_at, cover_photo_path, unlock['id']))
+
+    conn.commit()
+    conn.close()
+
+
+def get_all_codex_entries():
+    """获取图鉴全部条目（预设植物+自定义），标记解锁状态。
+    先调用 sync_plant_unlocks() 扫描所有标签，匹配植物库。
+    返回列表，每个条目包含：id, name, category, unlocked, record_count, care_days, cover_url, description。
+    """
+    # 先同步标签到植物解锁表
+    sync_plant_unlocks()
+
+    conn = get_db()
+
+    # 获取所有已解锁的记录
+    unlocks = conn.execute('''
+        SELECT id, plant_lib_id, custom_name, tag_name, unlocked_at,
+               record_count, care_days, last_record_at, cover_photo_path
+        FROM plant_unlock
+        ORDER BY plant_lib_id ASC NULLS LAST, id ASC
+    ''').fetchall()
+
+    # 构建已解锁植物的映射：plant_lib_id -> unlock记录
+    unlocked_by_lib_id = {}
+    # 收集自定义植物
+    custom_entries = []
+    # 记录已出现的 plant_lib_id
+    seen_lib_ids = set()
+
+    for u in unlocks:
+        if u['plant_lib_id'] is not None:
+            unlocked_by_lib_id[u['plant_lib_id']] = dict(u)
+            seen_lib_ids.add(u['plant_lib_id'])
+        else:
+            custom_entries.append(dict(u))
+
+    # 构建结果列表
+    entries = []
+
+    # 1. 预设植物（20种）
+    for plant in PLANT_LIBRARY:
+        is_unlocked = plant['id'] in unlocked_by_lib_id
+        unlock_info = unlocked_by_lib_id.get(plant['id'], {})
+
+        # 计算培育等级
+        cultivation_level = 0
+        if is_unlocked:
+            rc = unlock_info.get('record_count', 0) or 0
+            cd = unlock_info.get('care_days', 0) or 0
+            if rc > 0:
+                cl = calc_cultivation_level(rc, cd)
+                cultivation_level = cl['level']
+
+        entries.append({
+            'id': plant['id'],
+            'name': plant['name'],
+            'category': plant['category'],
+            'care_tip': plant['care_tip'],
+            'unlocked': is_unlocked,
+            'record_count': unlock_info.get('record_count', 0) if is_unlocked else 0,
+            'care_days': unlock_info.get('care_days', 0) if is_unlocked else 0,
+            'cover_url': unlock_info.get('cover_photo_path', '') if is_unlocked else '',
+            'description': plant['description'],
+            'is_custom': False,
+            'cultivation_level': cultivation_level,
+            'silhouette_url': plant.get('silhouette_path', ''),
+            'illustration_url': plant.get('illustration_path', ''),
+        })
+
+    # 2. 自定义植物（不在植物库中的标签）
+    for custom in custom_entries:
+        entries.append({
+            'id': custom['id'],
+            'name': custom['custom_name'],
+            'category': '自定义',
+            'care_tip': '',
+            'unlocked': True,
+            'record_count': custom.get('record_count', 0),
+            'care_days': custom.get('care_days', 0),
+            'cover_url': custom.get('cover_photo_path', ''),
+            'description': '用户自定义植物',
+            'is_custom': True,
+            'silhouette_url': '',
+            'illustration_url': '',
+        })
+
+    conn.close()
+    return entries
+
+
+def get_plant_detail(plant_lib_id):
+    """获取某个预设植物的详细数据。
+    返回：植物库信息 + 解锁信息 + 记录次数 + 养护天数 + 最近记录时间 + 封面照片。
+    如果植物未解锁，unlocked 为 False，其余统计字段为默认值。
+    """
+    plant = get_plant_by_id(plant_lib_id)
+    if not plant:
+        return None
+
+    conn = get_db()
+    unlock = conn.execute(
+        "SELECT * FROM plant_unlock WHERE plant_lib_id = ?",
+        (plant_lib_id,)
+    ).fetchone()
+    conn.close()
+
+    if unlock:
+        return {
+            'id': plant['id'],
+            'name': plant['name'],
+            'aliases': plant['aliases'],
+            'category': plant['category'],
+            'care_tip': plant['care_tip'],
+            'description': plant['description'],
+            'unlocked': True,
+            'unlocked_at': unlock['unlocked_at'],
+            'tag_name': unlock['tag_name'],
+            'record_count': unlock['record_count'] or 0,
+            'care_days': unlock['care_days'] or 0,
+            'last_record_at': unlock['last_record_at'],
+            'cover_url': unlock['cover_photo_path'] or '',
+        }
+    else:
+        return {
+            'id': plant['id'],
+            'name': plant['name'],
+            'aliases': plant['aliases'],
+            'category': plant['category'],
+            'care_tip': plant['care_tip'],
+            'description': plant['description'],
+            'unlocked': False,
+            'unlocked_at': None,
+            'tag_name': None,
+            'record_count': 0,
+            'care_days': 0,
+            'last_record_at': None,
+            'cover_url': '',
+        }
+
+
+def get_plant_timeline(plant_lib_id):
+    """获取某个植物的所有照片（通过标签匹配），按时间正序排列。"""
+    plant = get_plant_by_id(plant_lib_id)
+    if not plant:
+        return []
+    db = get_db()
+    # 通过别名找到匹配的tag_id
+    tag_ids = []
+    for alias in plant['aliases']:
+        tag = db.execute('SELECT id FROM tag WHERE name = ?', (alias,)).fetchone()
+        if tag:
+            tag_ids.append(tag['id'])
+    if not tag_ids:
+        db.close()
+        return []
+    # 查询这些tag关联的照片
+    placeholders = ','.join(['?'] * len(tag_ids))
+    photos = db.execute('''
+        SELECT p.id, p.file_path, p.caption, p.created_at, p.watering_log_id
+        FROM photo p
+        JOIN photo_tag pt ON p.id = pt.photo_id
+        WHERE pt.tag_id IN (%s)
+        ORDER BY p.created_at ASC
+    ''' % placeholders, tag_ids).fetchall()
+    db.close()
+    return [dict(p) for p in photos]
+
+
+def get_plant_monthly_stats(plant_lib_id):
+    """获取某个植物的按月统计（记录次数+照片数量）。"""
+    plant = get_plant_by_id(plant_lib_id)
+    if not plant:
+        return []
+    db = get_db()
+    tag_ids = []
+    for alias in plant['aliases']:
+        tag = db.execute('SELECT id FROM tag WHERE name = ?', (alias,)).fetchone()
+        if tag:
+            tag_ids.append(tag['id'])
+    if not tag_ids:
+        db.close()
+        return []
+    placeholders = ','.join(['?'] * len(tag_ids))
+    rows = db.execute('''
+        SELECT strftime('%%Y-%%m', p.created_at) as month,
+               COUNT(DISTINCT p.watering_log_id) as log_count,
+               COUNT(p.id) as photo_count
+        FROM photo p
+        JOIN photo_tag pt ON p.id = pt.photo_id
+        WHERE pt.tag_id IN (%s)
+        GROUP BY month
+        ORDER BY month ASC
+    ''' % placeholders, tag_ids).fetchall()
+    db.close()
+    return [dict(r) for r in rows]
+
+
+# ========== 轻量化提醒相关函数 ==========
+
+def get_plant_reminders():
+    """获取已解锁植物的提醒信息（距上次记录天数）。"""
+    conn = get_db()
+    rows = conn.execute('''
+        SELECT plant_lib_id, custom_name, tag_name, last_record_at, record_count, care_days
+        FROM plant_unlock
+        WHERE last_record_at IS NOT NULL
+        ORDER BY last_record_at ASC
+    ''').fetchall()
+    conn.close()
+
+    now = datetime.now(BEIJING_TZ)
+    reminders = []
+    for r in rows:
+        last_str = r['last_record_at']
+        if not last_str:
+            continue
+        try:
+            last_dt = datetime.strptime(last_str, '%Y-%m-%d %H:%M:%S')
+            last_dt = last_dt.replace(tzinfo=BEIJING_TZ)
+        except ValueError:
+            try:
+                last_dt = datetime.strptime(last_str[:10], '%Y-%m-%d')
+                last_dt = last_dt.replace(tzinfo=BEIJING_TZ)
+            except ValueError:
+                continue
+        days_since = (now - last_dt).days
+        # 获取植物名
+        if r['plant_lib_id']:
+            plant = get_plant_by_id(r['plant_lib_id'])
+            name = plant['name'] if plant else r['custom_name'] or r['tag_name']
+        else:
+            name = r['custom_name'] or r['tag_name']
+        reminders.append({
+            'plant_lib_id': r['plant_lib_id'],
+            'name': name,
+            'days_since_last': days_since,
+            'last_record_at': last_str,
+        })
+    # 按days_since_last倒序排列
+    reminders.sort(key=lambda x: x['days_since_last'], reverse=True)
+    return reminders
+
+
+# ========== 园艺计划相关函数 ==========
+
+def add_plan(type, plant_lib_id, custom_plant_name, content, due_date):
+    """新增一条园艺计划。"""
+    conn = get_db()
+    cursor = conn.execute(
+        "INSERT INTO plans (type, plant_lib_id, custom_plant_name, content, due_date, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (type, plant_lib_id, custom_plant_name, content, due_date, current_time_str())
+    )
+    plan_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return plan_id
+
+
+def get_plans(plant_lib_id):
+    """获取某植物的所有计划（未完成在前，已完成在后）。"""
+    conn = get_db()
+    rows = conn.execute('''
+        SELECT id, type, plant_lib_id, custom_plant_name, content, due_date,
+               completed, completed_at, created_at
+        FROM plans
+        WHERE plant_lib_id = ?
+        ORDER BY completed ASC, created_at DESC
+    ''', (plant_lib_id,)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_pending_plan_count():
+    """获取所有未完成计划的总数。"""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT COUNT(*) as cnt FROM plans WHERE completed = 0"
+    ).fetchone()
+    conn.close()
+    return row['cnt']
+
+
+def complete_plan(plan_id):
+    """将计划标记为已完成。"""
+    conn = get_db()
+    conn.execute(
+        "UPDATE plans SET completed = 1, completed_at = ? WHERE id = ?",
+        (current_time_str(), plan_id)
+    )
+    conn.commit()
+    conn.close()
+
+
+def delete_plan(plan_id):
+    """删除一条计划。"""
+    conn = get_db()
+    conn.execute("DELETE FROM plans WHERE id = ?", (plan_id,))
+    conn.commit()
+    conn.close()
+
+
+# ========== 单株植物培育等级 ==========
+
+def get_plant_cultivation(plant_lib_id):
+    """获取某植物的培育等级。"""
+    plant = get_plant_by_id(plant_lib_id)
+    if not plant:
+        return None
+
+    conn = get_db()
+    unlock = conn.execute(
+        "SELECT record_count, care_days FROM plant_unlock WHERE plant_lib_id = ?",
+        (plant_lib_id,)
+    ).fetchone()
+    conn.close()
+
+    record_count = unlock['record_count'] or 0 if unlock else 0
+    care_days = unlock['care_days'] or 0 if unlock else 0
+
+    result = calc_cultivation_level(record_count, care_days)
+    result['plant_name'] = plant['name']
+    # 填充文案
+    quote_template = CULTIVATION_QUOTES.get(result['level'], '')
+    result['quote'] = quote_template.replace('{plant}', plant['name'])
+    return result
+
+
+# ========== 里程碑成就系统 ==========
+
+MILESTONES = [
+    {'id': 'first_record', 'name': '初次记录', 'icon': '🌱', 'desc': '完成第一次签到'},
+    {'id': 'week_streak', 'name': '周连续', 'icon': '📅', 'desc': '连续 7 天有记录'},
+    {'id': 'month_streak', 'name': '月连续', 'icon': '🗓️', 'desc': '连续 30 天有记录'},
+    {'id': 'collector_10', 'name': '收藏家', 'icon': '📚', 'desc': '解锁 10 种植物'},
+    {'id': 'collector_25', 'name': '大收藏家', 'icon': '🏛️', 'desc': '解锁 25 种植物'},
+    {'id': 'photographer', 'name': '摄影师', 'icon': '📷', 'desc': '累计上传 100 张照片'},
+    {'id': 'social', 'name': '社交蝴蝶', 'icon': '🦋', 'desc': '发布 50 条留言'},
+    {'id': 'botanist', 'name': '植物学家', 'icon': '🏆', 'desc': '达到最高等级'},
+]
+
+
+def check_consecutive_days(n):
+    """检查最近n天是否连续有记录，返回连续天数。"""
+    db = get_db()
+    rows = db.execute('''
+        SELECT DISTINCT DATE(created_at) as day
+        FROM watering_log
+        WHERE created_at >= DATE('now', '-' || ? || ' days')
+        ORDER BY day DESC
+    ''', (n,)).fetchall()
+    db.close()
+    if not rows:
+        return 0
+    consecutive = 0
+    check_date = datetime.now(BEIJING_TZ).date()
+    recorded_days = set(r['day'] for r in rows)
+    for i in range(n):
+        date_str = check_date.strftime('%Y-%m-%d')
+        if date_str in recorded_days:
+            consecutive += 1
+            check_date -= timedelta(days=1)
+        else:
+            break
+    return consecutive
+
+
+def check_milestones():
+    """检查所有里程碑的达成状态。返回列表，每个元素包含milestone信息+unlocked(bool)。"""
+    db = get_db()
+    stats = get_user_stats()
+    results = []
+
+    # 初次记录
+    log_count = stats['log_count']
+    results.append({'id': 'first_record', 'unlocked': log_count >= 1})
+
+    # 周连续
+    days = check_consecutive_days(7)
+    results.append({'id': 'week_streak', 'unlocked': days >= 7})
+
+    # 月连续
+    days = check_consecutive_days(30)
+    results.append({'id': 'month_streak', 'unlocked': days >= 30})
+
+    # 收藏家 / 大收藏家
+    unlocked_count = db.execute('SELECT COUNT(*) FROM plant_unlock WHERE plant_lib_id IS NOT NULL').fetchone()[0]
+    results.append({'id': 'collector_10', 'unlocked': unlocked_count >= 10})
+    results.append({'id': 'collector_25', 'unlocked': unlocked_count >= 25})
+
+    # 摄影师
+    results.append({'id': 'photographer', 'unlocked': stats['photo_count'] >= 100})
+
+    # 社交蝴蝶
+    board_count = db.execute('SELECT COUNT(*) FROM board_message').fetchone()[0]
+    results.append({'id': 'social', 'unlocked': board_count >= 50})
+
+    # 植物学家（最高等级 = LEVELS 最后一个）
+    max_level_xp = LEVELS[-1][0]
+    results.append({'id': 'botanist', 'unlocked': stats['total_xp'] >= max_level_xp})
+
+    db.close()
+
+    # 补充milestone的其他字段
+    for r in results:
+        m = next(x for x in MILESTONES if x['id'] == r['id'])
+        r.update({k: v for k, v in m.items() if k != 'id'})
+
+    return results

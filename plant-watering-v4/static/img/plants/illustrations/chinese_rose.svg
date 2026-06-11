@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- 月季手绘插图 - 玫瑰花形 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 茎 -->
+    <path d="M50,90 Q48,75 48,60 Q48,50 50,45 Q52,50 52,60 Q52,75 50,90Z" stroke="#5a9e5a" stroke-width="2"/>
+    <!-- 刺 -->
+    <line x1="48" y1="65" x2="44" y2="62" stroke="#5a9e5a" stroke-width="1.2"/>
+    <line x1="52" y1="72" x2="56" y2="69" stroke="#5a9e5a" stroke-width="1.2"/>
+    <!-- 叶子 -->
+    <path d="M48,65 Q38,60 32,55 Q28,52 30,50 Q34,50 40,55 Q44,58 48,62Z" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <line x1="38" y1="57" x2="46" y2="62" stroke="#2c2c2c" stroke-width="0.6" opacity="0.4"/>
+    <path d="M52,70 Q62,65 68,60 Q72,57 70,55 Q66,55 60,60 Q56,63 52,67Z" fill="#8fc48a" stroke="#2c2c2c"/>
+    <line x1="62" y1="62" x2="54" y2="67" stroke="#2c2c2c" stroke-width="0.6" opacity="0.4"/>
+    <!-- 花朵 - 外层花瓣 -->
+    <path d="M50,19 Q42,22 38,30 Q36,35 38,40 Q42,36 46,30 Q48,24 50,19Z" fill="#e8a0a0" stroke="#2c2c2c"/>
+    <path d="M50,19 Q58,22 62,30 Q64,35 62,40 Q58,36 54,30 Q52,24 50,19Z" fill="#e89090" stroke="#2c2c2c"/>
+    <path d="M34,35 Q38,28 46,24 Q50,22 54,24 Q48,26 42,30 Q36,34 34,35Z" fill="#f0b0b0" stroke="#2c2c2c"/>
+    <path d="M66,35 Q62,28 54,24 Q50,22 46,24 Q52,26 58,30 Q64,34 66,35Z" fill="#e8a8a8" stroke="#2c2c2c"/>
+    <!-- 花朵 - 内层花瓣 -->
+    <path d="M50,22 Q46,26 44,32 Q44,36 46,34 Q48,30 50,26Z" fill="#f0c0c0" stroke="#2c2c2c" stroke-width="1"/>
+    <path d="M50,22 Q54,26 56,32 Q56,36 54,34 Q52,30 50,26Z" fill="#e8b0b0" stroke="#2c2c2c" stroke-width="1"/>
+    <!-- 花心 -->
+    <circle cx="50" cy="32" r="3" fill="#f0d0d0" stroke="#2c2c2c" stroke-width="0.8"/>
+    <!-- 花萼 -->
+    <path d="M46,48 Q44,52 42,54 Q46,52 48,48Z" fill="#5a9e5a" stroke="#2c2c2c"/>
+    <path d="M54,48 Q56,52 58,54 Q54,52 52,48Z" fill="#5a9e5a" stroke="#2c2c2c"/>
+  </g>
+</svg>

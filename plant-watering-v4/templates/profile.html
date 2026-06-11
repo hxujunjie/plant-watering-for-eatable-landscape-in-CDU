@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}我的档案{% endblock %}
+
+{% block content %}
+<!-- 返回按钮 -->
+<div class="profile-back">
+    <a href="/" class="profile-back-btn">&#8592; 返回</a>
+</div>
+
+<!-- 用户头像 + 名称 + 等级 -->
+<div class="profile-header">
+    <div class="profile-avatar" id="profileAvatar"></div>
+    <div class="profile-name" id="profileName">加载中...</div>
+    <div class="profile-level">
+        <span id="profileLevelIcon"></span>
+        <span id="profileLevelName"></span>
+        <span class="profile-xp" id="profileXp"></span>
+    </div>
+    <div class="profile-title" id="profileTitle"></div>
+</div>
+
+<!-- 徽章墙 -->
+<div class="profile-section">
+    <div class="profile-section-title">成就徽章</div>
+    <div class="badge-wall" id="badgeWall">
+        <!-- 动态渲染 -->
+    </div>
+</div>
+
+<!-- 收集进度 -->
+<div class="profile-section">
+    <div class="profile-section-title">图鉴收集</div>
+    <div class="profile-codex-progress">
+        <div class="profile-codex-text">
+            <span id="codexUnlocked">0</span> / <span id="codexTotal">0</span> 种植物
+        </div>
+        <div class="profile-codex-bar-wrap">
+            <div class="profile-codex-bar" id="codexBar" style="width:0%"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 统计数据 -->
+<div class="profile-section">
+    <div class="profile-section-title">统计数据</div>
+    <div class="profile-stats-grid">
+        <div class="profile-stat-item">
+            <div class="profile-stat-value" id="statLogCount">0</div>
+            <div class="profile-stat-label">总记录数</div>
+        </div>
+        <div class="profile-stat-item">
+            <div class="profile-stat-value" id="statPhotoCount">0</div>
+            <div class="profile-stat-label">总照片数</div>
+        </div>
+        <div class="profile-stat-item">
+            <div class="profile-stat-value" id="statDays">0</div>
+            <div class="profile-stat-label">活跃天数</div>
+        </div>
+        <div class="profile-stat-item">
+            <div class="profile-stat-value" id="statTopPlant">-</div>
+            <div class="profile-stat-label">最爱记录</div>
+        </div>
+    </div>
+</div>
+
+<!-- 植物培育排行 -->
+<div class="profile-section">
+    <div class="profile-section-title">培育排行</div>
+    <div class="profile-rank-list" id="rankList">
+        <!-- 动态渲染 -->
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    fetch('/api/profile')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var stats = data.stats;
+            var achievements = data.achievements;
+            var codex = data.codex_progress;
+            var rankList = data.rank_list;
+            var topPlants = data.top_plants;
+
+            // 头像（取最近签到者首字）
+            var name = '植物观察者';
+            if (stats.first_log_date) {
+                // 用最近记录的名字
+                fetch('/api/last_watering').then(function(r) { return r.json(); }).then(function(d) {
+                    if (d.last_watering) {
+                        name = d.last_watering.name;
+                        document.getElementById('profileAvatar').textContent = name.charAt(0);
+                        document.getElementById('profileName').textContent = name;
+                    }
+                }).catch(function() {
+                    document.getElementById('profileAvatar').textContent = name.charAt(0);
+                    document.getElementById('profileName').textContent = name;
+                });
+            } else {
+                document.getElementById('profileAvatar').textContent = name.charAt(0);
+                document.getElementById('profileName').textContent = name;
+            }
+
+            // 等级
+            document.getElementById('profileLevelIcon').textContent = stats.level_icon;
+            document.getElementById('profileLevelName').textContent = stats.level_name;
+            document.getElementById('profileXp').textContent = stats.total_xp + ' XP';
+
+            // 称号
+            var titles = ['植物新手', '自然观察者', '园艺爱好者', '植物守护者', '植物达人', '园艺大师'];
+            var titleIdx = 0;
+            if (stats.total_xp >= 1800) titleIdx = 5;
+            else if (stats.total_xp >= 1200) titleIdx = 4;
+            else if (stats.total_xp >= 500) titleIdx = 3;
+            else if (stats.total_xp >= 300) titleIdx = 2;
+            else if (stats.total_xp >= 50) titleIdx = 1;
+            document.getElementById('profileTitle').textContent = titles[titleIdx];
+
+            // 徽章墙
+            var badgeWall = document.getElementById('badgeWall');
+            badgeWall.innerHTML = '';
+            achievements.forEach(function(a) {
+                var item = document.createElement('div');
+                item.className = 'badge-item' + (a.unlocked ? '' : ' locked');
+                item.innerHTML =
+                    '<div class="badge-icon">' + (a.unlocked ? '<img src="/static/img/badges/' + a.id + '.svg" alt="' + a.name + '">' : '?') + '</div>' +
+                    '<div class="badge-name">' + (a.unlocked ? a.name : '???') + '</div>' +
+                    '<div class="badge-desc">' + a.desc + '</div>';
+                badgeWall.appendChild(item);
+            });
+
+            // 图鉴进度
+            document.getElementById('codexUnlocked').textContent = codex.unlocked;
+            document.getElementById('codexTotal').textContent = codex.total;
+            var pct = codex.total > 0 ? Math.round((codex.unlocked / codex.total) * 100) : 0;
+            document.getElementById('codexBar').style.width = pct + '%';
+
+            // 统计数据
+            document.getElementById('statLogCount').textContent = stats.log_count;
+            document.getElementById('statPhotoCount').textContent = stats.photo_count;
+            // 活跃天数
+            if (stats.first_log_date && stats.last_log_date) {
+                var first = new Date(stats.first_log_date.replace(/-/g, '/'));
+                var last = new Date(stats.last_log_date.replace(/-/g, '/'));
+                var days = Math.ceil((last - first) / (1000 * 60 * 60 * 24)) + 1;
+                document.getElementById('statDays').textContent = days;
+            }
+            // 最爱记录
+            if (topPlants && topPlants.length > 0) {
+                document.getElementById('statTopPlant').textContent = topPlants[0].name;
+            }
+
+            // 培育排行
+            var rankEl = document.getElementById('rankList');
+            rankEl.innerHTML = '';
+            if (rankList.length === 0) {
+                rankEl.innerHTML = '<div class="profile-rank-empty">这片土壤还在等待第一颗种子</div>';
+            } else {
+                rankList.forEach(function(r, idx) {
+                    var item = document.createElement('div');
+                    item.className = 'profile-rank-item';
+                    // 生成星星
+                    var stars = '';
+                    for (var i = 0; i < 5; i++) {
+                        stars += '<span class="profile-rank-star' + (i < r.level ? '' : ' empty') + '">&#9733;</span>';
+                    }
+                    item.innerHTML =
+                        '<span class="profile-rank-num">' + (idx + 1) + '</span>' +
+                        '<a class="profile-rank-name" href="/codex/' + r.plant_lib_id + '">' + r.name + '</a>' +
+                        '<span class="profile-rank-level">' + r.level_name + '</span>' +
+                        '<span class="profile-rank-stars">' + stars + '</span>';
+                    rankEl.appendChild(item);
+                });
+            }
+        })
+        .catch(function() {
+            showToast('加载档案数据失败');
+        });
+})();
+</script>
+{% endblock %}

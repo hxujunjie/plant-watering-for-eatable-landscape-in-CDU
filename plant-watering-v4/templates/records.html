@@ -18,9 +18,8 @@
 <div class="tabs scrollable">
     <button class="tab active" data-tab="list">记录列表</button>
     <button class="tab" data-tab="calendar">日历</button>
-    <button class="tab" data-tab="photos">图鉴</button>
+    <button class="tab" data-tab="board">黑板</button>
     <button class="tab" data-tab="tags" onclick="switchTab('tags')">标签筛选</button>
-    <button class="tab" data-tab="growth" onclick="switchTab('growth')">成长</button>
 </div>
 
 <!-- 签到列表 -->
@@ -28,11 +27,11 @@
     <div id="recordsList"></div>
     <div class="empty-state" id="listEmpty">
         <div class="empty-icon">🌿</div>
-        <div class="empty-title">尚无记录</div>
-        <div class="empty-desc">快来写下第一条观察笔记</div>
+        <div class="empty-title">这片土壤还在等待第一颗种子</div>
+        <div class="empty-desc">去记录你的植物，它们就会出现在这里</div>
     </div>
     <div class="load-more-wrapper" id="loadMoreWrapper">
-        <button class="btn-load-more" id="loadMoreBtn">加载更多</button>
+        <button class="btn-load-more" id="loadMoreBtn">翻翻过去的日记...</button>
     </div>
 </div>
 
@@ -47,18 +46,55 @@
     <div class="cal-detail" id="calDetail"></div>
     <div class="empty-state" id="calendarEmpty">
         <div class="empty-icon">📅</div>
-        <div class="empty-title">本月暂无记录</div>
+        <div class="empty-title">这片土壤还在等待第一颗种子</div>
         <div class="empty-desc">浇水后这里会显示标记</div>
     </div>
 </div>
 
-<!-- 照片集（图鉴） -->
-<div class="tab-content" id="tabPhotos">
-    <div id="photosContainer"></div>
-    <div class="empty-state" id="photosEmpty">
-        <div class="empty-icon">📷</div>
-        <div class="empty-title">尚无影像</div>
-        <div class="empty-desc">签到时上传照片，此处将展示图鉴</div>
+<!-- 黑板留言 -->
+<div class="tab-content" id="tabBoard">
+    <!-- 搜索栏 -->
+    <div class="board-search">
+        <input type="text" id="boardSearchInput" placeholder="搜索留言..." maxlength="50">
+    </div>
+
+    <!-- 便利贴墙 -->
+    <div class="board-wall" id="boardWall">
+        <!-- 便利贴由JS动态渲染 -->
+    </div>
+
+    <!-- 加载更多 -->
+    <div class="board-load-more" id="boardLoadMore" style="display:none;">
+        <button id="boardLoadMoreBtn" class="board-load-more-btn">翻翻过去的日记...</button>
+    </div>
+
+    <!-- 空状态提示 -->
+    <div class="board-empty" id="boardEmpty" style="display:none;">
+        <div class="empty-icon">📝</div>
+        <div class="empty-title">黑板还是空的，来留下第一笔吧</div>
+        <div class="empty-desc">在黑板上写下你的植物心得</div>
+    </div>
+
+    <!-- 输入区域 -->
+    <div class="board-input">
+        <div class="board-input-card">
+            <input type="text" id="boardAuthor" class="board-author-input" placeholder="你的名字" maxlength="20">
+            <textarea id="boardContent" class="board-content-input" placeholder="写下你的留言..." rows="2" maxlength="200"></textarea>
+            <div class="board-input-footer">
+                <div class="board-colors" id="boardColors">
+                    <!-- 颜色选择按钮由JS渲染 -->
+                </div>
+                <button class="board-submit" id="boardSubmitBtn">发布留言</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 便利贴放大遮罩 -->
+<div class="note-overlay" id="noteOverlay">
+    <div class="note-zoomed" id="noteZoomed">
+        <button class="note-zoomed-close" id="noteZoomedClose">&times;</button>
+        <div class="note-zoomed-content" id="noteZoomedContent"></div>
     </div>
 </div>
 
@@ -72,29 +108,6 @@
     </div>
 </div>
 
-<!-- 成长时间线 -->
-<div class="tab-content" id="tabGrowth">
-    <div class="growth-tag-selector" id="growthTagSelector">
-        <div class="growth-tag-selector-label">选择植物</div>
-        <div class="growth-tags-list" id="growthTagsList">
-            <!-- 动态渲染 -->
-        </div>
-    </div>
-    <div class="growth-info" id="growthInfo" style="display:none;">
-        <span id="growthInfoText"></span>
-        <button class="growth-gif-btn" id="growthGifBtn" onclick="toggleGifSelectMode()">🎞️ 制作GIF</button>
-    </div>
-    <div class="growth-timeline-wrapper" id="growthTimelineWrapper" style="display:none;">
-        <div class="growth-timeline" id="growthTimeline">
-            <!-- 动态渲染照片卡片 -->
-        </div>
-    </div>
-    <div class="growth-empty" id="growthEmpty">
-        <div class="empty-icon">🌱</div>
-        <div class="empty-title">追踪成长</div>
-        <div class="empty-desc">选择一个标签，查看植物的成长轨迹</div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
@@ -114,7 +127,7 @@
     var hasMore = true;
     var listLoaded = false;
     var calendarLoaded = false;
-    var photosLoaded = false;
+    var boardLoaded = false;
     var tagsLoaded = false;
     var calYear, calMonth;
 
@@ -141,8 +154,9 @@
                 calendarLoaded = true;
                 initCalendar();
                 loadCalendar();
-            } else if (targetTab === 'photos' && !photosLoaded) {
-                loadPhotos();
+            } else if (targetTab === 'board' && !boardLoaded) {
+                boardLoaded = true;
+                initBoard();
             }
         });
     });
@@ -191,7 +205,7 @@
             })
             .finally(function() {
                 loadMoreBtn.disabled = false;
-                loadMoreBtn.textContent = '加载更多';
+                loadMoreBtn.textContent = '翻翻过去的日记...';
             });
     }
 
@@ -505,7 +519,7 @@
             .then(function(data) {
                 var logs = data.logs || [];
                 if (logs.length === 0) {
-                    calDetail.innerHTML = '<div class="cal-detail-empty">当日暂无记录</div>';
+                    calDetail.innerHTML = '<div class="cal-detail-empty">这片土壤还在等待第一颗种子</div>';
                     return;
                 }
                 calDetail.innerHTML = '';
@@ -580,103 +594,6 @@
         loadCalendar();
     });
 
-    // ========== 照片集（图鉴） ==========
-    var photosGroupsCache = null; // 缓存分组数据
-
-    function loadPhotos() {
-        var container = document.getElementById('photosContainer');
-        var photosEmpty = document.getElementById('photosEmpty');
-
-        fetch('/api/photos')
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                var groups = data.groups || {};
-                var groupKeys = Array.isArray(groups) ? groups.map(function(g) { return g.date; }) : Object.keys(groups);
-                if (groupKeys.length === 0) {
-                    photosEmpty.style.display = '';
-                    return;
-                }
-                photosEmpty.style.display = 'none';
-                photosLoaded = true;
-
-                // 缓存原始数据
-                photosGroupsCache = { groups: groups, groupKeys: groupKeys };
-                renderPhotos(photosGroupsCache);
-            })
-            .catch(function() {
-                showToast('加载照片失败');
-            });
-    }
-
-    function renderPhotos(cache) {
-        var container = document.getElementById('photosContainer');
-        var groups = cache.groups;
-        var groupKeys = cache.groupKeys.slice(); // 复制一份，避免修改原数据
-
-        // 按排序要求排列日期分组
-        var order = typeof getSortOrder === 'function' ? getSortOrder() : 'desc';
-        if (order === 'asc') {
-            groupKeys.sort(); // 日期字符串升序 = 从旧到新
-        } else {
-            groupKeys.sort().reverse(); // 从新到旧
-        }
-
-        container.innerHTML = '';
-        groupKeys.forEach(function(dateKey) {
-            var photos = Array.isArray(groups) ? groups[groupKeys.indexOf(dateKey)].photos : groups[dateKey];
-            var groupEl = document.createElement('div');
-            groupEl.className = 'photo-group';
-
-            var dateLabel = document.createElement('div');
-            dateLabel.className = 'photo-date';
-            dateLabel.textContent = dateKey || '';
-            groupEl.appendChild(dateLabel);
-
-            var photoGrid = document.createElement('div');
-            photoGrid.className = 'photo-grid';
-
-            (photos || []).forEach(function(photo) {
-                var item = document.createElement('div');
-                item.className = 'photo-item';
-                var img = document.createElement('img');
-                img.src = photo.file_path || photo.path;
-                img.alt = '照片';
-                img.loading = 'lazy';
-                if (photo.id) img.setAttribute('data-photo-id', photo.id);
-                img.addEventListener('click', function() {
-                    openViewerUrl(img);
-                });
-                item.appendChild(img);
-
-                // 叠加注释文字
-                if (photo.caption) {
-                    var captionEl = document.createElement('div');
-                    captionEl.className = 'photo-caption-overlay';
-                    captionEl.textContent = photo.caption;
-                    item.appendChild(captionEl);
-                }
-
-                // 叠加tag标签
-                if (photo.tags && photo.tags.length > 0) {
-                    var tagOverlay = document.createElement('div');
-                    tagOverlay.className = 'photo-tag-overlay';
-                    photo.tags.forEach(function(tag) {
-                        var badge = document.createElement('span');
-                        badge.className = 'photo-tag-badge';
-                        badge.textContent = tag.name || tag;
-                        tagOverlay.appendChild(badge);
-                    });
-                    item.appendChild(tagOverlay);
-                }
-
-                photoGrid.appendChild(item);
-            });
-
-            groupEl.appendChild(photoGrid);
-            container.appendChild(groupEl);
-        });
-    }
-
     // ========== 标签筛选Tab ==========
     var allTagsCache = [];
     var activeTagIds = [];
@@ -702,7 +619,7 @@
         tagsCloud.innerHTML = '';
 
         if (allTagsCache.length === 0) {
-            tagsCloud.innerHTML = '<div class="empty-state" style="padding:2rem 1rem;"><div class="empty-title">尚无标签</div><div class="empty-desc">签到时为照片添加标签，此处将展示</div></div>';
+            tagsCloud.innerHTML = '<div class="empty-state" style="padding:2rem 1rem;"><div class="empty-title">这片土壤还在等待第一颗种子</div><div class="empty-desc">签到时为照片添加标签，此处将展示</div></div>';
             return;
         }
 
@@ -838,8 +755,9 @@
             calendarLoaded = true;
             initCalendar();
             loadCalendar();
-        } else if (targetTab === 'photos' && !photosLoaded) {
-            loadPhotos();
+        } else if (targetTab === 'board' && !boardLoaded) {
+            boardLoaded = true;
+            initBoard();
         } else if (targetTab === 'tags' && !tagsLoaded) {
             loadTagsCloud();
         }
@@ -953,7 +871,7 @@
         if (!commentsList) return;
 
         if (comments.length === 0) {
-            commentsList.innerHTML = '<div class="viewer-comments-empty">暂无留言，来说两句吧</div>';
+            commentsList.innerHTML = '<div class="viewer-comments-empty">黑板还是空的，来留下第一笔吧</div>';
             return;
         }
 
@@ -1090,165 +1008,353 @@
         }
     })();
 
-    // ========== 成长时间线 ==========
-    var growthActiveTagId = null;
-    var growthPhotosCache = [];
-    var growthGifSelectMode = false;
-    var growthSelectedForGif = new Set();
+    // ========== 黑板留言 ==========
+    // 便利贴背景颜色
+    var boardNoteColors = ['#fffef8', '#fff9c4', '#e3f2fd', '#fce4ec', '#e8f5e9'];
+    // 粉笔颜色选择器
+    var boardChalkColors = [
+        { color: '#ffffff', label: '白色' },
+        { color: '#ffeb3b', label: '黄色' },
+        { color: '#f48fb1', label: '粉色' },
+        { color: '#81d4fa', label: '蓝色' },
+        { color: '#a5d6a7', label: '绿色' },
+        { color: '#ffcc80', label: '橙色' }
+    ];
 
-    function loadGrowthTags() {
-        fetch('/api/tags')
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                var tags = data.tags || [];
-                var container = document.getElementById('growthTagsList');
-                container.innerHTML = '';
-                tags.forEach(function(tag) {
-                    var btn = document.createElement('button');
-                    btn.className = 'growth-tag-btn' + (growthActiveTagId === tag.id ? ' active' : '');
-                    btn.textContent = tag.name;
-                    btn.addEventListener('click', function() {
-                        growthActiveTagId = tag.id;
-                        loadGrowthTags(); // 刷新按钮样式
-                        loadGrowthTimeline(tag.id);
-                    });
-                    container.appendChild(btn);
-                });
+    var boardMessages = [];
+    var boardCurrentPage = 1;
+    var boardHasMore = false;
+    var boardCurrentKeyword = '';
+    var boardIsLoading = false;
+    var boardSelectedChalkColor = boardChalkColors[0].color;
+    var boardReadIds = JSON.parse(localStorage.getItem('board_read_ids') || '[]');
+
+    function initBoard() {
+        // 从localStorage恢复昵称
+        var savedAuthor = localStorage.getItem('board_author');
+        var boardAuthor = document.getElementById('boardAuthor');
+        if (savedAuthor && boardAuthor) {
+            boardAuthor.value = savedAuthor;
+        }
+
+        // 渲染颜色选择器
+        renderBoardColorPicker();
+
+        // 加载留言
+        loadBoardMessages();
+
+        // 绑定事件
+        var boardSubmitBtn = document.getElementById('boardSubmitBtn');
+        if (boardSubmitBtn) {
+            boardSubmitBtn.addEventListener('click', submitBoardMessage);
+        }
+
+        var noteZoomedClose = document.getElementById('noteZoomedClose');
+        if (noteZoomedClose) {
+            noteZoomedClose.addEventListener('click', closeBoardZoom);
+        }
+
+        var noteOverlay = document.getElementById('noteOverlay');
+        if (noteOverlay) {
+            noteOverlay.addEventListener('click', function(e) {
+                if (e.target === noteOverlay) closeBoardZoom();
             });
+        }
+
+        // 搜索框：输入防抖搜索
+        var searchTimer = null;
+        var searchInput = document.getElementById('boardSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(function() {
+                    boardCurrentKeyword = searchInput.value.trim();
+                    boardCurrentPage = 1;
+                    boardMessages = [];
+                    loadBoardMessages(false);
+                }, 400);
+            });
+        }
+
+        // 加载更多按钮
+        var boardLoadMoreBtn = document.getElementById('boardLoadMoreBtn');
+        if (boardLoadMoreBtn) {
+            boardLoadMoreBtn.addEventListener('click', function() {
+                boardCurrentPage++;
+                loadBoardMessages(true);
+            });
+        }
     }
 
-    function loadGrowthTimeline(tagId) {
-        var wrapper = document.getElementById('growthTimelineWrapper');
-        var info = document.getElementById('growthInfo');
-        var empty = document.getElementById('growthEmpty');
-        var timeline = document.getElementById('growthTimeline');
-        if (!timeline) return;
-        timeline.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--pencil);font-size:0.85rem;">加载中...</div>';
-        wrapper.style.display = 'block';
-        info.style.display = 'none';
-        empty.style.display = 'none';
+    function renderBoardColorPicker() {
+        var boardColors = document.getElementById('boardColors');
+        if (!boardColors) return;
 
-        fetch('/api/photos/by-tag/' + tagId + '?order=asc')
+        var html = '';
+        boardChalkColors.forEach(function(item, i) {
+            var activeClass = i === 0 ? ' active' : '';
+            html += '<button class="color-btn' + activeClass + '" data-color="' + item.color + '" title="' + item.label + '"></button>';
+        });
+        boardColors.innerHTML = html;
+
+        // 绑定颜色选择事件
+        var btns = boardColors.querySelectorAll('.color-btn');
+        btns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                btns.forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                boardSelectedChalkColor = btn.getAttribute('data-color');
+            });
+        });
+    }
+
+    function loadBoardMessages(append) {
+        if (boardIsLoading) return;
+        boardIsLoading = true;
+
+        var url = '/api/board?page=' + boardCurrentPage + '&limit=20';
+        if (boardCurrentKeyword) url += '&keyword=' + encodeURIComponent(boardCurrentKeyword);
+
+        var boardWall = document.getElementById('boardWall');
+        var boardLoadMoreBtn = document.getElementById('boardLoadMoreBtn');
+
+        if (!append) {
+            if (boardWall) boardWall.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--pencil);font-size:0.85rem;">加载中...</div>';
+        } else {
+            if (boardLoadMoreBtn) boardLoadMoreBtn.textContent = '加载中...';
+        }
+
+        fetch(url)
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                var photos = data.photos || [];
-                growthPhotosCache = photos;
-                growthGifSelectMode = false;
-                growthSelectedForGif.clear();
+                boardIsLoading = false;
+                var newMessages = data.messages || [];
+                boardHasMore = data.has_more || false;
 
-                if (photos.length === 0) {
-                    wrapper.style.display = 'none';
-                    empty.style.display = 'flex';
-                    return;
+                if (append) {
+                    boardMessages = boardMessages.concat(newMessages);
+                } else {
+                    boardMessages = newMessages;
                 }
+                renderBoardNotes(append);
 
-                // 计算时间跨度
-                var first = photos[0].created_at || '';
-                var last = photos[photos.length - 1].created_at || '';
-                var firstShort = first ? first.substring(5, 10).replace('-', '/') : '';
-                var lastShort = last ? last.substring(5, 10).replace('-', '/') : '';
-                document.getElementById('growthInfoText').textContent =
-                    firstShort + ' - ' + lastShort + '，共 ' + photos.length + ' 张';
-                info.style.display = 'flex';
-
-                // 渲染时间线
-                timeline.innerHTML = '';
-                timeline.classList.remove('gif-select-mode');
-
-                photos.forEach(function(photo) {
-                    var card = document.createElement('div');
-                    card.className = 'growth-card';
-                    card.setAttribute('data-photo-id', photo.id);
-
-                    var dateStr = photo.created_at ? photo.created_at.substring(5, 10).replace('-', '/') : '';
-                    var caption = photo.caption || '';
-
-                    card.innerHTML =
-                        '<div class="growth-card-photo">' +
-                            '<img src="' + (photo.file_path || photo.path || '') + '" alt="照片" loading="lazy" data-photo-id="' + photo.id + '">' +
-                            '<div class="growth-card-checkbox" data-id="' + photo.id + '"></div>' +
-                        '</div>' +
-                        '<div class="growth-card-node"></div>' +
-                        '<div class="growth-card-date">' + dateStr + '</div>' +
-                        (caption ? '<div class="growth-card-caption">' + escapeHtml(caption) + '</div>' : '');
-
-                    // 点击照片打开查看器
-                    var cardImg = card.querySelector('.growth-card-photo img');
-                    if (cardImg) {
-                        cardImg.addEventListener('click', function(e) {
-                            if (growthGifSelectMode) {
-                                var id = parseInt(card.getAttribute('data-photo-id'));
-                                var cb = card.querySelector('.growth-card-checkbox');
-                                if (growthSelectedForGif.has(id)) {
-                                    growthSelectedForGif.delete(id);
-                                    cb.classList.remove('checked');
-                                    cb.textContent = '';
-                                } else {
-                                    if (growthSelectedForGif.size >= 20) {
-                                        showToast('最多选择20张照片', 'error');
-                                        return;
-                                    }
-                                    growthSelectedForGif.add(id);
-                                    cb.classList.add('checked');
-                                    cb.textContent = '✓';
-                                }
-                                updateGifBtnText();
-                                e.stopPropagation();
-                            } else {
-                                openViewerUrl(this);
-                            }
-                        });
-                    }
-
-                    timeline.appendChild(card);
-                });
+                // 更新加载更多按钮
+                var loadMoreDiv = document.getElementById('boardLoadMore');
+                if (boardHasMore) {
+                    if (loadMoreDiv) loadMoreDiv.style.display = 'block';
+                    if (boardLoadMoreBtn) boardLoadMoreBtn.textContent = '翻翻过去的日记...';
+                } else {
+                    if (loadMoreDiv) loadMoreDiv.style.display = 'none';
+                }
             })
             .catch(function(err) {
-                if (timeline) {
-                    timeline.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--accent-rose);font-size:0.85rem;">加载失败</div>';
+                boardIsLoading = false;
+                console.error('加载留言失败:', err);
+                if (!append && boardWall) {
+                    boardWall.innerHTML = '<div style="text-align:center;padding:1rem;color:var(--accent-rose);font-size:0.85rem;">加载失败</div>';
                 }
             });
     }
 
-    function toggleGifSelectMode() {
-        growthGifSelectMode = !growthGifSelectMode;
-        var timeline = document.getElementById('growthTimeline');
-        var gifBtn = document.getElementById('growthGifBtn');
+    function renderBoardNotes(append) {
+        var boardWall = document.getElementById('boardWall');
+        var boardEmpty = document.getElementById('boardEmpty');
+        if (!boardWall) return;
 
-        if (growthGifSelectMode) {
-            timeline.classList.add('gif-select-mode');
-            gifBtn.textContent = '开始制作 (' + growthSelectedForGif.size + '张)';
-            gifBtn.onclick = function() {
-                if (growthSelectedForGif.size < 3) {
-                    showToast('请至少选择3张照片', 'error');
-                    return;
+        if (boardMessages.length === 0) {
+            boardWall.style.display = 'none';
+            if (boardEmpty) {
+                if (boardCurrentKeyword) {
+                    boardEmpty.querySelector('.empty-title').textContent = '没有找到匹配的留言，换个词试试';
+                    boardEmpty.querySelector('.empty-desc').textContent = '';
+                } else {
+                    boardEmpty.querySelector('.empty-title').textContent = '黑板还是空的，来留下第一笔吧';
+                    boardEmpty.querySelector('.empty-desc').textContent = '在黑板上写下你的植物心得';
                 }
-                openGifMaker();
-            };
-        } else {
-            timeline.classList.remove('gif-select-mode');
-            growthSelectedForGif.clear();
-            // 清除所有勾选
-            timeline.querySelectorAll('.growth-card-checkbox').forEach(function(cb) {
-                cb.classList.remove('checked');
-                cb.textContent = '';
+                boardEmpty.style.display = 'flex';
+            }
+            return;
+        }
+        boardWall.style.display = 'block';
+        if (boardEmpty) boardEmpty.style.display = 'none';
+
+        var html = '';
+        if (append) {
+            html = boardWall.innerHTML;
+        }
+
+        var toRender = append
+            ? boardMessages.slice(boardMessages.length - (boardMessages.length - (boardCurrentPage - 1) * 20))
+            : boardMessages;
+
+        var sorted = toRender.slice().sort(function(a, b) {
+            return (b.created_at || '').localeCompare(a.created_at || '');
+        });
+
+        sorted.forEach(function(msg) {
+            if (append && boardWall.querySelector('.sticky-note[data-id="' + msg.id + '"]')) return;
+
+            var isRead = isBoardMessageRead(msg.id);
+            var readClass = isRead ? 'read' : 'unread';
+            var bgColor = boardNoteColors[Math.abs(boardHashCode(msg.id)) % boardNoteColors.length];
+            var rotation = (Math.random() * 6 - 3).toFixed(1);
+
+            html += '<div class="sticky-note ' + readClass + '" data-id="' + msg.id + '" '
+                + 'style="background:' + bgColor + '; transform:rotate(' + rotation + 'deg); --note-color:' + msg.chalkColor + ';">'
+                + '<div class="sticky-pin"></div>'
+                + '<button class="sticky-delete" data-id="' + msg.id + '" title="删除">&times;</button>'
+                + '<div class="sticky-author" style="color:' + msg.chalkColor + ';">' + escapeHtml(msg.author) + '</div>'
+                + '<div class="sticky-text">' + escapeHtml(msg.content) + '</div>'
+                + '<div class="sticky-time">' + formatBoardTime(msg.created_at) + '</div>'
+                + '</div>';
+        });
+        boardWall.innerHTML = html;
+
+        bindBoardNoteEvents();
+    }
+
+    function bindBoardNoteEvents() {
+        var boardWall = document.getElementById('boardWall');
+        if (!boardWall) return;
+        var notes = boardWall.querySelectorAll('.sticky-note');
+
+        notes.forEach(function(note) {
+            note.addEventListener('click', function(e) {
+                if (e.target.classList.contains('sticky-delete')) return;
+
+                var id = note.getAttribute('data-id');
+                markBoardAsRead(id);
+                note.classList.remove('unread');
+                note.classList.add('read');
+                zoomBoardNote(note);
             });
-            gifBtn.textContent = '🎞️ 制作GIF';
-            gifBtn.onclick = function() { toggleGifSelectMode(); };
+
+            var deleteBtn = note.querySelector('.sticky-delete');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var id = deleteBtn.getAttribute('data-id');
+                    deleteBoardMessage(id);
+                });
+            }
+        });
+    }
+
+    function submitBoardMessage() {
+        var boardAuthor = document.getElementById('boardAuthor');
+        var boardContent = document.getElementById('boardContent');
+        var author = boardAuthor ? (boardAuthor.value.trim() || '匿名') : '匿名';
+        var content = boardContent ? boardContent.value.trim() : '';
+        var color = boardSelectedChalkColor;
+
+        if (!content) {
+            showToast('请输入留言内容', 'error');
+            return;
+        }
+
+        fetch('/api/board', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({author: author, content: content, color: color})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                if (boardContent) boardContent.value = '';
+                localStorage.setItem('board_author', author);
+                boardCurrentPage = 1;
+                boardMessages = [];
+                loadBoardMessages(false);
+                showToast('留言发布成功', 'success');
+            } else {
+                showToast(data.message || '发布失败', 'error');
+            }
+        })
+        .catch(function(err) {
+            showToast('网络错误', 'error');
+        });
+    }
+
+    function deleteBoardMessage(id) {
+        showModal('确认删除', '确定要删除这条留言吗？', function() {
+            fetch('/api/board/' + id, {method: 'DELETE'})
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        boardCurrentPage = 1;
+                        boardMessages = [];
+                        loadBoardMessages(false);
+                        showToast('已删除', 'success');
+                    }
+                });
+        });
+    }
+
+    function zoomBoardNote(noteEl) {
+        var id = noteEl.getAttribute('data-id');
+        var msg = boardMessages.find(function(m) { return m.id == id; });
+        if (!msg) return;
+
+        var bgColor = boardNoteColors[Math.abs(boardHashCode(msg.id)) % boardNoteColors.length];
+        var noteZoomed = document.getElementById('noteZoomed');
+        var noteZoomedContent = document.getElementById('noteZoomedContent');
+        var noteOverlay = document.getElementById('noteOverlay');
+
+        if (noteZoomedContent) {
+            noteZoomedContent.innerHTML =
+                '<div class="note-zoomed-author" style="color:' + msg.chalkColor + ';">' + escapeHtml(msg.author) + '</div>'
+                + '<div class="note-zoomed-text">' + escapeHtml(msg.content) + '</div>'
+                + '<div class="note-zoomed-time">' + formatBoardTime(msg.created_at) + '</div>';
+        }
+
+        if (noteZoomed) noteZoomed.style.background = bgColor;
+        if (noteOverlay) {
+            noteOverlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
         }
     }
 
-    function updateGifBtnText() {
-        var gifBtn = document.getElementById('growthGifBtn');
-        if (growthGifSelectMode) {
-            gifBtn.textContent = '开始制作 (' + growthSelectedForGif.size + '张)';
+    function closeBoardZoom() {
+        var noteOverlay = document.getElementById('noteOverlay');
+        if (noteOverlay) {
+            noteOverlay.classList.remove('show');
+            document.body.style.overflow = '';
         }
+    }
+
+    function isBoardMessageRead(id) {
+        return boardReadIds.indexOf(id) !== -1;
+    }
+
+    function markBoardAsRead(id) {
+        if (boardReadIds.indexOf(id) === -1) {
+            boardReadIds.push(id);
+            localStorage.setItem('board_read_ids', JSON.stringify(boardReadIds));
+        }
+    }
+
+    function boardHashCode(str) {
+        var hash = 0;
+        for (var i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash |= 0;
+        }
+        return hash;
+    }
+
+    function formatBoardTime(ts) {
+        if (!ts) return '';
+        var d = new Date(ts);
+        var month = d.getMonth() + 1;
+        var day = d.getDate();
+        var hour = d.getHours().toString().padStart(2, '0');
+        var min = d.getMinutes().toString().padStart(2, '0');
+        return month + '月' + day + '日 ' + hour + ':' + min;
     }
 
     // ========== 初始化 ==========
     initCalendar();
     loadRecords(false);
-    loadGrowthTags();
 
     // 监听全局排序变化，刷新当前数据
     window.addEventListener('sortOrderChanged', function() {
@@ -1259,10 +1365,6 @@
         hasMore = true;
         listLoaded = false;
         loadRecords(false);
-        // 重置图鉴
-        photosLoaded = false;
-        photosGroupsCache = null;
-        loadPhotos();
         // 重置标签筛选
         if (activeTagIds.length > 0) {
             loadTagFilterResult();

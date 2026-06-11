@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- 薄荷手绘插图 - 心形薄荷叶 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 茎 -->
+    <path d="M50,90 Q48,68 48,52 Q48,42 50,36 Q52,42 52,52 Q52,68 50,90Z" stroke="#5a9e5a" stroke-width="2"/>
+    <!-- 分枝 -->
+    <path d="M48,55 Q40,48 34,42 Q30,38 32,36 Q36,38 40,42 Q44,46 48,52Z" stroke="#5a9e5a" stroke-width="1.5"/>
+    <path d="M52,50 Q60,43 66,37 Q70,33 68,31 Q64,33 60,37 Q56,43 52,48Z" stroke="#5a9e5a" stroke-width="1.5"/>
+    <!-- 顶部薄荷叶 -->
+    <path d="M50,36 Q42,28 36,22 Q32,18 34,16 Q38,16 42,20 Q48,26 50,32 Q52,26 58,20 Q62,16 66,16 Q68,18 64,22 Q58,28 50,36Z" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <line x1="50" y1="20" x2="50" y2="34" stroke="#2c2c2c" stroke-width="0.8" opacity="0.4"/>
+    <line x1="50" y1="24" x2="42" y2="22" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
+    <line x1="50" y1="24" x2="58" y2="22" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
+    <!-- 侧叶1 -->
+    <path d="M34,42 Q28,36 24,32 Q22,30 24,28 Q26,30 28,32 Q32,36 34,40Z" fill="#8fc48a" stroke="#2c2c2c"/>
+    <path d="M34,42 Q30,34 26,30 Q24,28 26,26 Q28,28 30,30 Q32,34 34,40Z" fill="#7ab875" stroke="#2c2c2c"/>
+    <line x1="28" y1="32" x2="34" y2="38" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
+    <!-- 侧叶2 -->
+    <path d="M66,37 Q72,31 76,27 Q78,25 76,23 Q74,25 72,27 Q68,31 66,35Z" fill="#8fc48a" stroke="#2c2c2c"/>
+    <path d="M66,37 Q70,29 74,25 Q76,23 74,21 Q72,23 70,25 Q68,29 66,35Z" fill="#7ab875" stroke="#2c2c2c"/>
+    <line x1="72" y1="27" x2="66" y2="33" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
+  </g>
+</svg>

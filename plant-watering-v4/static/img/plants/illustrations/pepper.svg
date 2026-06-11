@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- 辣椒手绘插图 - 尖椒形 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 茎 -->
+    <path d="M50,90 Q48,68 48,52 Q48,44 50,40 Q52,44 52,52 Q52,68 50,90Z" stroke="#5a9e5a" stroke-width="2"/>
+    <!-- 叶子 -->
+    <path d="M48,58 Q38,52 30,48 Q26,46 28,44 Q32,46 38,50 Q44,54 48,56Z" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <path d="M52,62 Q62,56 70,52 Q74,50 72,48 Q68,50 62,54 Q56,58 52,60Z" fill="#8fc48a" stroke="#2c2c2c"/>
+    <!-- 辣椒1（红色下垂） -->
+    <path d="M48,40 Q44,34 38,28 Q34,24 32,22 Q30,20 32,18 Q36,18 40,22 Q46,28 50,36 Q52,38 50,40Z" fill="#e85050" stroke="#2c2c2c"/>
+    <!-- 辣椒蒂1 -->
+    <path d="M48,40 Q46,38 44,38 Q46,36 48,38Z" fill="#5a9e5a" stroke="#2c2c2c"/>
+    <!-- 辣椒高光 -->
+    <path d="M44,28 Q40,24 38,22" stroke="#f0a0a0" stroke-width="1" opacity="0.4"/>
+    <!-- 辣椒2（绿色） -->
+    <path d="M52,40 Q56,32 62,26 Q66,22 68,20 Q70,18 68,16 Q64,16 60,20 Q54,28 50,36 Q48,38 50,40Z" fill="#8fc48a" stroke="#2c2c2c"/>
+    <!-- 辣椒蒂2 -->
+    <path d="M52,40 Q54,38 56,38 Q54,36 52,38Z" fill="#5a9e5a" stroke="#2c2c2c"/>
+    <!-- 辣椒高光2 -->
+    <path d="M56,26 Q60,22 62,20" stroke="#b8e0b2" stroke-width="1" opacity="0.4"/>
+  </g>
+</svg>

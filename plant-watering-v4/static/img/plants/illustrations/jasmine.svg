@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- 茉莉手绘插图 - 小白花 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 茎 -->
+    <path d="M50,90 Q48,70 48,55 Q48,45 50,40 Q52,45 52,55 Q52,70 50,90Z" stroke="#5a9e5a" stroke-width="2"/>
+    <!-- 分枝 -->
+    <path d="M48,55 Q40,50 35,45 Q32,42 34,40 Q38,42 42,46 Q46,50 48,53Z" stroke="#5a9e5a" stroke-width="1.5"/>
+    <path d="M52,50 Q60,45 65,40 Q68,37 66,35 Q62,37 58,41 Q54,45 52,48Z" stroke="#5a9e5a" stroke-width="1.5"/>
+    <!-- 叶子 -->
+    <path d="M35,45 Q28,40 24,36 Q22,34 24,33 Q28,34 32,38 Q34,42 35,45Z" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <path d="M65,40 Q72,35 76,31 Q78,29 76,28 Q72,29 68,33 Q66,37 65,40Z" fill="#8fc48a" stroke="#2c2c2c"/>
+    <!-- 花朵1（主花） -->
+    <ellipse cx="50" cy="32" rx="4" ry="6" transform="rotate(-30 50 32)" fill="#f8f8f0" stroke="#2c2c2c" stroke-width="1"/>
+    <ellipse cx="50" cy="32" rx="4" ry="6" transform="rotate(30 50 32)" fill="#f0f0e8" stroke="#2c2c2c" stroke-width="1"/>
+    <ellipse cx="50" cy="32" rx="4" ry="6" transform="rotate(90 50 32)" fill="#f8f8f0" stroke="#2c2c2c" stroke-width="1"/>
+    <ellipse cx="50" cy="32" rx="4" ry="6" transform="rotate(-60 50 32)" fill="#f0f0e8" stroke="#2c2c2c" stroke-width="1"/>
+    <ellipse cx="50" cy="32" rx="4" ry="6" transform="rotate(60 50 32)" fill="#f8f8f0" stroke="#2c2c2c" stroke-width="1"/>
+    <circle cx="50" cy="32" r="2" fill="#f0e8a0" stroke="#2c2c2c" stroke-width="0.8"/>
+    <!-- 花朵2 -->
+    <ellipse cx="34" cy="38" rx="3" ry="5" transform="rotate(-30 34 38)" fill="#f8f8f0" stroke="#2c2c2c" stroke-width="0.8"/>
+    <ellipse cx="34" cy="38" rx="3" ry="5" transform="rotate(30 34 38)" fill="#f0f0e8" stroke="#2c2c2c" stroke-width="0.8"/>
+    <ellipse cx="34" cy="38" rx="3" ry="5" transform="rotate(90 34 38)" fill="#f8f8f0" stroke="#2c2c2c" stroke-width="0.8"/>
+    <circle cx="34" cy="38" r="1.5" fill="#f0e8a0" stroke="#2c2c2c" stroke-width="0.6"/>
+    <!-- 花朵3 -->
+    <ellipse cx="66" cy="33" rx="3" ry="5" transform="rotate(-30 66 33)" fill="#f8f8f0" stroke="#2c2c2c" stroke-width="0.8"/>
+    <ellipse cx="66" cy="33" rx="3" ry="5" transform="rotate(30 66 33)" fill="#f0f0e8" stroke="#2c2c2c" stroke-width="0.8"/>
+    <ellipse cx="66" cy="33" rx="3" ry="5" transform="rotate(90 66 33)" fill="#f8f8f0" stroke="#2c2c2c" stroke-width="0.8"/>
+    <circle cx="66" cy="33" r="1.5" fill="#f0e8a0" stroke="#2c2c2c" stroke-width="0.6"/>
+  </g>
+</svg>

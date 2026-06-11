@@ -48,9 +48,9 @@
             <span class="nav-icon">✏️</span>
             <span class="nav-label">记录</span>
         </a>
-        <a href="/board" class="nav-item {% if request.endpoint == 'board' %}active{% endif %}">
-            <span class="nav-icon">📝</span>
-            <span class="nav-label">黑板</span>
+        <a href="/codex" class="nav-item {% if request.endpoint == 'codex' %}active{% endif %}">
+            <span class="nav-icon">📖</span>
+            <span class="nav-label">图鉴</span>
         </a>
         <a href="/records" class="nav-item {% if request.endpoint == 'records' %}active{% endif %}">
             <span class="nav-icon">📜</span>
@@ -124,6 +124,11 @@
                 <button class="settings-close" id="settingsClose">✕</button>
             </div>
             <div class="settings-body">
+                <div class="settings-item" onclick="location.href='/profile'" style="cursor:pointer;">
+                    <span class="settings-item-icon">👤</span>
+                    <span class="settings-item-text">我的档案</span>
+                    <span class="settings-item-arrow">›</span>
+                </div>
                 <div class="settings-section">
                     <h3>排序方式</h3>
                     <p>照片和记录的时间排列顺序</p>

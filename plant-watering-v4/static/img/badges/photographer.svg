@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- 复古相机 - 手绘风格 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 相机机身 -->
+    <rect x="14" y="22" width="52" height="38" rx="4" fill="#f5eed8" stroke="#2c2c2c"/>
+    <!-- 取景器凸起 -->
+    <rect x="28" y="16" width="24" height="8" rx="2" fill="#e8e0c8" stroke="#2c2c2c"/>
+    <!-- 镜头外圈 -->
+    <circle cx="40" cy="42" r="14" fill="#e8e0c8" stroke="#2c2c2c"/>
+    <!-- 镜头内圈 -->
+    <circle cx="40" cy="42" r="10" fill="#d8d0b8" stroke="#2c2c2c" stroke-width="1.2"/>
+    <!-- 镜头中心 - 叶子 -->
+    <circle cx="40" cy="42" r="7" fill="#e8f5e8" stroke="#2c2c2c" stroke-width="1"/>
+    <path d="M40,36 Q36,39 37,42 Q38,45 40,48 Q42,45 43,42 Q44,39 40,36Z" fill="#a8d5a2" stroke="#2c2c2c" stroke-width="1"/>
+    <line x1="40" y1="37" x2="40" y2="47" stroke="#2c2c2c" stroke-width="0.6" opacity="0.5"/>
+    <!-- 闪光灯 -->
+    <circle cx="58" cy="28" r="3" fill="#f0e8c8" stroke="#2c2c2c" stroke-width="1.2"/>
+    <!-- 快门按钮 -->
+    <circle cx="40" cy="18" r="2.5" fill="#d4b896" stroke="#2c2c2c" stroke-width="1.2"/>
+  </g>
+</svg>

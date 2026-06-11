@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- 吊兰手绘插图 - 细长叶子下垂 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 中心丛 -->
+    <path d="M50,22 Q48,30 46,40 Q44,50 42,60 Q40,70 38,80 Q37,86 39,88 Q41,90 43,86 Q44,80 46,70 Q48,60 50,50" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <path d="M50,22 Q52,30 54,40 Q56,50 58,60 Q60,70 62,80 Q63,86 61,88 Q59,90 57,86 Q56,80 54,70 Q52,60 50,50" fill="#8fc48a" stroke="#2c2c2c"/>
+    <path d="M50,22 Q46,28 42,36 Q38,44 34,52 Q31,60 29,68 Q28,74 30,76 Q32,78 34,74 Q36,68 40,60 Q44,52 48,44" fill="#b8e0b2" stroke="#2c2c2c"/>
+    <path d="M50,22 Q54,28 58,36 Q62,44 66,52 Q69,60 71,68 Q72,74 70,76 Q68,78 66,74 Q64,68 60,60 Q56,52 52,44" fill="#7ab875" stroke="#2c2c2c"/>
+    <path d="M50,22 Q44,26 38,32 Q32,38 26,46 Q23,52 25,54 Q27,55 29,51 Q33,44 39,38 Q45,32 49,28" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <path d="M50,22 Q56,26 62,32 Q68,38 74,46 Q77,52 75,54 Q73,55 71,51 Q67,44 61,38 Q55,32 51,28" fill="#8fc48a" stroke="#2c2c2c"/>
+    <!-- 叶脉 -->
+    <line x1="50" y1="24" x2="40" y2="70" stroke="#2c2c2c" stroke-width="0.6" opacity="0.3"/>
+    <line x1="50" y1="24" x2="60" y2="70" stroke="#2c2c2c" stroke-width="0.6" opacity="0.3"/>
+  </g>
+</svg>

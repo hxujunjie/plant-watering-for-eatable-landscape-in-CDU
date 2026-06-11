@@ -40,14 +40,14 @@
 
     <!-- 加载更多 -->
     <div class="board-load-more" id="boardLoadMore" style="display:none;">
-        <button id="boardLoadMoreBtn" class="board-load-more-btn">加载更多</button>
+        <button id="boardLoadMoreBtn" class="board-load-more-btn">翻翻过去的日记...</button>
     </div>
 
     <!-- 空状态提示 -->
     <div class="board-empty" id="boardEmpty" style="display:none;">
         <div class="empty-icon">📝</div>
-        <div class="empty-title">还没有留言</div>
-        <div class="empty-desc">在黑板上留下你的第一条植物心得吧</div>
+        <div class="empty-title">黑板还是空的，来留下第一笔吧</div>
+        <div class="empty-desc">在黑板上写下你的植物心得</div>
     </div>
 </div>
 
@@ -186,7 +186,7 @@
                 var loadMoreDiv = document.getElementById('boardLoadMore');
                 if (hasMore) {
                     loadMoreDiv.style.display = 'block';
-                    document.getElementById('boardLoadMoreBtn').textContent = '加载更多';
+                    document.getElementById('boardLoadMoreBtn').textContent = '翻翻过去的日记...';
                 } else {
                     loadMoreDiv.style.display = 'none';
                 }
@@ -204,6 +204,13 @@
     function renderNotes(append) {
         if (messages.length === 0) {
             boardWall.style.display = 'none';
+            if (currentKeyword) {
+                boardEmpty.querySelector('.empty-title').textContent = '没有找到匹配的留言，换个词试试';
+                boardEmpty.querySelector('.empty-desc').textContent = '';
+            } else {
+                boardEmpty.querySelector('.empty-title').textContent = '黑板还是空的，来留下第一笔吧';
+                boardEmpty.querySelector('.empty-desc').textContent = '在黑板上写下你的植物心得';
+            }
             boardEmpty.style.display = 'flex';
             return;
         }

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- 放大镜+叶子 - 手绘风格 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 放大镜手柄 -->
+    <line x1="52" y1="52" x2="66" y2="66" stroke="#2c2c2c" stroke-width="4"/>
+    <line x1="52" y1="52" x2="66" y2="66" stroke="#d4b896" stroke-width="2.5"/>
+    <!-- 放大镜镜框 -->
+    <circle cx="36" cy="36" r="22" fill="#f8f8f0" stroke="#2c2c2c" stroke-width="2.5"/>
+    <!-- 镜片内的高光 -->
+    <path d="M22,26 Q26,22 32,22" stroke="#2c2c2c" stroke-width="0.8" fill="none" opacity="0.3"/>
+    <!-- 被放大的小植物 -->
+    <!-- 茎 -->
+    <path d="M36,50 Q35,42 36,34" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <!-- 左叶 -->
+    <path d="M35,40 Q26,34 22,30 Q28,33 34,38Z" fill="#a8d5a2" stroke="#2c2c2c" stroke-width="1.2"/>
+    <line x1="30" y1="34" x2="34" y2="38" stroke="#2c2c2c" stroke-width="0.5" opacity="0.4"/>
+    <!-- 右叶 -->
+    <path d="M37,36 Q46,30 50,26 Q44,30 38,34Z" fill="#8fc48a" stroke="#2c2c2c" stroke-width="1.2"/>
+    <line x1="42" y1="30" x2="38" y2="34" stroke="#2c2c2c" stroke-width="0.5" opacity="0.4"/>
+    <!-- 顶叶 -->
+    <path d="M36,34 Q33,26 36,22 Q39,26 36,34Z" fill="#b8e0b2" stroke="#2c2c2c" stroke-width="1.2"/>
+    <line x1="36" y1="24" x2="36" y2="32" stroke="#2c2c2c" stroke-width="0.5" opacity="0.4"/>
+    <!-- 小土堆 -->
+    <path d="M30,52 Q36,48 42,52 Q36,54 30,52Z" fill="#d4b896" stroke="#2c2c2c" stroke-width="1"/>
+  </g>
+</svg>

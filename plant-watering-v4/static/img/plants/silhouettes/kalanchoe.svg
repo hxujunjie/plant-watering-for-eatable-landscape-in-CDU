@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- 长寿花剪影 - 小花簇 -->
+  <g fill="#d0d0d0" stroke="none">
+    <!-- 茎 -->
+    <path d="M50,90 Q48,70 48,55 Q48,48 50,44 Q52,48 52,55 Q52,70 50,90Z"/>
+    <!-- 叶子 -->
+    <path d="M48,65 Q38,60 30,56 Q26,54 28,52 Q32,54 38,58 Q44,62 48,64Z"/>
+    <path d="M52,68 Q62,63 70,59 Q74,57 72,55 Q68,57 62,61 Q56,65 52,67Z"/>
+    <!-- 花簇 -->
+    <circle cx="50" cy="30" r="8"/>
+    <circle cx="42" cy="34" r="7"/>
+    <circle cx="58" cy="34" r="7"/>
+    <circle cx="46" cy="24" r="6"/>
+    <circle cx="54" cy="24" r="6"/>
+    <circle cx="38" cy="28" r="5"/>
+    <circle cx="62" cy="28" r="5"/>
+    <!-- 小花细节 -->
+    <circle cx="50" cy="30" r="3" fill="#c0c0c0"/>
+    <circle cx="42" cy="34" r="2.5" fill="#c0c0c0"/>
+    <circle cx="58" cy="34" r="2.5" fill="#c0c0c0"/>
+  </g>
+</svg>

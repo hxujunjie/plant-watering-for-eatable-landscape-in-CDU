@@ -1,0 +1,577 @@
+{% extends "base.html" %}
+
+{% block title %}{{ detail.name }} - 植物图鉴{% endblock %}
+
+{% block content %}
+<!-- 返回按钮 -->
+<button class="codex-detail-back" onclick="history.back()">
+    <span class="codex-detail-back-arrow">&#8592;</span>
+    <span>返回图鉴</span>
+</button>
+
+<!-- 植物头部信息区 -->
+<div class="codex-detail-header">
+    <h1 class="codex-detail-name">{{ detail.name }}</h1>
+    <span class="codex-detail-tag">{{ detail.category }}</span>
+    {% if detail.care_tip %}
+    <p class="codex-detail-tip">{{ detail.care_tip }}</p>
+    {% endif %}
+    {% if detail.description %}
+    <p class="codex-detail-desc">{{ detail.description }}</p>
+    {% endif %}
+</div>
+
+<!-- 养护数据卡片 -->
+<div class="codex-care-card sketch-card">
+    <div class="codex-care-grid">
+        <div class="codex-care-item">
+            <div class="codex-care-value" id="careFirstDate">--</div>
+            <div class="codex-care-label">首次记录</div>
+        </div>
+        <div class="codex-care-item">
+            <div class="codex-care-value" id="careRecordCount">--</div>
+            <div class="codex-care-label">记录次数</div>
+        </div>
+        <div class="codex-care-item">
+            <div class="codex-care-value" id="careDays">--</div>
+            <div class="codex-care-label">养护天数</div>
+        </div>
+        <div class="codex-care-item">
+            <div class="codex-care-value" id="careLastRecord">--</div>
+            <div class="codex-care-label">最近记录</div>
+        </div>
+    </div>
+</div>
+
+<!-- 培育等级卡片 -->
+<div class="cultivation-card sketch-card" id="cultivationCard" style="display:none;">
+    <div class="cultivation-header">
+        <span class="cultivation-level-name" id="cultivationLevelName"></span>
+        <span class="cultivation-stars" id="cultivationStars"></span>
+    </div>
+    <div class="cultivation-progress-track">
+        <div class="cultivation-progress-fill" id="cultivationProgressFill" style="width:0%"></div>
+    </div>
+    <div class="cultivation-quote" id="cultivationQuote"></div>
+</div>
+
+<!-- 生长日记时间线 -->
+<div class="codex-timeline-section">
+    <div class="codex-section-title">
+        <span class="codex-section-leaf">&#9752;</span>
+        生长日记
+    </div>
+    <div class="codex-timeline" id="codexTimeline">
+        <!-- 由JS动态渲染 -->
+    </div>
+    <div class="codex-timeline-empty" id="codexTimelineEmpty" style="display:none;">
+        <div class="codex-timeline-empty-icon">&#9752;</div>
+        <div class="codex-timeline-empty-text">你和{{ detail.name }}的故事，从这里开始</div>
+    </div>
+</div>
+
+<!-- 前后对比滑动 -->
+<div class="codex-compare-section" id="codexCompareSection" style="display:none;">
+    <button class="codex-compare-toggle" id="codexCompareToggle" onclick="toggleCompare()">
+        <span>&#8644;</span> 前后对比
+    </button>
+    <div class="codex-compare-panel" id="codexComparePanel" style="display:none;">
+        <!-- 照片选择器 -->
+        <div class="codex-compare-selectors">
+            <div class="codex-compare-selector">
+                <label>之前</label>
+                <select id="compareBefore" onchange="updateCompare()"></select>
+            </div>
+            <div class="codex-compare-selector">
+                <label>之后</label>
+                <select id="compareAfter" onchange="updateCompare()"></select>
+            </div>
+        </div>
+        <!-- 对比组件 -->
+        <div class="compare-container" id="compareContainer">
+            <div class="compare-slider">
+                <img class="compare-before" id="compareBeforeImg" src="" alt="之前">
+                <div class="compare-after-wrap" id="compareAfterWrap">
+                    <img class="compare-after" id="compareAfterImg" src="" alt="之后">
+                </div>
+                <div class="compare-divider" id="compareDivider">
+                    <div class="compare-handle">&#8596;</div>
+                </div>
+            </div>
+            <div class="compare-labels">
+                <span class="compare-label-before">之前</span>
+                <span class="compare-label-after">之后</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 生长数据可视化 -->
+<div class="codex-chart-section" id="codexChartSection" style="display:none;">
+    <div class="codex-section-title">
+        <span class="codex-section-leaf">&#9788;</span>
+        生长数据
+    </div>
+    <div class="growth-chart sketch-card">
+        <div class="growth-chart-bars" id="growthChartBars">
+            <!-- 由JS动态渲染 -->
+        </div>
+    </div>
+</div>
+
+<!-- 园艺计划 -->
+<div class="plan-section sketch-card" id="planSection">
+    <div class="codex-section-title">
+        <span class="codex-section-leaf">&#9998;</span>
+        园艺计划
+    </div>
+    <div class="plan-tabs" id="planTabs">
+        <button class="plan-tab active" data-tab="todo">待办</button>
+        <button class="plan-tab" data-tab="welcome">计划迎接</button>
+    </div>
+    <!-- 待办列表 -->
+    <div class="plan-panel" id="planTodoPanel">
+        <div class="plan-list" id="planTodoList"></div>
+        <div class="plan-add-form" id="planAddForm">
+            <input type="text" class="plan-input" id="planContentInput" placeholder="添加一项待办...">
+            <input type="date" class="plan-date-input" id="planDateInput">
+            <button class="plan-submit-btn" id="planSubmitBtn" type="button">添加</button>
+        </div>
+    </div>
+    <!-- 计划迎接列表 -->
+    <div class="plan-panel" id="planWelcomePanel" style="display:none;">
+        <div class="plan-list" id="planWelcomeList"></div>
+        <div class="plan-add-form" id="planWelcomeForm">
+            <input type="text" class="plan-input" id="planWelcomeNameInput" placeholder="想迎接的植物名...">
+            <input type="date" class="plan-date-input" id="planWelcomeDateInput">
+            <button class="plan-submit-btn" id="planWelcomeSubmitBtn" type="button">计划</button>
+        </div>
+    </div>
+    <div class="plan-empty" id="planEmpty" style="display:none;">暂无计划，给这株植物安排点什么吧</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var plantId = {{ plant_id }};
+    var detail = {{ detail | tojson | safe }};
+    var allPhotos = [];
+    var monthlyStats = [];
+
+    // ========== 初始化养护数据 ==========
+    function initCareData() {
+        // 首次记录日期
+        var firstDate = document.getElementById('careFirstDate');
+        var recordCount = document.getElementById('careRecordCount');
+        var careDays = document.getElementById('careDays');
+        var lastRecord = document.getElementById('careLastRecord');
+
+        if (detail.unlocked) {
+            recordCount.textContent = detail.record_count;
+            careDays.textContent = detail.care_days;
+            if (detail.unlocked_at) {
+                firstDate.textContent = detail.unlocked_at.substring(5, 10);
+            }
+            if (detail.last_record_at) {
+                lastRecord.textContent = detail.last_record_at.substring(5, 10);
+            }
+        } else {
+            firstDate.textContent = '--';
+            recordCount.textContent = '0';
+            careDays.textContent = '0';
+            lastRecord.textContent = '--';
+        }
+    }
+
+    // ========== 加载时间线 ==========
+    function loadTimeline() {
+        fetch('/api/codex/' + plantId + '/timeline')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                allPhotos = data.photos || [];
+                renderTimeline();
+                initCompare();
+            })
+            .catch(function() {});
+    }
+
+    // ========== 渲染时间线 ==========
+    function renderTimeline() {
+        var container = document.getElementById('codexTimeline');
+        var emptyEl = document.getElementById('codexTimelineEmpty');
+
+        if (allPhotos.length === 0) {
+            container.style.display = 'none';
+            emptyEl.style.display = 'flex';
+            return;
+        }
+        container.style.display = 'block';
+        emptyEl.style.display = 'none';
+
+        var html = '';
+        var lastDate = '';
+        allPhotos.forEach(function(photo, idx) {
+            var dateStr = photo.created_at ? photo.created_at.substring(0, 10) : '';
+            var timeStr = photo.created_at ? photo.created_at.substring(11, 16) : '';
+            var showDate = dateStr !== lastDate;
+
+            html += '<div class="codex-timeline-item">';
+            if (showDate) {
+                html += '<div class="codex-timeline-date">';
+                html += '<span class="codex-timeline-date-text">' + escapeHtml(dateStr) + '</span>';
+                if (timeStr) {
+                    html += '<span class="codex-timeline-time">' + escapeHtml(timeStr) + '</span>';
+                }
+                html += '</div>';
+            } else {
+                html += '<div class="codex-timeline-date"></div>';
+            }
+            html += '<div class="codex-timeline-content">';
+            html += '<div class="codex-timeline-photo" onclick="openViewerAt(' + idx + ')">';
+            html += '<img src="' + escapeHtml(photo.file_path) + '" alt="" loading="lazy">';
+            html += '</div>';
+            if (photo.caption) {
+                html += '<div class="codex-timeline-caption">' + escapeHtml(photo.caption) + '</div>';
+            }
+            html += '</div>';
+            html += '</div>';
+
+            lastDate = dateStr;
+        });
+        container.innerHTML = html;
+    }
+
+    // ========== 前后对比 ==========
+    function initCompare() {
+        var section = document.getElementById('codexCompareSection');
+        if (allPhotos.length < 2) {
+            section.style.display = 'none';
+            return;
+        }
+        section.style.display = 'block';
+
+        var beforeSelect = document.getElementById('compareBefore');
+        var afterSelect = document.getElementById('compareAfter');
+        beforeSelect.innerHTML = '';
+        afterSelect.innerHTML = '';
+
+        allPhotos.forEach(function(photo, idx) {
+            var dateStr = photo.created_at ? photo.created_at.substring(0, 10) : '照片' + (idx + 1);
+            var opt1 = '<option value="' + idx + '">' + escapeHtml(dateStr) + '</option>';
+            beforeSelect.innerHTML += opt1;
+            afterSelect.innerHTML += opt1;
+        });
+
+        // 默认最早和最新
+        beforeSelect.value = '0';
+        afterSelect.value = String(allPhotos.length - 1);
+        updateCompare();
+    }
+
+    window.toggleCompare = function() {
+        var panel = document.getElementById('codexComparePanel');
+        var toggle = document.getElementById('codexCompareToggle');
+        if (panel.style.display === 'none') {
+            panel.style.display = 'block';
+            toggle.classList.add('active');
+        } else {
+            panel.style.display = 'none';
+            toggle.classList.remove('active');
+        }
+    };
+
+    window.updateCompare = function() {
+        var beforeIdx = parseInt(document.getElementById('compareBefore').value);
+        var afterIdx = parseInt(document.getElementById('compareAfter').value);
+        if (isNaN(beforeIdx) || isNaN(afterIdx) || !allPhotos[beforeIdx] || !allPhotos[afterIdx]) return;
+
+        document.getElementById('compareBeforeImg').src = allPhotos[beforeIdx].file_path;
+        document.getElementById('compareAfterImg').src = allPhotos[afterIdx].file_path;
+
+        // 重置分割线位置到50%
+        var wrap = document.getElementById('compareAfterWrap');
+        var divider = document.getElementById('compareDivider');
+        wrap.style.clipPath = 'inset(0 0 0 50%)';
+        divider.style.left = '50%';
+    };
+
+    // ========== 对比滑块拖拽逻辑 ==========
+    (function() {
+        var container = document.getElementById('compareContainer');
+        var wrap = document.getElementById('compareAfterWrap');
+        var divider = document.getElementById('compareDivider');
+        var isDragging = false;
+
+        function setPosition(clientX) {
+            var rect = container.getBoundingClientRect();
+            var x = clientX - rect.left;
+            var pct = Math.max(0, Math.min(1, x / rect.width));
+            var pctStr = (pct * 100) + '%';
+            wrap.style.clipPath = 'inset(0 0 0 ' + pctStr + ')';
+            divider.style.left = pctStr;
+        }
+
+        // 鼠标事件
+        divider.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            isDragging = true;
+        });
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            setPosition(e.clientX);
+        });
+        document.addEventListener('mouseup', function() {
+            isDragging = false;
+        });
+
+        // 触摸事件
+        divider.addEventListener('touchstart', function(e) {
+            isDragging = true;
+        }, { passive: true });
+        document.addEventListener('touchmove', function(e) {
+            if (!isDragging) return;
+            setPosition(e.touches[0].clientX);
+        }, { passive: true });
+        document.addEventListener('touchend', function() {
+            isDragging = false;
+        });
+    })();
+
+    // ========== 加载月度统计 ==========
+    function loadStats() {
+        fetch('/api/codex/' + plantId + '/stats')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                monthlyStats = data.stats || [];
+                renderChart();
+            })
+            .catch(function() {});
+    }
+
+    // ========== 加载培育等级 ==========
+    function loadCultivation() {
+        fetch('/api/codex/' + plantId + '/cultivation')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var card = document.getElementById('cultivationCard');
+                if (!data || !data.level || data.record_count === 0) {
+                    card.style.display = 'none';
+                    return;
+                }
+                card.style.display = 'block';
+                document.getElementById('cultivationLevelName').textContent = data.name;
+                // 星星
+                var starsHtml = '';
+                for (var i = 0; i < 5; i++) {
+                    starsHtml += '<span class="cultivation-star' + (i < data.level ? '' : ' empty') + '">&#9733;</span>';
+                }
+                document.getElementById('cultivationStars').innerHTML = starsHtml;
+                // 进度条
+                document.getElementById('cultivationProgressFill').style.width = Math.round(data.progress * 100) + '%';
+                // 文案
+                document.getElementById('cultivationQuote').textContent = data.quote || '';
+            })
+            .catch(function() {});
+    }
+
+    // ========== 园艺计划 ==========
+    var allPlans = [];
+
+    function loadPlans() {
+        fetch('/api/codex/' + plantId + '/plans')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                allPlans = data.plans || [];
+                renderPlans();
+            })
+            .catch(function() {});
+    }
+
+    function renderPlans() {
+        var todoList = document.getElementById('planTodoList');
+        var welcomeList = document.getElementById('planWelcomeList');
+        var emptyEl = document.getElementById('planEmpty');
+
+        var todos = allPlans.filter(function(p) { return p.type === 'todo'; });
+        var welcomes = allPlans.filter(function(p) { return p.type === 'welcome'; });
+
+        if (todos.length === 0 && welcomes.length === 0) {
+            emptyEl.style.display = 'block';
+        } else {
+            emptyEl.style.display = 'none';
+        }
+
+        // 渲染待办
+        var todoHtml = '';
+        todos.forEach(function(p) {
+            var completedClass = p.completed ? ' completed' : '';
+            var dateStr = p.due_date ? p.due_date.substring(5) : '';
+            todoHtml += '<div class="plan-item' + completedClass + '">';
+            todoHtml += '<div class="plan-item-content">' + escapeHtml(p.content) + '</div>';
+            if (dateStr) {
+                todoHtml += '<div class="plan-item-date">' + escapeHtml(dateStr) + '</div>';
+            }
+            if (!p.completed) {
+                todoHtml += '<div class="plan-item-actions">';
+                todoHtml += '<button class="plan-action-btn plan-complete-btn" data-id="' + p.id + '">完成</button>';
+                todoHtml += '<button class="plan-action-btn plan-delete-btn" data-id="' + p.id + '">删除</button>';
+                todoHtml += '</div>';
+            }
+            todoHtml += '</div>';
+        });
+        todoList.innerHTML = todoHtml;
+
+        // 渲染计划迎接
+        var welcomeHtml = '';
+        welcomes.forEach(function(p) {
+            var completedClass = p.completed ? ' completed' : '';
+            var dateStr = p.due_date ? p.due_date.substring(5) : '';
+            welcomeHtml += '<div class="plan-item' + completedClass + '">';
+            welcomeHtml += '<div class="plan-item-content">' + escapeHtml(p.custom_plant_name || p.content) + '</div>';
+            if (dateStr) {
+                welcomeHtml += '<div class="plan-item-date">' + escapeHtml(dateStr) + '</div>';
+            }
+            if (!p.completed) {
+                welcomeHtml += '<div class="plan-item-actions">';
+                welcomeHtml += '<button class="plan-action-btn plan-complete-btn" data-id="' + p.id + '">完成</button>';
+                welcomeHtml += '<button class="plan-action-btn plan-delete-btn" data-id="' + p.id + '">删除</button>';
+                welcomeHtml += '</div>';
+            }
+            welcomeHtml += '</div>';
+        });
+        welcomeList.innerHTML = welcomeHtml;
+
+        // 绑定完成/删除按钮事件
+        document.querySelectorAll('.plan-complete-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var id = parseInt(this.getAttribute('data-id'));
+                fetch('/api/plans/' + id + '/complete', { method: 'PUT' })
+                    .then(function(r) { return r.json(); })
+                    .then(function() {
+                        showToast('干得漂亮，你的植物感谢你');
+                        loadPlans();
+                    })
+                    .catch(function() {});
+            });
+        });
+        document.querySelectorAll('.plan-delete-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var id = parseInt(this.getAttribute('data-id'));
+                fetch('/api/plans/' + id, { method: 'DELETE' })
+                    .then(function(r) { return r.json(); })
+                    .then(function() { loadPlans(); })
+                    .catch(function() {});
+            });
+        });
+    }
+
+    // 计划tab切换
+    document.querySelectorAll('.plan-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.plan-tab').forEach(function(t) { t.classList.remove('active'); });
+            this.classList.add('active');
+            var tabName = this.getAttribute('data-tab');
+            document.getElementById('planTodoPanel').style.display = tabName === 'todo' ? '' : 'none';
+            document.getElementById('planWelcomePanel').style.display = tabName === 'welcome' ? '' : 'none';
+        });
+    });
+
+    // 添加待办
+    document.getElementById('planSubmitBtn').addEventListener('click', function() {
+        var content = document.getElementById('planContentInput').value.trim();
+        if (!content) return;
+        var dueDate = document.getElementById('planDateInput').value;
+        fetch('/api/codex/' + plantId + '/plans', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'todo', content: content, due_date: dueDate })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                document.getElementById('planContentInput').value = '';
+                document.getElementById('planDateInput').value = '';
+                loadPlans();
+            }
+        })
+        .catch(function() {});
+    });
+
+    // 添加计划迎接
+    document.getElementById('planWelcomeSubmitBtn').addEventListener('click', function() {
+        var name = document.getElementById('planWelcomeNameInput').value.trim();
+        if (!name) return;
+        var dueDate = document.getElementById('planWelcomeDateInput').value;
+        fetch('/api/codex/' + plantId + '/plans', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'welcome', custom_plant_name: name, content: '计划迎接' + name, due_date: dueDate })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                document.getElementById('planWelcomeNameInput').value = '';
+                document.getElementById('planWelcomeDateInput').value = '';
+                loadPlans();
+            }
+        })
+        .catch(function() {});
+    });
+
+    // ========== 渲染柱状图 ==========
+    function renderChart() {
+        var section = document.getElementById('codexChartSection');
+        var barsContainer = document.getElementById('growthChartBars');
+
+        if (monthlyStats.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+        section.style.display = 'block';
+
+        var maxCount = 0;
+        monthlyStats.forEach(function(s) {
+            if (s.log_count > maxCount) maxCount = s.log_count;
+        });
+        maxCount = Math.max(maxCount, 1);
+
+        var html = '';
+        monthlyStats.forEach(function(s) {
+            var heightPct = Math.round((s.log_count / maxCount) * 100);
+            var monthLabel = s.month ? s.month.substring(5) : '';
+            html += '<div class="growth-chart-bar">';
+            html += '<div class="growth-chart-value">' + s.log_count + '</div>';
+            html += '<div class="growth-chart-bar-inner" style="height:' + heightPct + '%"></div>';
+            html += '<div class="growth-chart-label">' + escapeHtml(monthLabel) + '</div>';
+            html += '</div>';
+        });
+        barsContainer.innerHTML = html;
+    }
+
+    // ========== 照片查看器集成 ==========
+    window.openViewerAt = function(idx) {
+        if (typeof openViewerWithPhotos !== 'function') return;
+        var photos = allPhotos.map(function(p) {
+            return { file_path: p.file_path, caption: p.caption, id: p.id };
+        });
+        openViewerWithPhotos(photos, idx);
+    };
+
+    // ========== 工具函数 ==========
+    function escapeHtml(str) {
+        if (!str) return '';
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // ========== 启动 ==========
+    initCareData();
+    loadTimeline();
+    loadStats();
+    loadCultivation();
+    loadPlans();
+})();
+</script>
+{% endblock %}

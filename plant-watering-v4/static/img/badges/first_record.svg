@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- 小种子发芽 - 手绘风格 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 土壤 -->
+    <path d="M18,58 Q20,55 30,56 Q40,54 50,56 Q60,55 62,58 Q60,62 50,63 Q40,64 30,63 Q20,62 18,58Z" fill="#d4b896" stroke="#2c2c2c"/>
+    <!-- 种子 -->
+    <ellipse cx="40" cy="55" rx="4" ry="3" fill="#c4a67a" stroke="#2c2c2c"/>
+    <!-- 茎 -->
+    <path d="M40,52 Q39,42 40,30" stroke="#2c2c2c" stroke-width="1.5"/>
+    <!-- 左叶 -->
+    <path d="M39,38 Q30,32 26,28 Q32,30 38,36Z" fill="#a8d5a2" stroke="#2c2c2c" stroke-width="1.2"/>
+    <!-- 右叶 -->
+    <path d="M41,34 Q50,28 54,24 Q48,28 42,32Z" fill="#8fc48a" stroke="#2c2c2c" stroke-width="1.2"/>
+    <!-- 顶叶 -->
+    <path d="M40,30 Q38,22 40,18 Q42,22 40,30Z" fill="#b8e0b2" stroke="#2c2c2c" stroke-width="1.2"/>
+  </g>
+</svg>

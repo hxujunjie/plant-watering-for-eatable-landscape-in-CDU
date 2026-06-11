@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- 绿萝手绘插图 - 心形叶子垂吊 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 茎 -->
+    <path d="M50,18 Q49,22 50,26" stroke="#2c2c2c" stroke-width="1.8"/>
+    <!-- 顶部心形叶 -->
+    <path d="M50,26 Q44,22 40,24 Q36,26 38,32 Q40,36 50,30 Q60,36 62,32 Q64,26 60,24 Q56,22 50,26Z" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <line x1="50" y1="26" x2="50" y2="30" stroke="#2c2c2c" stroke-width="0.8" opacity="0.5"/>
+    <!-- 左垂叶1 -->
+    <path d="M42,30 Q38,38 34,48 Q32,54 34,56 Q36,58 40,54 Q42,48 44,40" fill="#8fc48a" stroke="#2c2c2c"/>
+    <line x1="38" y1="40" x2="42" y2="34" stroke="#2c2c2c" stroke-width="0.6" opacity="0.4"/>
+    <!-- 右垂叶1 -->
+    <path d="M58,30 Q62,38 66,48 Q68,54 66,56 Q64,58 60,54 Q58,48 56,40" fill="#8fc48a" stroke="#2c2c2c"/>
+    <line x1="62" y1="40" x2="58" y2="34" stroke="#2c2c2c" stroke-width="0.6" opacity="0.4"/>
+    <!-- 左垂叶2 -->
+    <path d="M40,54 Q36,62 32,72 Q30,78 32,80 Q34,82 38,78 Q40,72 42,64" fill="#7ab875" stroke="#2c2c2c"/>
+    <line x1="36" y1="64" x2="40" y2="58" stroke="#2c2c2c" stroke-width="0.6" opacity="0.4"/>
+    <!-- 右垂叶2 -->
+    <path d="M60,54 Q64,62 68,72 Q70,78 68,80 Q66,82 62,78 Q60,72 58,64" fill="#7ab875" stroke="#2c2c2c"/>
+    <line x1="64" y1="64" x2="60" y2="58" stroke="#2c2c2c" stroke-width="0.6" opacity="0.4"/>
+    <!-- 左垂叶3 -->
+    <path d="M38,78 Q36,84 34,90 Q33,94 35,95 Q37,96 40,92 Q41,88 42,82" fill="#6aad65" stroke="#2c2c2c"/>
+    <!-- 右垂叶3 -->
+    <path d="M62,78 Q64,84 66,90 Q67,94 65,95 Q63,96 60,92 Q59,88 58,82" fill="#6aad65" stroke="#2c2c2c"/>
+  </g>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- 小葱手绘插图 - 细长直立 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 葱1 -->
+    <path d="M30,90 Q29,60 28,35 Q28,20 30,10 Q32,20 32,35 Q31,60 30,90Z" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <line x1="30" y1="15" x2="30" y2="85" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
+    <!-- 葱2 -->
+    <path d="M42,90 Q41,55 40,30 Q40,15 42,8 Q44,15 44,30 Q43,55 42,90Z" fill="#8fc48a" stroke="#2c2c2c"/>
+    <line x1="42" y1="12" x2="42" y2="85" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
+    <!-- 葱3（中心最高） -->
+    <path d="M54,90 Q53,55 52,30 Q52,15 54,8 Q56,15 56,30 Q55,55 54,90Z" fill="#b8e0b2" stroke="#2c2c2c"/>
+    <line x1="54" y1="12" x2="54" y2="85" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
+    <!-- 葱4 -->
+    <path d="M66,90 Q65,60 64,35 Q64,20 66,10 Q68,20 68,35 Q67,60 66,90Z" fill="#7ab875" stroke="#2c2c2c"/>
+    <line x1="66" y1="15" x2="66" y2="85" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
+    <!-- 葱5（小） -->
+    <path d="M78,90 Q77,65 76,45 Q76,32 78,24 Q80,32 80,45 Q79,65 78,90Z" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <!-- 葱6（小） -->
+    <path d="M20,90 Q19,68 18,48 Q18,36 20,28 Q22,36 22,48 Q21,68 20,90Z" fill="#8fc48a" stroke="#2c2c2c"/>
+    <!-- 葱尖 -->
+    <circle cx="30" cy="10" r="1" fill="#5a9e5a" stroke="none"/>
+    <circle cx="42" cy="8" r="1" fill="#5a9e5a" stroke="none"/>
+    <circle cx="54" cy="8" r="1" fill="#5a9e5a" stroke="none"/>
+    <circle cx="66" cy="10" r="1" fill="#5a9e5a" stroke="none"/>
+  </g>
+</svg>

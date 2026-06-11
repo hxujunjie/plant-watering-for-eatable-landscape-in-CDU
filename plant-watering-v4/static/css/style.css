@@ -4088,6 +4088,139 @@ body {
   padding: 0.4rem 0.7rem;
   font-size: 0.7rem;
 }
+/* ========== 图鉴页样式 ========== */
+.codex-progress-bar {
+  margin: 0.4rem 1.2rem 0;
+  padding: 0.6rem 0.8rem;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 1px 2px 0 var(--shadow);
+  position: relative;
+}
+.codex-progress-text {
+  font-size: 0.75rem;
+  color: var(--pencil);
+  margin-bottom: 0.4rem;
+}
+.codex-progress-track {
+  height: 6px;
+  background: var(--bg2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.codex-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.codex-category-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 1rem;
+  margin: 0.6rem 0 0.4rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.codex-category-tabs::-webkit-scrollbar {
+  display: none;
+}
+.codex-cat-tab {
+  flex: 0 0 auto;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.7rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--pencil);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.codex-cat-tab.active {
+  background: var(--ink);
+  color: #fff;
+}
+.codex-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+  padding: 0.4rem 1.2rem 1rem;
+}
+.codex-card {
+  background: #fff;
+  border-radius: 2px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 2px 3px 0 var(--shadow);
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.codex-card:active {
+  transform: scale(0.97);
+}
+.codex-card.locked {
+  opacity: 0.7;
+  cursor: default;
+}
+.codex-card-cover {
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--bg2);
+}
+.codex-card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.codex-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: var(--accent);
+}
+.codex-card-silhouette {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #ccc;
+  background: var(--bg2);
+}
+.codex-card-name {
+  padding: 0.4rem 0.6rem 0.1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.codex-card-stats {
+  padding: 0 0.6rem 0.4rem;
+  font-size: 0.65rem;
+  color: var(--pencil);
+}
+.codex-card-hint {
+  padding: 0 0.6rem 0.4rem;
+  font-size: 0.6rem;
+  color: var(--muted);
+  font-style: italic;
+}
+.codex-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
 .record-item {
   margin: 0 1rem 0.6rem;
   padding: 0.8rem 1rem;
@@ -4163,4 +4296,881 @@ body {
   .fun-stat-inline-item strong {
     font-size: 0.85rem;
   }
+}
+
+/* ---------- 签到模式切换（影像/文字） ---------- */
+.checkin-mode-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0.8rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.checkin-mode-tab {
+  flex: 1;
+  padding: 0.4rem 0;
+  font-size: 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--pencil);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.checkin-mode-tab.active {
+  background: var(--ink);
+  color: #fff;
+}
+.field-textarea {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: #fff;
+  resize: vertical;
+  min-height: 60px;
+  box-sizing: border-box;
+}
+.field-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.field-textarea::placeholder {
+  color: var(--muted);
+}
+
+/* ========== 图鉴详情页样式 ========== */
+
+/* --- 返回按钮 --- */
+.codex-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.4rem 1.2rem 0;
+  padding: 0.3rem 0.6rem;
+  background: transparent;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  font-family: inherit;
+  font-size: 0.7rem;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.codex-detail-back:hover {
+  background: var(--ink);
+  color: #fff;
+}
+.codex-detail-back-arrow {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+/* --- 植物头部信息 --- */
+.codex-detail-header {
+  margin: 0.6rem 1.2rem 0;
+  padding: 0;
+}
+.codex-detail-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.3rem;
+  line-height: 1.3;
+}
+.codex-detail-tag {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.65rem;
+  border: 1.5px solid var(--accent);
+  border-radius: 2px;
+  color: var(--accent);
+  margin-bottom: 0.4rem;
+}
+.codex-detail-tip {
+  font-size: 0.78rem;
+  color: var(--accent);
+  margin-bottom: 0.15rem;
+  font-style: italic;
+}
+.codex-detail-desc {
+  font-size: 0.75rem;
+  color: var(--pencil);
+  line-height: 1.5;
+}
+
+/* --- 养护数据卡片 --- */
+.codex-care-card {
+  margin-top: 0.6rem;
+}
+.codex-care-card .sketch-card::before,
+.codex-care-card .sketch-card::after {
+  /* sketch-card 伪元素已由父级处理 */
+}
+.codex-care-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
+}
+.codex-care-item {
+  text-align: center;
+  padding: 0.4rem 0;
+}
+.codex-care-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.15rem;
+}
+.codex-care-label {
+  font-size: 0.65rem;
+  color: var(--pencil);
+}
+
+/* --- 区域标题 --- */
+.codex-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 1rem 1.2rem 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.codex-section-leaf {
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+/* --- 时间线 --- */
+.codex-timeline-section {
+  margin-bottom: 0.5rem;
+}
+.codex-timeline {
+  padding: 0 1.2rem;
+  position: relative;
+}
+.codex-timeline::before {
+  content: '';
+  position: absolute;
+  left: 2.6rem;
+  top: 0;
+  bottom: 0;
+  width: 1.5px;
+  background: var(--pencil);
+  opacity: 0.25;
+}
+.codex-timeline-item {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+  position: relative;
+}
+.codex-timeline-date {
+  flex: 0 0 3.2rem;
+  text-align: right;
+  padding-top: 0.3rem;
+}
+.codex-timeline-date-text {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--pencil);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.codex-timeline-time {
+  display: block;
+  font-size: 0.55rem;
+  color: var(--muted);
+}
+.codex-timeline-content {
+  flex: 1;
+  min-width: 0;
+}
+.codex-timeline-photo {
+  width: 100%;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--paper-dark);
+  cursor: pointer;
+  box-shadow: 1px 2px 0 var(--shadow);
+}
+.codex-timeline-photo img {
+  width: 100%;
+  display: block;
+  transition: transform 0.2s;
+}
+.codex-timeline-photo:active img {
+  transform: scale(1.02);
+}
+.codex-timeline-caption {
+  font-size: 0.7rem;
+  color: var(--ink-light);
+  margin-top: 0.25rem;
+  padding: 0 0.2rem;
+  line-height: 1.4;
+}
+
+/* 时间线空状态 */
+.codex-timeline-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  text-align: center;
+}
+.codex-timeline-empty-icon {
+  font-size: 2.5rem;
+  color: var(--accent);
+  opacity: 0.4;
+  margin-bottom: 0.5rem;
+}
+.codex-timeline-empty-text {
+  font-size: 0.8rem;
+  color: var(--pencil);
+  font-style: italic;
+}
+
+/* --- 前后对比 --- */
+.codex-compare-section {
+  margin: 0.5rem 1.2rem 0;
+}
+.codex-compare-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.codex-compare-toggle:hover,
+.codex-compare-toggle.active {
+  background: var(--ink);
+  color: #fff;
+}
+.codex-compare-panel {
+  margin-top: 0.6rem;
+}
+.codex-compare-selectors {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+.codex-compare-selector {
+  flex: 1;
+}
+.codex-compare-selector label {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--pencil);
+  margin-bottom: 0.2rem;
+}
+.codex-compare-selector select {
+  width: 100%;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.7rem;
+  font-family: inherit;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--ink);
+  appearance: auto;
+}
+
+/* 对比容器 */
+.compare-container {
+  position: relative;
+  width: 100%;
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 2px 3px 0 var(--shadow);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.compare-slider {
+  position: relative;
+  width: 100%;
+  line-height: 0;
+}
+.compare-before,
+.compare-after {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+}
+.compare-after-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  clip-path: inset(0 0 0 50%);
+}
+.compare-after {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.compare-divider {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 3px;
+  height: 100%;
+  background: #fff;
+  cursor: ew-resize;
+  transform: translateX(-50%);
+  z-index: 10;
+  box-shadow: 0 0 4px rgba(0,0,0,0.3);
+}
+.compare-handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--ink);
+  pointer-events: none;
+}
+.compare-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.6rem;
+  color: var(--pencil);
+}
+.compare-label-before,
+.compare-label-after {
+  background: rgba(255,255,255,0.8);
+  padding: 0.1rem 0.3rem;
+  border-radius: 2px;
+}
+
+/* --- 生长数据柱状图 --- */
+.codex-chart-section {
+  margin-bottom: 1rem;
+}
+.growth-chart {
+  margin: 0 1.2rem;
+}
+.growth-chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  height: 120px;
+  padding: 0.5rem 0.5rem 0;
+}
+.growth-chart-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  min-width: 0;
+}
+.growth-chart-value {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 0.15rem;
+  white-space: nowrap;
+}
+.growth-chart-bar-inner {
+  width: 100%;
+  max-width: 28px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+  transition: height 0.4s ease;
+  opacity: 0.8;
+}
+.growth-chart-label {
+  font-size: 0.55rem;
+  color: var(--pencil);
+  margin-top: 0.2rem;
+  white-space: nowrap;
+}
+
+/* ========== 功能A：轻量化提醒样式 ========== */
+.codex-card-reminder {
+  padding: 0.15rem 0.6rem 0.35rem;
+  font-size: 0.6rem;
+  color: var(--pencil);
+}
+.codex-card-reminder.overdue {
+  color: var(--accent-rose);
+  font-weight: 600;
+}
+.status-reminder-badge {
+  background: var(--accent-rose);
+  color: #fff;
+  font-size: 0.6rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ========== 功能B：园艺计划样式 ========== */
+.plan-section {
+  margin: 0.8rem 1.2rem 1rem;
+  padding: 0.8rem;
+}
+.plan-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0.6rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.plan-tab {
+  flex: 1;
+  padding: 0.35rem 0;
+  font-size: 0.72rem;
+  border: none;
+  background: transparent;
+  color: var(--pencil);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.plan-tab.active {
+  background: var(--ink);
+  color: #fff;
+}
+.plan-panel {
+  min-height: 2rem;
+}
+.plan-list {
+  margin-bottom: 0.5rem;
+}
+.plan-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px dashed var(--paper-dark);
+  font-size: 0.75rem;
+}
+.plan-item:last-child {
+  border-bottom: none;
+}
+.plan-item.completed {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+.plan-item-content {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink);
+  word-break: break-all;
+}
+.plan-item-date {
+  font-size: 0.6rem;
+  color: var(--pencil);
+  white-space: nowrap;
+}
+.plan-item-actions {
+  display: flex;
+  gap: 0.3rem;
+}
+.plan-action-btn {
+  padding: 0.15rem 0.4rem;
+  font-size: 0.6rem;
+  font-family: inherit;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.plan-complete-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.plan-delete-btn:hover {
+  background: var(--accent-rose);
+  color: #fff;
+  border-color: var(--accent-rose);
+}
+.plan-add-form {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+  margin-top: 0.4rem;
+}
+.plan-input {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.72rem;
+  font-family: inherit;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--ink);
+  min-width: 0;
+}
+.plan-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.plan-date-input {
+  padding: 0.35rem 0.3rem;
+  font-size: 0.65rem;
+  font-family: inherit;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--ink);
+}
+.plan-submit-btn {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.72rem;
+  font-family: inherit;
+  border: 1.5px solid var(--accent);
+  border-radius: 2px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.plan-submit-btn:hover {
+  opacity: 0.85;
+}
+.plan-empty {
+  text-align: center;
+  padding: 1.5rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--pencil);
+  font-style: italic;
+}
+
+/* ========== 功能C：培育等级样式 ========== */
+.cultivation-card {
+  margin-top: 0.6rem;
+  padding: 0.8rem;
+}
+.cultivation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.cultivation-level-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.cultivation-stars {
+  display: flex;
+  gap: 0.15rem;
+}
+.cultivation-star {
+  font-size: 0.9rem;
+  color: var(--accent-warm);
+}
+.cultivation-star.empty {
+  color: var(--paper-dark);
+}
+.cultivation-progress-track {
+  height: 8px;
+  background: var(--paper-dark);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+.cultivation-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-warm));
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+.cultivation-quote {
+  font-size: 0.72rem;
+  color: var(--pencil);
+  font-style: italic;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* 图鉴卡片右上角小星星 */
+.codex-card-stars {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  display: flex;
+  gap: 0;
+  z-index: 2;
+  background: rgba(255,255,255,0.85);
+  padding: 0.1rem 0.2rem;
+  border-radius: 2px;
+}
+.codex-card-star {
+  font-size: 0.5rem;
+  color: var(--accent-warm);
+  line-height: 1;
+}
+.codex-card-star.empty {
+  color: var(--paper-dark);
+}
+
+/* ---------- 首页等级卡片 - 最擅长植物 ---------- */
+.fun-level-top-plant {
+    margin-top: 0.4rem;
+    font-size: 0.7rem;
+    color: var(--pencil);
+    text-align: center;
+}
+.fun-level-top-plant a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+/* ---------- 个人档案页 ---------- */
+.profile-back {
+    padding: 0.5rem 0;
+}
+.profile-back-btn {
+    color: var(--pencil);
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+.profile-back-btn:hover {
+    color: var(--accent);
+}
+
+.profile-header {
+    text-align: center;
+    padding: 1rem 0 0.8rem;
+}
+.profile-avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 3.5rem;
+    margin: 0 auto 0.5rem;
+    font-family: 'Noto Serif SC', serif;
+}
+.profile-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.2rem;
+}
+.profile-level {
+    font-size: 0.85rem;
+    color: var(--pencil);
+}
+.profile-level .profile-xp {
+    margin-left: 0.3rem;
+    font-size: 0.75rem;
+}
+.profile-title {
+    font-size: 0.7rem;
+    color: var(--accent-warm);
+    margin-top: 0.15rem;
+    font-style: italic;
+}
+
+/* 徽章墙 */
+.badge-wall {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+.badge-item {
+    text-align: center;
+    padding: 0.5rem 0.2rem;
+    border-radius: var(--radius);
+    background: var(--paper-dark);
+    transition: transform 0.2s;
+}
+.badge-item.locked {
+    opacity: 0.45;
+    filter: grayscale(1);
+}
+.badge-icon {
+    font-size: 1.4rem;
+    line-height: 1.5;
+}
+.badge-name {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-top: 0.1rem;
+}
+.badge-desc {
+    font-size: 0.5rem;
+    color: var(--pencil);
+    margin-top: 0.1rem;
+    line-height: 1.3;
+}
+
+/* 档案区块 */
+.profile-section {
+    margin-top: 0.8rem;
+    padding: 0 0 0.3rem;
+}
+.profile-section-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.2rem;
+    border-bottom: 1px dashed var(--pencil);
+}
+
+/* 图鉴进度 */
+.profile-codex-progress {
+    padding: 0.3rem 0;
+}
+.profile-codex-text {
+    font-size: 0.75rem;
+    color: var(--pencil);
+    margin-bottom: 0.3rem;
+}
+.profile-codex-bar-wrap {
+    height: 8px;
+    background: var(--paper-dark);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.profile-codex-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-warm));
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+/* 统计数据 */
+.profile-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+.profile-stat-item {
+    text-align: center;
+    padding: 0.6rem 0.3rem;
+    background: var(--paper-dark);
+    border-radius: var(--radius);
+}
+.profile-stat-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+.profile-stat-label {
+    font-size: 0.65rem;
+    color: var(--pencil);
+    margin-top: 0.1rem;
+}
+
+/* 培育排行 */
+.profile-rank-list {
+    padding: 0.3rem 0;
+}
+.profile-rank-empty {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--pencil);
+    padding: 1rem 0;
+}
+.profile-rank-item {
+    display: flex;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--grid);
+    gap: 0.4rem;
+}
+.profile-rank-item:last-child {
+    border-bottom: none;
+}
+.profile-rank-num {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--accent-warm);
+    min-width: 1.2rem;
+    text-align: center;
+}
+.profile-rank-name {
+    font-size: 0.8rem;
+    color: var(--ink);
+    text-decoration: none;
+    flex: 1;
+}
+.profile-rank-name:hover {
+    color: var(--accent);
+}
+.profile-rank-level {
+    font-size: 0.65rem;
+    color: var(--pencil);
+    min-width: 2rem;
+    text-align: right;
+}
+.profile-rank-stars {
+    font-size: 0.6rem;
+    min-width: 3rem;
+    text-align: right;
+}
+.profile-rank-star {
+    color: var(--accent-warm);
+}
+.profile-rank-star.empty {
+    color: var(--paper-dark);
+}
+
+/* 设置面板 - 档案入口 */
+.settings-item {
+    display: flex;
+    align-items: center;
+    padding: 0.7rem 0.5rem;
+    border-bottom: 1px dashed var(--pencil);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.settings-item:hover {
+    background: var(--paper-dark);
+}
+.settings-item-icon {
+    font-size: 1.1rem;
+    margin-right: 0.5rem;
+}
+.settings-item-text {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--ink);
+}
+.settings-item-arrow {
+    font-size: 1rem;
+    color: var(--pencil);
 }

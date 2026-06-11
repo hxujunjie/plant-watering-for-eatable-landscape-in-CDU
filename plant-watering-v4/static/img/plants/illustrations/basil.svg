@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- 罗勒手绘插图 - 椭圆叶对生 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 主茎 -->
+    <path d="M50,90 Q48,65 48,45 Q48,35 50,28 Q52,35 52,45 Q52,65 50,90Z" stroke="#5a9e5a" stroke-width="2"/>
+    <!-- 对生叶1（上） -->
+    <path d="M48,35 Q38,28 30,24 Q26,22 28,20 Q32,22 38,26 Q44,30 48,33Z" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <line x1="36" y1="26" x2="46" y2="32" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
+    <path d="M52,35 Q62,28 70,24 Q74,22 72,20 Q68,22 62,26 Q56,30 52,33Z" fill="#8fc48a" stroke="#2c2c2c"/>
+    <line x1="64" y1="26" x2="54" y2="32" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
+    <!-- 对生叶2 -->
+    <path d="M48,45 Q36,38 28,34 Q24,32 26,30 Q30,32 36,36 Q42,40 48,43Z" fill="#7ab875" stroke="#2c2c2c"/>
+    <line x1="34" y1="36" x2="46" y2="42" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
+    <path d="M52,45 Q64,38 72,34 Q76,32 74,30 Q70,32 64,36 Q58,40 52,43Z" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <line x1="66" y1="36" x2="54" y2="42" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
+    <!-- 对生叶3 -->
+    <path d="M48,55 Q38,50 32,46 Q28,44 30,42 Q34,44 38,46 Q44,50 48,53Z" fill="#8fc48a" stroke="#2c2c2c"/>
+    <path d="M52,55 Q62,50 68,46 Q72,44 70,42 Q66,44 62,46 Q56,50 52,53Z" fill="#7ab875" stroke="#2c2c2c"/>
+    <!-- 顶叶簇 -->
+    <path d="M50,28 Q44,20 38,16 Q36,14 38,12 Q42,14 46,18 Q50,22 50,26Z" fill="#b8e0b2" stroke="#2c2c2c"/>
+    <path d="M50,28 Q56,20 62,16 Q64,14 62,12 Q58,14 54,18 Q50,22 50,26Z" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <path d="M50,28 Q48,18 50,12 Q52,18 50,28Z" fill="#8fc48a" stroke="#2c2c2c"/>
+  </g>
+</svg>

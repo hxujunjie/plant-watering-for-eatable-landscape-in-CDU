@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- 大图书馆 - 手绘风格 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 书架框架 -->
+    <rect x="10" y="10" width="60" height="62" rx="2" fill="#f5eed8" stroke="#2c2c2c"/>
+    <!-- 隔板 -->
+    <line x1="10" y1="30" x2="70" y2="30" stroke="#2c2c2c" stroke-width="2"/>
+    <line x1="10" y1="50" x2="70" y2="50" stroke="#2c2c2c" stroke-width="2"/>
+    <!-- 第一层书 -->
+    <rect x="14" y="14" width="7" height="16" rx="1" fill="#a8d5a2" stroke="#2c2c2c" stroke-width="1.2"/>
+    <rect x="22" y="16" width="6" height="14" rx="1" fill="#d4b896" stroke="#2c2c2c" stroke-width="1.2"/>
+    <rect x="29" y="13" width="8" height="17" rx="1" fill="#a8c8e0" stroke="#2c2c2c" stroke-width="1.2"/>
+    <rect x="38" y="15" width="6" height="15" rx="1" fill="#f0c8c8" stroke="#2c2c2c" stroke-width="1.2"/>
+    <rect x="45" y="14" width="7" height="16" rx="1" fill="#e0d0a8" stroke="#2c2c2c" stroke-width="1.2"/>
+    <rect x="53" y="16" width="6" height="14" rx="1" fill="#c8b8d8" stroke="#2c2c2c" stroke-width="1.2"/>
+    <!-- 第二层书 -->
+    <rect x="14" y="34" width="8" height="16" rx="1" fill="#e0d0a8" stroke="#2c2c2c" stroke-width="1.2"/>
+    <rect x="23" y="36" width="6" height="14" rx="1" fill="#f0c8c8" stroke="#2c2c2c" stroke-width="1.2"/>
+    <rect x="30" y="33" width="7" height="17" rx="1" fill="#a8d5a2" stroke="#2c2c2c" stroke-width="1.2"/>
+    <rect x="38" y="35" width="8" height="15" rx="1" fill="#a8c8e0" stroke="#2c2c2c" stroke-width="1.2"/>
+    <!-- 小盆栽装饰 -->
+    <rect x="50" y="42" width="8" height="8" rx="1" fill="#d4b896" stroke="#2c2c2c" stroke-width="1.2"/>
+    <path d="M54,42 Q50,36 48,32" stroke="#5a9e5a" stroke-width="1.2" fill="none"/>
+    <path d="M54,42 Q58,36 60,32" stroke="#5a9e5a" stroke-width="1.2" fill="none"/>
+    <circle cx="48" cy="31" r="3" fill="#b8e0b2" stroke="#2c2c2c" stroke-width="1"/>
+    <circle cx="60" cy="31" r="3" fill="#a8d5a2" stroke="#2c2c2c" stroke-width="1"/>
+    <!-- 第三层书 -->
+    <rect x="14" y="54" width="6" height="16" rx="1" fill="#c8b8d8" stroke="#2c2c2c" stroke-width="1.2"/>
+    <rect x="21" y="52" width="8" height="18" rx="1" fill="#a8c8e0" stroke="#2c2c2c" stroke-width="1.2"/>
+    <rect x="30" y="55" width="7" height="15" rx="1" fill="#d4b896" stroke="#2c2c2c" stroke-width="1.2"/>
+    <rect x="38" y="53" width="6" height="17" rx="1" fill="#a8d5a2" stroke="#2c2c2c" stroke-width="1.2"/>
+    <rect x="45" y="54" width="8" height="16" rx="1" fill="#f0c8c8" stroke="#2c2c2c" stroke-width="1.2"/>
+    <rect x="54" y="56" width="6" height="14" rx="1" fill="#e0d0a8" stroke="#2c2c2c" stroke-width="1.2"/>
+  </g>
+</svg>

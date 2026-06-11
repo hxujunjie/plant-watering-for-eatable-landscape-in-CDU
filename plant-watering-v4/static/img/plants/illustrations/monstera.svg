@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- 龟背竹手绘插图 - 大型裂叶 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 主叶轮廓 -->
+    <path d="M50,10 Q30,20 20,40 Q15,55 20,70 Q25,80 35,85 Q42,88 50,90 Q58,88 65,85 Q75,80 80,70 Q85,55 80,40 Q70,20 50,10Z" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <!-- 裂口 -->
+    <path d="M50,10 Q48,30 44,50 Q42,60 40,70" stroke="#2c2c2c" stroke-width="1.2" fill="none"/>
+    <path d="M50,10 Q52,30 56,50 Q58,60 60,70" stroke="#2c2c2c" stroke-width="1.2" fill="none"/>
+    <path d="M30,30 Q38,40 42,55" stroke="#2c2c2c" stroke-width="1" fill="none"/>
+    <path d="M70,30 Q62,40 58,55" stroke="#2c2c2c" stroke-width="1" fill="none"/>
+    <path d="M22,55 Q30,58 38,62" stroke="#2c2c2c" stroke-width="1" fill="none"/>
+    <path d="M78,55 Q70,58 62,62" stroke="#2c2c2c" stroke-width="1" fill="none"/>
+    <!-- 叶脉 -->
+    <path d="M50,15 Q50,50 50,88" stroke="#2c2c2c" stroke-width="0.8" opacity="0.4"/>
+    <path d="M50,30 Q35,35 25,45" stroke="#2c2c2c" stroke-width="0.6" opacity="0.3"/>
+    <path d="M50,30 Q65,35 75,45" stroke="#2c2c2c" stroke-width="0.6" opacity="0.3"/>
+    <path d="M50,50 Q38,55 28,60" stroke="#2c2c2c" stroke-width="0.6" opacity="0.3"/>
+    <path d="M50,50 Q62,55 72,60" stroke="#2c2c2c" stroke-width="0.6" opacity="0.3"/>
+    <!-- 茎 -->
+    <path d="M50,88 Q49,92 48,98" stroke="#2c2c2c" stroke-width="2" fill="none"/>
+  </g>
+</svg>

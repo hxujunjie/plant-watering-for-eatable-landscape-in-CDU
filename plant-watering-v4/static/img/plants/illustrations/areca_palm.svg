@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- 散尾葵手绘插图 - 羽状棕榈叶 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 茎 -->
+    <path d="M50,72 L50,98" stroke="#2c2c2c" stroke-width="2.5" fill="none"/>
+    <!-- 羽状叶片 -->
+    <path d="M50,70 Q30,50 15,30 Q20,38 30,46 Q40,54 50,64" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <path d="M50,70 Q25,55 10,45 Q18,50 28,56 Q40,62 50,66" fill="#8fc48a" stroke="#2c2c2c"/>
+    <path d="M50,70 Q70,50 85,30 Q80,38 70,46 Q60,54 50,64" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <path d="M50,70 Q75,55 90,45 Q82,50 72,56 Q60,62 50,66" fill="#8fc48a" stroke="#2c2c2c"/>
+    <path d="M50,70 Q35,45 25,20 Q32,32 40,44 Q46,54 50,62" fill="#b8e0b2" stroke="#2c2c2c"/>
+    <path d="M50,70 Q65,45 75,20 Q68,32 60,44 Q54,54 50,62" fill="#7ab875" stroke="#2c2c2c"/>
+    <path d="M50,70 Q40,60 30,55 Q38,58 46,64 Q48,66 50,68" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <path d="M50,70 Q60,60 70,55 Q62,58 54,64 Q52,66 50,68" fill="#8fc48a" stroke="#2c2c2c"/>
+    <!-- 叶脉细节 -->
+    <line x1="50" y1="68" x2="22" y2="38" stroke="#2c2c2c" stroke-width="0.6" opacity="0.3"/>
+    <line x1="50" y1="68" x2="78" y2="38" stroke="#2c2c2c" stroke-width="0.6" opacity="0.3"/>
+  </g>
+</svg>

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- 月历满标记 - 手绘风格 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 日历主体 -->
+    <rect x="12" y="14" width="56" height="56" rx="3" fill="#fff8e8" stroke="#2c2c2c"/>
+    <!-- 挂钩 -->
+    <line x1="24" y1="10" x2="24" y2="18" stroke="#2c2c2c" stroke-width="2.5"/>
+    <line x1="56" y1="10" x2="56" y2="18" stroke="#2c2c2c" stroke-width="2.5"/>
+    <!-- 顶部色条 -->
+    <rect x="12" y="14" width="56" height="10" rx="3" fill="#f0d0a0" stroke="#2c2c2c" stroke-width="1.2"/>
+    <!-- 小勾标记 - 第一行 -->
+    <path d="M20,32 Q22,35 25,35" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <path d="M30,32 Q32,35 35,35" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <path d="M40,32 Q42,35 45,35" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <path d="M50,32 Q52,35 55,35" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <!-- 小勾标记 - 第二行 -->
+    <path d="M20,42 Q22,45 25,45" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <path d="M30,42 Q32,45 35,45" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <path d="M40,42 Q42,45 45,45" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <path d="M50,42 Q52,45 55,45" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <!-- 小勾标记 - 第三行 -->
+    <path d="M20,52 Q22,55 25,55" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <path d="M30,52 Q32,55 35,55" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <path d="M40,52 Q42,55 45,55" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <path d="M50,52 Q52,55 55,55" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <!-- 小勾标记 - 第四行 -->
+    <path d="M20,62 Q22,65 25,65" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <path d="M30,62 Q32,65 35,65" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <path d="M40,62 Q42,65 45,65" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+    <path d="M50,62 Q52,65 55,65" stroke="#5a9e5a" stroke-width="1.5" fill="none"/>
+  </g>
+</svg>

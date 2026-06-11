@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- 蝴蝶兰手绘插图 - 蝶形花朵 -->
+  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 茎 -->
+    <path d="M50,90 Q48,70 48,55 Q47,45 48,38 Q49,45 50,55 Q50,70 50,90Z" stroke="#5a9e5a" stroke-width="2"/>
+    <!-- 叶子 -->
+    <path d="M48,72 Q36,66 28,60 Q24,56 26,54 Q30,56 36,60 Q42,66 48,70Z" fill="#a8d5a2" stroke="#2c2c2c"/>
+    <path d="M52,75 Q64,69 72,63 Q76,59 74,57 Q70,59 64,63 Q58,69 52,73Z" fill="#8fc48a" stroke="#2c2c2c"/>
+    <!-- 花茎 -->
+    <path d="M48,38 Q44,30 40,24 Q38,20 40,18 Q42,20 44,24 Q46,28 48,34Z" stroke="#5a9e5a" stroke-width="1.5"/>
+    <path d="M48,38 Q52,28 56,22 Q58,18 56,16 Q54,18 52,22 Q50,28 48,34Z" stroke="#5a9e5a" stroke-width="1.5"/>
+    <!-- 蝶形花1 - 紫色 -->
+    <path d="M40,20 Q32,14 28,16 Q26,18 30,22 Q34,24 40,22Z" fill="#c8a0d8" stroke="#2c2c2c"/>
+    <path d="M40,20 Q36,12 38,8 Q40,6 42,10 Q42,16 40,20Z" fill="#d8b0e8" stroke="#2c2c2c"/>
+    <path d="M40,20 Q34,22 30,26 Q28,28 32,28 Q36,26 40,22Z" fill="#b890c8" stroke="#2c2c2c"/>
+    <circle cx="40" cy="20" r="2" fill="#f0e0a0" stroke="#2c2c2c" stroke-width="0.8"/>
+    <!-- 蝶形花2 - 粉紫色 -->
+    <path d="M56,18 Q64,12 68,14 Q70,16 66,20 Q62,22 56,20Z" fill="#d8a0c8" stroke="#2c2c2c"/>
+    <path d="M56,18 Q60,10 58,6 Q56,4 54,8 Q54,14 56,18Z" fill="#e8b0d8" stroke="#2c2c2c"/>
+    <path d="M56,18 Q62,20 66,24 Q68,26 64,26 Q60,24 56,20Z" fill="#c890b8" stroke="#2c2c2c"/>
+    <circle cx="56" cy="18" r="2" fill="#f0e0a0" stroke="#2c2c2c" stroke-width="0.8"/>
+  </g>
+</svg>
