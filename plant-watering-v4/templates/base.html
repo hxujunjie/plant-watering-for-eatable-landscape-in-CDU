@@ -80,7 +80,7 @@
 
     <!-- 全屏照片查看器 -->
     <div class="viewer-overlay" id="viewerOverlay">
-        <div class="viewer-header">
+        <div class="viewer-header" id="viewerHeader">
             <button class="viewer-close" id="viewerClose">✕</button>
             <div class="viewer-header-actions">
                 <button class="viewer-edit-tags" id="viewerEditTags" title="编辑标签">🏷️ 标签</button>
@@ -166,9 +166,64 @@
         </div>
     </div>
 
+    <!-- GIF 制作面板 -->
+    <div class="gif-maker-overlay" id="gifMakerOverlay" style="display:none;">
+        <div class="gif-maker-panel">
+            <div class="gif-maker-header">
+                <h3>制作成长动画</h3>
+                <button class="tag-picker-close" onclick="closeGifMaker()">&#x2715;</button>
+            </div>
+            <div class="gif-maker-body">
+                <div class="gif-setting">
+                    <label class="gif-setting-label">帧率 (FPS)</label>
+                    <div class="gif-setting-options" id="gifFpsOptions">
+                        <button class="gif-option" data-value="1">1</button>
+                        <button class="gif-option active" data-value="2">2</button>
+                        <button class="gif-option" data-value="3">3</button>
+                        <button class="gif-option" data-value="5">5</button>
+                        <button class="gif-option" data-value="8">8</button>
+                    </div>
+                </div>
+                <div class="gif-setting">
+                    <label class="gif-setting-label">输出尺寸</label>
+                    <div class="gif-setting-options" id="gifSizeOptions">
+                        <button class="gif-option" data-value="0">原始</button>
+                        <button class="gif-option active" data-value="800">800px</button>
+                        <button class="gif-option" data-value="600">600px</button>
+                        <button class="gif-option" data-value="400">400px</button>
+                    </div>
+                </div>
+                <div class="gif-setting">
+                    <label class="gif-setting-label">播放顺序</label>
+                    <div class="gif-setting-options" id="gifOrderOptions">
+                        <button class="gif-option active" data-value="false">正序（从旧到新）</button>
+                        <button class="gif-option" data-value="true">倒序（从新到旧）</button>
+                    </div>
+                </div>
+                <div class="gif-preview-strip" id="gifPreviewStrip"></div>
+                <button class="gif-generate-btn" id="gifGenerateBtn" onclick="generateGif()">生成动画</button>
+                <div class="gif-progress" id="gifProgress" style="display:none;">
+                    <div class="gif-progress-bar" id="gifProgressBar"></div>
+                    <span class="gif-progress-text" id="gifProgressText">生成中...</span>
+                </div>
+                <div class="gif-result" id="gifResult" style="display:none;">
+                    <img id="gifResultImg" src="" alt="GIF预览">
+                    <div class="gif-result-info" id="gifResultInfo"></div>
+                    <a class="gif-download-btn" id="gifDownloadBtn" href="" download>下载 GIF</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-    // 状态栏日期显示 {
+    // 全局错误捕获（调试用）
+    window.addEventListener('error', function(e) {
+      console.error('[GLOBAL ERROR]', e.message, e.filename, e.lineno, e.colno);
+    });
+
+    // 状态栏日期显示
+    (function() {
         var cnMonths = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
         var now = new Date();
         var el = document.getElementById('statusDate');
@@ -176,6 +231,125 @@
             el.textContent = '二零二六年' + cnMonths[now.getMonth()] + '月';
         }
     })();
+
+    // GIF 制作面板参数选项切换
+    document.querySelectorAll('.gif-setting-options').forEach(function(group) {
+        group.addEventListener('click', function(e) {
+            var btn = e.target.closest('.gif-option');
+            if (!btn) return;
+            group.querySelectorAll('.gif-option').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+        });
+    });
+
+    // GIF 制作面板打开/关闭/生成
+    var gifSettings = { fps: 2, size: 800, reverse: false };
+
+    window.openGifMaker = function() {
+        if (typeof growthSelectedForGif === 'undefined' || growthSelectedForGif.size < 3) {
+            if (typeof showToast === 'function') showToast('请至少选择3张照片', 'error');
+            return;
+        }
+        // 渲染已选照片预览
+        var strip = document.getElementById('gifPreviewStrip');
+        strip.innerHTML = '';
+        var cards = document.querySelectorAll('.growth-card');
+        cards.forEach(function(card) {
+            var id = parseInt(card.getAttribute('data-photo-id'));
+            if (growthSelectedForGif.has(id)) {
+                var img = card.querySelector('.growth-card-photo img');
+                if (img) {
+                    var thumb = document.createElement('img');
+                    thumb.className = 'gif-preview-thumb';
+                    thumb.src = img.src;
+                    strip.appendChild(thumb);
+                }
+            }
+        });
+        // 读取参数
+        gifSettings.fps = parseInt(document.querySelector('#gifFpsOptions .gif-option.active').getAttribute('data-value')) || 2;
+        gifSettings.size = parseInt(document.querySelector('#gifSizeOptions .gif-option.active').getAttribute('data-value')) || 800;
+        gifSettings.reverse = document.querySelector('#gifOrderOptions .gif-option.active').getAttribute('data-value') === 'true';
+
+        var overlay = document.getElementById('gifMakerOverlay');
+        overlay.style.display = 'flex';
+        overlay.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('gifResult').style.display = 'none';
+        document.getElementById('gifProgress').style.display = 'none';
+        document.getElementById('gifGenerateBtn').disabled = false;
+        document.getElementById('gifGenerateBtn').textContent = '生成动画';
+    };
+
+    window.closeGifMaker = function() {
+        var overlay = document.getElementById('gifMakerOverlay');
+        overlay.style.display = 'none';
+        overlay.classList.remove('show');
+        document.body.style.overflow = '';
+    };
+
+    window.generateGif = function() {
+        gifSettings.fps = parseInt(document.querySelector('#gifFpsOptions .gif-option.active').getAttribute('data-value')) || 2;
+        gifSettings.size = parseInt(document.querySelector('#gifSizeOptions .gif-option.active').getAttribute('data-value')) || 800;
+        gifSettings.reverse = document.querySelector('#gifOrderOptions .gif-option.active').getAttribute('data-value') === 'true';
+
+        var photoIds = Array.from(growthSelectedForGif);
+        var btn = document.getElementById('gifGenerateBtn');
+        btn.disabled = true;
+        btn.textContent = '生成中...';
+
+        var progress = document.getElementById('gifProgress');
+        progress.style.display = 'block';
+        var bar = document.getElementById('gifProgressBar');
+        bar.style.width = '0%';
+        // 模拟进度
+        var progressVal = 0;
+        var interval = setInterval(function() {
+            progressVal = Math.min(progressVal + Math.random() * 15, 90);
+            bar.style.width = progressVal + '%';
+        }, 300);
+
+        fetch('/api/gif/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                photo_ids: photoIds,
+                fps: gifSettings.fps,
+                size: gifSettings.size,
+                reverse: gifSettings.reverse
+            })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            clearInterval(interval);
+            bar.style.width = '100%';
+            setTimeout(function() {
+                progress.style.display = 'none';
+                if (data.success) {
+                    var result = document.getElementById('gifResult');
+                    result.style.display = 'block';
+                    document.getElementById('gifResultImg').src = data.gif_url;
+                    document.getElementById('gifResultInfo').textContent =
+                        data.frame_count + '帧 / ' + data.file_size + ' / ' +
+                        (data.duration_ms / 1000).toFixed(1) + '秒';
+                    document.getElementById('gifDownloadBtn').href = data.gif_url;
+                    document.getElementById('gifDownloadBtn').download = 'growth_' + Date.now() + '.gif';
+                    if (typeof showToast === 'function') showToast('GIF 生成成功');
+                } else {
+                    if (typeof showToast === 'function') showToast(data.error || '生成失败', 'error');
+                }
+            }, 300);
+        })
+        .catch(function() {
+            clearInterval(interval);
+            progress.style.display = 'none';
+            if (typeof showToast === 'function') showToast('网络错误', 'error');
+        })
+        .finally(function() {
+            btn.disabled = false;
+            btn.textContent = '生成动画';
+        });
+    };
     </script>
     {% block scripts %}{% endblock %}
 </body>

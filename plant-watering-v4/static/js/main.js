@@ -93,13 +93,14 @@
     var track = getTrack();
     if (!track) return;
     track.innerHTML = "";
-    viewerPhotos.forEach(function (src) {
+    viewerPhotos.forEach(function (src, idx) {
       var slide = document.createElement("div");
       slide.className = "viewer-slide";
       var img = document.createElement("img");
       img.src = src;
       img.alt = "照片";
       img.draggable = false;
+      img.setAttribute("data-index", idx);
       slide.appendChild(img);
       track.appendChild(slide);
     });
@@ -862,6 +863,14 @@
       }
     });
   })();
+
+  // 辅助：HTML转义
+  function escapeHtml(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
 
   /* ---------- I7. 设置关闭按钮 ---------- */
   (function initSettingsClose() {

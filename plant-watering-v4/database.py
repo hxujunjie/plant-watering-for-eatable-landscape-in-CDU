@@ -672,3 +672,106 @@ def check_log_liked(log_id, author):
     ).fetchone()
     conn.close()
     return row['cnt'] > 0
+
+
+# ========== 成就系统相关函数 ==========
+
+LEVELS = [
+    (0, '种子', '🌱'),
+    (50, '发芽', '🌿'),
+    (150, '幼苗', '🪴'),
+    (300, '成长', '🌳'),
+    (500, '开花', '🌸'),
+    (800, '结果', '🍎'),
+    (1200, '大树', '🌲'),
+    (1800, '园艺大师', '🏆'),
+]
+
+def get_user_stats():
+    """获取用户统计数据（总经验、等级、各操作计数）。"""
+    conn = get_db()
+    log_count = conn.execute("SELECT COUNT(*) as cnt FROM watering_log").fetchone()['cnt']
+    photo_count = conn.execute("SELECT COUNT(*) as cnt FROM photo").fetchone()['cnt']
+    comment_count = conn.execute("SELECT COUNT(*) as cnt FROM photo_comment").fetchone()['cnt']
+    like_count = conn.execute("SELECT COUNT(*) as cnt FROM log_like").fetchone()['cnt']
+    board_count = conn.execute("SELECT COUNT(*) as cnt FROM board_message").fetchone()['cnt']
+    tag_count = conn.execute("SELECT COUNT(*) as cnt FROM tag").fetchone()['cnt']
+
+    # 计算总经验值
+    total_xp = log_count * 5 + photo_count * 15 + comment_count * 3 + like_count * 2 + board_count * 3
+
+    # 计算当前等级
+    current_level = LEVELS[0]
+    next_level = LEVELS[1] if len(LEVELS) > 1 else None
+    for i in range(len(LEVELS) - 1, -1, -1):
+        if total_xp >= LEVELS[i][0]:
+            current_level = LEVELS[i]
+            next_level = LEVELS[i + 1] if i + 1 < len(LEVELS) else None
+            break
+
+    level_progress = 0
+    if next_level:
+        level_progress = (total_xp - current_level[0]) / (next_level[0] - current_level[0])
+
+    # 获取最早和最晚记录日期
+    first_log = conn.execute("SELECT created_at FROM watering_log ORDER BY created_at ASC LIMIT 1").fetchone()
+    last_log = conn.execute("SELECT created_at FROM watering_log ORDER BY created_at DESC LIMIT 1").fetchone()
+
+    conn.close()
+
+    return {
+        'total_xp': total_xp,
+        'level_name': current_level[1],
+        'level_icon': current_level[2],
+        'level_xp': current_level[0],
+        'next_level_name': next_level[1] if next_level else None,
+        'next_level_xp': next_level[0] if next_level else None,
+        'level_progress': min(level_progress, 1.0),
+        'log_count': log_count,
+        'photo_count': photo_count,
+        'comment_count': comment_count,
+        'like_count': like_count,
+        'board_count': board_count,
+        'tag_count': tag_count,
+        'first_log_date': first_log['created_at'] if first_log else None,
+        'last_log_date': last_log['created_at'] if last_log else None,
+    }
+
+def get_monthly_summary():
+    """获取本月统计摘要。"""
+    conn = get_db()
+    now = current_time_str()
+    month_prefix = now[:7]  # YYYY-MM
+
+    month_logs = conn.execute(
+        "SELECT COUNT(*) as cnt FROM watering_log WHERE created_at LIKE ?",
+        (month_prefix + '%',)
+    ).fetchone()['cnt']
+
+    month_photos = conn.execute(
+        "SELECT COUNT(*) as cnt FROM photo WHERE created_at LIKE ?",
+        (month_prefix + '%',)
+    ).fetchone()['cnt']
+
+    # 获取本月最常记录的植物名
+    top_name = conn.execute('''
+        SELECT name, COUNT(*) as cnt FROM watering_log
+        WHERE created_at LIKE ?
+        GROUP BY name ORDER BY cnt DESC LIMIT 1
+    ''', (month_prefix + '%',)).fetchone()
+
+    # 获取本月总留言数
+    month_comments = conn.execute(
+        "SELECT COUNT(*) as cnt FROM photo_comment WHERE created_at LIKE ?",
+        (month_prefix + '%',)
+    ).fetchone()['cnt']
+
+    conn.close()
+
+    return {
+        'month_logs': month_logs,
+        'month_photos': month_photos,
+        'month_comments': month_comments,
+        'top_plant_name': top_name['name'] if top_name else None,
+        'top_plant_count': top_name['cnt'] if top_name else 0,
+    }

@@ -3,7 +3,7 @@
 {% block content %}
 <div class="board-container">
     <!-- 头部区域 -->
-    <div class="board-header">
+    <div class="board-header header-compact">
         <div class="board-badge">BLACKBOARD</div>
         <h1>留言黑板</h1>
         <div class="board-subtitle">写下你的植物心得</div>
@@ -17,6 +17,20 @@
     <!-- 搜索栏 -->
     <div class="board-search">
         <input type="text" id="boardSearchInput" placeholder="搜索留言..." maxlength="50">
+    </div>
+
+    <!-- 输入区域 -->
+    <div class="board-input">
+        <div class="board-input-card">
+            <input type="text" id="boardAuthor" class="board-author-input" placeholder="你的名字" maxlength="20">
+            <textarea id="boardContent" class="board-content-input" placeholder="写下你的留言..." rows="2" maxlength="200"></textarea>
+            <div class="board-input-footer">
+                <div class="board-colors" id="boardColors">
+                    <!-- 颜色选择按钮由JS渲染 -->
+                </div>
+                <button class="board-submit" id="boardSubmitBtn">发布留言</button>
+            </div>
+        </div>
     </div>
 
     <!-- 便利贴墙 -->
@@ -34,20 +48,6 @@
         <div class="empty-icon">📝</div>
         <div class="empty-title">还没有留言</div>
         <div class="empty-desc">在黑板上留下你的第一条植物心得吧</div>
-    </div>
-
-    <!-- 输入区域 -->
-    <div class="board-input">
-        <div class="board-input-card">
-            <input type="text" id="boardAuthor" class="board-author-input" placeholder="你的名字" maxlength="20">
-            <textarea id="boardContent" class="board-content-input" placeholder="写下你的留言..." rows="2" maxlength="200"></textarea>
-            <div class="board-input-footer">
-                <div class="board-colors" id="boardColors">
-                    <!-- 颜色选择按钮由JS渲染 -->
-                </div>
-                <button class="board-submit" id="boardSubmitBtn">发布留言</button>
-            </div>
-        </div>
     </div>
 </div>
 

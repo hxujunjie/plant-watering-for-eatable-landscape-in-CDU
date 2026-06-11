@@ -4,7 +4,7 @@
 
 {% block content %}
 <!-- 页面头部 - 植物志封面风格 -->
-<div class="header">
+<div class="header header-compact">
     <div class="header-badge">ARCHIVE</div>
     <h1>观察档案</h1>
     <div class="header-divider">
@@ -15,11 +15,12 @@
 </div>
 
 <!-- 标签页切换 -->
-<div class="tabs">
+<div class="tabs scrollable">
     <button class="tab active" data-tab="list">记录列表</button>
     <button class="tab" data-tab="calendar">日历</button>
     <button class="tab" data-tab="photos">图鉴</button>
     <button class="tab" data-tab="tags" onclick="switchTab('tags')">标签筛选</button>
+    <button class="tab" data-tab="growth" onclick="switchTab('growth')">成长</button>
 </div>
 
 <!-- 签到列表 -->
@@ -70,12 +71,35 @@
         <!-- 点击tag后显示照片合集 -->
     </div>
 </div>
+
+<!-- 成长时间线 -->
+<div class="tab-content" id="tabGrowth">
+    <div class="growth-tag-selector" id="growthTagSelector">
+        <div class="growth-tag-selector-label">选择植物</div>
+        <div class="growth-tags-list" id="growthTagsList">
+            <!-- 动态渲染 -->
+        </div>
+    </div>
+    <div class="growth-info" id="growthInfo" style="display:none;">
+        <span id="growthInfoText"></span>
+        <button class="growth-gif-btn" id="growthGifBtn" onclick="toggleGifSelectMode()">🎞️ 制作GIF</button>
+    </div>
+    <div class="growth-timeline-wrapper" id="growthTimelineWrapper" style="display:none;">
+        <div class="growth-timeline" id="growthTimeline">
+            <!-- 动态渲染照片卡片 -->
+        </div>
+    </div>
+    <div class="growth-empty" id="growthEmpty">
+        <div class="empty-icon">🌱</div>
+        <div class="empty-title">追踪成长</div>
+        <div class="empty-desc">选择一个标签，查看植物的成长轨迹</div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-(function() {
-    // ========== 竖排中文数字 ==========
+// ========== 竖排中文数字 ==========
     var cnNumbers = ['壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖', '拾',
                      '拾壹', '拾贰', '拾叁', '拾肆', '拾伍', '拾陆', '拾柒', '拾捌', '拾玖', '贰拾'];
     var recordCounter = 0;
@@ -1066,9 +1090,165 @@
         }
     })();
 
+    // ========== 成长时间线 ==========
+    var growthActiveTagId = null;
+    var growthPhotosCache = [];
+    var growthGifSelectMode = false;
+    var growthSelectedForGif = new Set();
+
+    function loadGrowthTags() {
+        fetch('/api/tags')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var tags = data.tags || [];
+                var container = document.getElementById('growthTagsList');
+                container.innerHTML = '';
+                tags.forEach(function(tag) {
+                    var btn = document.createElement('button');
+                    btn.className = 'growth-tag-btn' + (growthActiveTagId === tag.id ? ' active' : '');
+                    btn.textContent = tag.name;
+                    btn.addEventListener('click', function() {
+                        growthActiveTagId = tag.id;
+                        loadGrowthTags(); // 刷新按钮样式
+                        loadGrowthTimeline(tag.id);
+                    });
+                    container.appendChild(btn);
+                });
+            });
+    }
+
+    function loadGrowthTimeline(tagId) {
+        var wrapper = document.getElementById('growthTimelineWrapper');
+        var info = document.getElementById('growthInfo');
+        var empty = document.getElementById('growthEmpty');
+        var timeline = document.getElementById('growthTimeline');
+        if (!timeline) return;
+        timeline.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--pencil);font-size:0.85rem;">加载中...</div>';
+        wrapper.style.display = 'block';
+        info.style.display = 'none';
+        empty.style.display = 'none';
+
+        fetch('/api/photos/by-tag/' + tagId + '?order=asc')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var photos = data.photos || [];
+                growthPhotosCache = photos;
+                growthGifSelectMode = false;
+                growthSelectedForGif.clear();
+
+                if (photos.length === 0) {
+                    wrapper.style.display = 'none';
+                    empty.style.display = 'flex';
+                    return;
+                }
+
+                // 计算时间跨度
+                var first = photos[0].created_at || '';
+                var last = photos[photos.length - 1].created_at || '';
+                var firstShort = first ? first.substring(5, 10).replace('-', '/') : '';
+                var lastShort = last ? last.substring(5, 10).replace('-', '/') : '';
+                document.getElementById('growthInfoText').textContent =
+                    firstShort + ' - ' + lastShort + '，共 ' + photos.length + ' 张';
+                info.style.display = 'flex';
+
+                // 渲染时间线
+                timeline.innerHTML = '';
+                timeline.classList.remove('gif-select-mode');
+
+                photos.forEach(function(photo) {
+                    var card = document.createElement('div');
+                    card.className = 'growth-card';
+                    card.setAttribute('data-photo-id', photo.id);
+
+                    var dateStr = photo.created_at ? photo.created_at.substring(5, 10).replace('-', '/') : '';
+                    var caption = photo.caption || '';
+
+                    card.innerHTML =
+                        '<div class="growth-card-photo">' +
+                            '<img src="' + (photo.file_path || photo.path || '') + '" alt="照片" loading="lazy" data-photo-id="' + photo.id + '">' +
+                            '<div class="growth-card-checkbox" data-id="' + photo.id + '"></div>' +
+                        '</div>' +
+                        '<div class="growth-card-node"></div>' +
+                        '<div class="growth-card-date">' + dateStr + '</div>' +
+                        (caption ? '<div class="growth-card-caption">' + escapeHtml(caption) + '</div>' : '');
+
+                    // 点击照片打开查看器
+                    var cardImg = card.querySelector('.growth-card-photo img');
+                    if (cardImg) {
+                        cardImg.addEventListener('click', function(e) {
+                            if (growthGifSelectMode) {
+                                var id = parseInt(card.getAttribute('data-photo-id'));
+                                var cb = card.querySelector('.growth-card-checkbox');
+                                if (growthSelectedForGif.has(id)) {
+                                    growthSelectedForGif.delete(id);
+                                    cb.classList.remove('checked');
+                                    cb.textContent = '';
+                                } else {
+                                    if (growthSelectedForGif.size >= 20) {
+                                        showToast('最多选择20张照片', 'error');
+                                        return;
+                                    }
+                                    growthSelectedForGif.add(id);
+                                    cb.classList.add('checked');
+                                    cb.textContent = '✓';
+                                }
+                                updateGifBtnText();
+                                e.stopPropagation();
+                            } else {
+                                openViewerUrl(this);
+                            }
+                        });
+                    }
+
+                    timeline.appendChild(card);
+                });
+            })
+            .catch(function(err) {
+                if (timeline) {
+                    timeline.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--accent-rose);font-size:0.85rem;">加载失败</div>';
+                }
+            });
+    }
+
+    function toggleGifSelectMode() {
+        growthGifSelectMode = !growthGifSelectMode;
+        var timeline = document.getElementById('growthTimeline');
+        var gifBtn = document.getElementById('growthGifBtn');
+
+        if (growthGifSelectMode) {
+            timeline.classList.add('gif-select-mode');
+            gifBtn.textContent = '开始制作 (' + growthSelectedForGif.size + '张)';
+            gifBtn.onclick = function() {
+                if (growthSelectedForGif.size < 3) {
+                    showToast('请至少选择3张照片', 'error');
+                    return;
+                }
+                openGifMaker();
+            };
+        } else {
+            timeline.classList.remove('gif-select-mode');
+            growthSelectedForGif.clear();
+            // 清除所有勾选
+            timeline.querySelectorAll('.growth-card-checkbox').forEach(function(cb) {
+                cb.classList.remove('checked');
+                cb.textContent = '';
+            });
+            gifBtn.textContent = '🎞️ 制作GIF';
+            gifBtn.onclick = function() { toggleGifSelectMode(); };
+        }
+    }
+
+    function updateGifBtnText() {
+        var gifBtn = document.getElementById('growthGifBtn');
+        if (growthGifSelectMode) {
+            gifBtn.textContent = '开始制作 (' + growthSelectedForGif.size + '张)';
+        }
+    }
+
     // ========== 初始化 ==========
     initCalendar();
     loadRecords(false);
+    loadGrowthTags();
 
     // 监听全局排序变化，刷新当前数据
     window.addEventListener('sortOrderChanged', function() {
@@ -1088,6 +1268,5 @@
             loadTagFilterResult();
         }
     });
-})();
 </script>
 {% endblock %}

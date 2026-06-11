@@ -2,6 +2,8 @@ import os
 import io
 import json
 import csv
+import uuid
+import tempfile
 from flask import Flask, render_template, request, jsonify, send_file
 from PIL import Image
 from database import (
@@ -14,7 +16,8 @@ from database import (
     get_all_photos_with_tags_grouped_by_date, \
     add_board_message, get_board_messages, delete_board_message, \
     add_photo_comment, get_photo_comments, delete_photo_comment, \
-    add_log_like, remove_log_like, get_log_likes, get_log_like_count, check_log_liked
+    add_log_like, remove_log_like, get_log_likes, get_log_like_count, check_log_liked, \
+    get_user_stats, get_monthly_summary
 )
 import backup
 
@@ -60,7 +63,9 @@ def index():
     """签到页（首页）。"""
     last_watering = get_last_watering()
     names = get_all_names()
-    return render_template('index.html', last_watering=last_watering, names=names)
+    stats = get_user_stats()
+    monthly = get_monthly_summary()
+    return render_template('index.html', last_watering=last_watering, names=names, stats=stats, monthly=monthly)
 
 
 @app.route('/records')
@@ -285,6 +290,85 @@ def api_photos_by_tags():
     photos = get_photos_by_tags_intersection(tag_ids, order=order)
     return jsonify({'photos': photos})
 
+
+# ========== GIF 合成 API ==========
+
+GIF_OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', 'gifs')
+
+@app.route('/api/gif/create', methods=['POST'])
+def create_gif():
+    """合成GIF动画。"""
+    data = request.get_json()
+    photo_ids = data.get('photo_ids', [])
+    fps = data.get('fps', 2)
+    size = data.get('size', 0)
+    reverse = data.get('reverse', False)
+
+    if not isinstance(photo_ids, list) or len(photo_ids) < 3 or len(photo_ids) > 20:
+        return jsonify({'success': False, 'error': '请选择3-20张照片'}), 400
+    fps = max(1, min(10, int(fps)))
+
+    from database import get_db
+    conn = get_db()
+    placeholders = ','.join(['?' for _ in photo_ids])
+    rows = conn.execute(
+        'SELECT id, file_path FROM photo WHERE id IN (' + placeholders + ')',
+        photo_ids
+    ).fetchall()
+    conn.close()
+
+    if len(rows) != len(photo_ids):
+        return jsonify({'success': False, 'error': '部分照片不存在'}), 400
+
+    id_to_path = {r['id']: r['file_path'] for r in rows}
+    paths = [id_to_path[pid] for pid in photo_ids]
+    if reverse:
+        paths.reverse()
+
+    images = []
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    for path in paths:
+        filepath = os.path.join(base_dir, path.lstrip('/'))
+        if not os.path.exists(filepath):
+            return jsonify({'success': False, 'error': '照片文件丢失'}), 404
+        img = Image.open(filepath)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        if size > 0:
+            img.thumbnail((size, size), Image.LANCZOS)
+        images.append(img)
+
+    os.makedirs(GIF_OUTPUT_DIR, exist_ok=True)
+    gif_filename = 'temp_' + uuid.uuid4().hex[:8] + '.gif'
+    gif_path = os.path.join(GIF_OUTPUT_DIR, gif_filename)
+
+    duration_ms = int(1000 / fps)
+    images[0].save(
+        gif_path,
+        save_all=True,
+        append_images=images[1:],
+        duration=duration_ms,
+        loop=0,
+        optimize=True
+    )
+
+    file_size = os.path.getsize(gif_path)
+
+    def _format_size(bytes_num):
+        if bytes_num < 1024:
+            return str(bytes_num) + 'B'
+        elif bytes_num < 1024 * 1024:
+            return str(round(bytes_num / 1024, 1)) + 'KB'
+        else:
+            return str(round(bytes_num / (1024 * 1024), 1)) + 'MB'
+
+    return jsonify({
+        'success': True,
+        'gif_url': '/uploads/gifs/' + gif_filename,
+        'file_size': _format_size(file_size),
+        'frame_count': len(images),
+        'duration_ms': duration_ms * len(images)
+    })
 
 # ========== 黑板留言 API ==========
 
@@ -520,6 +604,16 @@ def admin_restore():
         return jsonify({'success': True, 'message': '恢复成功，请刷新页面'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ========== 趣味功能 API ==========
+
+@app.route('/api/stats', methods=['GET'])
+def api_stats():
+    """获取用户成就统计数据。"""
+    stats = get_user_stats()
+    monthly = get_monthly_summary()
+    return jsonify({'stats': stats, 'monthly': monthly})
 
 
 # ========== 启动逻辑 ==========

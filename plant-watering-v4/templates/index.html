@@ -3,43 +3,40 @@
 {% block title %}植物日志{% endblock %}
 
 {% block content %}
-<!-- 页面头部 - 植物志封面风格 -->
-<div class="header">
-    <div class="header-badge">BOTANICAL JOURNAL</div>
-    <h1>植物日志</h1>
-    <div class="subtitle">记录每一次与植物的相遇</div>
-    <div class="header-divider">
-        <div class="line"></div>
-        <div class="leaf">🌿</div>
-        <div class="line"></div>
+<!-- 区块1: 紧凑头部 + 状态条 -->
+<div class="home-top">
+    <div class="home-top-header">
+        <div class="header-badge">BOTANICAL JOURNAL</div>
+        <h1>植物日志</h1>
+        <div class="subtitle">记录每一次与植物的相遇</div>
+        <div class="header-divider">
+            <div class="line"></div>
+            <div class="leaf">🌿</div>
+            <div class="line"></div>
+        </div>
     </div>
-</div>
-
-<!-- 上次浇水信息 - 标本标签风格 -->
-<div class="sketch-card">
-    <div class="last-water" id="lastWater">
-        {% if last_watering %}
-        <div class="last-water-card">
-            <span class="specimen-no">No.{{ last_watering.created_at[:10] | replace('-', '') }}</span>
-            <div class="info">
-                <span class="label">最近记录</span>
-                <span class="value" id="lastWaterValue"></span>
+    <div class="home-status-bar">
+        <div class="status-level" id="statusLevel">
+            <span class="status-level-icon">{{ stats.level_icon }}</span>
+            <span class="status-level-name">{{ stats.level_name }}</span>
+            <span class="status-level-xp">{{ stats.total_xp }} XP</span>
+        </div>
+        <div class="status-divider">|</div>
+        <div class="status-last-water" id="lastWater">
+            {% if last_watering %}
+                <span class="specimen-no">No.{{ last_watering.created_at[:10] | replace('-', '') }}</span>
+                <span class="status-water-value" id="lastWaterValue"></span>
                 <span class="days-tag" id="daysDiff"></span>
-            </div>
+            {% else %}
+                <span class="status-water-empty">尚无记录</span>
+            {% endif %}
         </div>
-        {% else %}
-        <div class="last-water-empty">
-            <span class="icon">🌿</span>
-            <p>尚无浇水记录，快来写下第一笔</p>
-        </div>
-        {% endif %}
     </div>
 </div>
 
-<!-- 签到卡片 -->
+<!-- 区块2: 签到表单（核心操作） -->
 <div class="sketch-card">
     <form id="checkinForm" enctype="multipart/form-data">
-        <!-- 姓名输入 -->
         <div class="field">
             <div class="field-label">
                 <span class="field-number-circle">1</span>
@@ -48,8 +45,6 @@
             <input type="text" id="nameInput" class="field-input" name="name" placeholder="请写下你的名字..." autocomplete="off" required>
             <div class="name-dropdown" id="nameDropdown"></div>
         </div>
-
-        <!-- 照片上传 -->
         <div class="field">
             <div class="field-label">
                 <span class="field-number-circle">2</span>
@@ -63,13 +58,73 @@
             <input type="file" id="photoInput" name="photos" accept="image/*" multiple hidden>
             <div class="photo-preview" id="photoPreview"></div>
         </div>
-
-        <!-- 签到按钮 - 绿色背景+印章圆圈 -->
         <button type="submit" class="btn-checkin" id="checkinBtn">
             确认签到
             <div class="seal">志</div>
         </button>
     </form>
+</div>
+
+<!-- 区块3: 趣味内容（紧凑化） -->
+<!-- 3a. 等级详情 -->
+<div class="fun-card fun-level-card compact">
+    <div class="fun-card-header">
+        <span class="fun-card-title">培育者档案</span>
+    </div>
+    <div class="fun-level-body">
+        <div class="fun-level-icon" id="levelIcon">{{ stats.level_icon }}</div>
+        <div class="fun-level-info">
+            <div class="fun-level-name" id="levelName">{{ stats.level_name }}</div>
+            <div class="fun-level-bar-wrap">
+                <div class="fun-level-bar" id="levelBar" style="width:{{ (stats.level_progress * 100) | int }}%"></div>
+            </div>
+            <div class="fun-level-xp">
+                <span id="levelXpText">{{ stats.total_xp }} XP</span>
+                {% if stats.next_level_name %}
+                <span class="fun-level-next">距「{{ stats.next_level_name }}」还需 {{ stats.next_level_xp - stats.total_xp }} XP</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3b. 数据统计（内联） -->
+<div class="fun-card fun-stats-card compact">
+    <div class="fun-card-header">
+        <span class="fun-card-title">植物数据</span>
+    </div>
+    <div class="fun-stats-inline">
+        <span class="fun-stat-inline-item"><strong>{{ stats.log_count }}</strong> 次记录</span>
+        <span class="fun-stat-sep">/</span>
+        <span class="fun-stat-inline-item"><strong>{{ stats.photo_count }}</strong> 张照片</span>
+        <span class="fun-stat-sep">/</span>
+        <span class="fun-stat-inline-item"><strong>{{ stats.tag_count }}</strong> 个标签</span>
+        <span class="fun-stat-sep">/</span>
+        <span class="fun-stat-inline-item"><strong>{{ stats.board_count }}</strong> 条留言</span>
+    </div>
+    {% if monthly.month_logs > 0 %}
+    <div class="fun-monthly-summary" id="monthlySummary">
+        <div class="fun-monthly-line">
+            本月 <strong>{{ monthly.month_logs }}</strong> 次记录，
+            <strong>{{ monthly.month_photos }}</strong> 张照片
+            {% if monthly.top_plant_name %}
+            ，最常记录 <strong>{{ monthly.top_plant_name }}</strong>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 3c. 每日一签 -->
+<div class="fun-card fun-daily-card compact">
+    <div class="fun-card-header">
+        <span class="fun-card-title">植物日签</span>
+        <button class="fun-daily-refresh" id="dailyRefresh" type="button">换一条</button>
+    </div>
+    <div class="fun-daily-body" id="dailyBody">
+        <div class="fun-daily-text" id="dailyText"></div>
+        <div class="fun-daily-source" id="dailySource"></div>
+    </div>
 </div>
 
 <!-- 签到成功动画 -->
@@ -273,7 +328,7 @@
             if (data.success) {
                 playCelebration();
                 showToast('已记录');
-                // 更新上次浇水信息
+                // 更新状态条（新结构）
                 fetch('/api/last_watering').then(function(r) { return r.json(); }).then(function(d) {
                     if (d.last_watering) {
                         var lw = d.last_watering;
@@ -285,14 +340,35 @@
                         var dateNo = lw.created_at.substring(0, 10).replace(/-/g, '');
                         var lastWater = document.getElementById('lastWater');
                         lastWater.innerHTML =
-                            '<div class="last-water-card">' +
                             '<span class="specimen-no">No.' + dateNo + '</span>' +
-                            '<div class="info">' +
-                            '<span class="label">最近记录</span>' +
-                            '<span class="value">' + m + '月' + dd + '日 ' + hh + ':' + mm + ' · ' + lw.name + '</span>' +
-                            '<span class="days-tag">刚刚</span>' +
-                            '</div>' +
-                            '</div>';
+                            '<span class="status-water-value">' + m + '月' + dd + '日 ' + hh + ':' + mm + ' · ' + lw.name + '</span>' +
+                            '<span class="days-tag">刚刚</span>';
+                    }
+                });
+                // 同时刷新等级信息（状态条 + 详情卡片）
+                fetch('/api/stats').then(function(r) { return r.json(); }).then(function(d) {
+                    if (d.stats) {
+                        // 更新状态条等级
+                        var statusLevel = document.getElementById('statusLevel');
+                        if (statusLevel) {
+                            statusLevel.querySelector('.status-level-icon').textContent = d.stats.level_icon;
+                            statusLevel.querySelector('.status-level-name').textContent = d.stats.level_name;
+                            statusLevel.querySelector('.status-level-xp').textContent = d.stats.total_xp + ' XP';
+                        }
+                        // 更新等级详情卡片
+                        document.getElementById('levelIcon').textContent = d.stats.level_icon;
+                        document.getElementById('levelName').textContent = d.stats.level_name;
+                        document.getElementById('levelBar').style.width = (d.stats.level_progress * 100) + '%';
+                        document.getElementById('levelXpText').textContent = d.stats.total_xp + ' XP';
+                        // 更新内联统计
+                        var inlineStats = document.querySelector('.fun-stats-inline');
+                        if (inlineStats) {
+                            var items = inlineStats.querySelectorAll('.fun-stat-inline-item strong');
+                            if (items[0]) items[0].textContent = d.stats.log_count;
+                            if (items[1]) items[1].textContent = d.stats.photo_count;
+                            if (items[2]) items[2].textContent = d.stats.tag_count;
+                            if (items[3]) items[3].textContent = d.stats.board_count;
+                        }
                     }
                 });
                 // 清空表单
@@ -322,6 +398,58 @@
             celebration.classList.remove('active');
         }, 2000);
     }
+
+    // ========== 每日一签 ==========
+    var plantFacts = [
+        { text: '向日葵的花盘会跟随太阳转动，这种现象叫做"向光性"。', source: '植物学基础' },
+        { text: '含羞草被触碰后会闭合叶片，这是因为叶枕细胞水分快速流失。', source: '植物生理学' },
+        { text: '竹子是地球上生长最快的植物，有些品种一天能长近1米。', source: '植物趣闻' },
+        { text: '世界上最古老的花是银杏，已经存在了2.7亿年。', source: '古植物学' },
+        { text: '植物通过根系与周围的真菌建立"菌根网络"，可以互相传递营养和信号。', source: '生态学' },
+        { text: '薰衣草的香味可以帮助人放松，减轻焦虑感。', source: '芳香疗法' },
+        { text: '仙人掌的刺其实是退化的叶子，用来减少水分蒸发。', source: '沙漠植物' },
+        { text: '一棵成年橡树每天可以蒸腾约150升水。', source: '树木生理学' },
+        { text: '草莓表面的小颗粒不是种子，而是真正的果实。', source: '植物形态学' },
+        { text: '捕蝇草能在0.1秒内闭合叶片捕捉昆虫，是植物界最快的运动之一。', source: '食虫植物' },
+        { text: '薄荷的清凉感来自薄荷醇，它能欺骗神经末梢产生冷感。', source: '植物化学' },
+        { text: '有些植物会在被虫咬后释放化学信号，通知邻近植物启动防御。', source: '植物通讯' },
+        { text: '世界上最大的花是大王花，直径可达1米，但没有根茎叶。', source: '热带植物' },
+        { text: '多肉植物在原生地经常经历极端干旱，所以叶片能储存大量水分。', source: '多肉养护' },
+        { text: '音乐可能促进植物生长，声波振动可能刺激细胞壁的通透性。', source: '植物声学' },
+        { text: '常春藤可以净化空气中的甲醛和苯，是天然的空气净化器。', source: '室内植物' },
+        { text: '月季和玫瑰的区别：月季一年多次开花，玫瑰通常一年只开一次。', source: '花卉知识' },
+        { text: '植物的根具有向地性，无论种子怎么放，根都会向下生长。', source: '植物学基础' },
+        { text: '番茄是世界上最受欢迎的蔬菜之一，全球每年产量超过1.8亿吨。', source: '园艺数据' },
+        { text: '苔藓没有真正的根，靠叶片直接吸收水分和养分。', source: '苔藓植物' },
+        { text: '给植物唱歌或说话可能帮助它们生长，因为呼出的二氧化碳是光合作用的原料。', source: '园艺趣闻' },
+        { text: '水培植物不需要土壤，只要营养液中含有足够的矿物质就能健康生长。', source: '水培技术' },
+        { text: '绿萝是最容易养活的室内植物之一，耐阴、耐旱、还能净化空气。', source: '室内绿植' },
+        { text: '有些植物的种子可以在地下休眠数百年，等待合适条件再发芽。', source: '种子生物学' },
+        { text: '植物的颜色来自不同色素：叶绿素（绿）、花青素（红/紫）、类胡萝卜素（黄/橙）。', source: '植物色素' },
+        { text: '浇水最好的时间是清晨，这样植物有整天时间吸收水分，夜间不会太湿。', source: '养护技巧' },
+        { text: '咖啡渣是很好的堆肥材料，富含氮元素，适合喜欢酸性土壤的植物。', source: '堆肥知识' },
+        { text: '植物的气孔主要在叶片背面，这是它们"呼吸"的通道。', source: '植物解剖学' },
+        { text: '大蒜水可以作为一种天然的杀虫剂，喷洒在植物上能驱赶蚜虫。', source: '有机园艺' },
+        { text: '世界上有超过39万种已知植物物种，其中约9万种尚未被研究。', source: '植物多样性' },
+    ];
+
+    var lastDailyIndex = -1;
+    function showDailyFact() {
+        var idx;
+        do {
+            idx = Math.floor(Math.random() * plantFacts.length);
+        } while (idx === lastDailyIndex && plantFacts.length > 1);
+        lastDailyIndex = idx;
+        var fact = plantFacts[idx];
+        document.getElementById('dailyText').textContent = fact.text;
+        document.getElementById('dailySource').textContent = '— ' + fact.source;
+    }
+    showDailyFact();
+
+    document.getElementById('dailyRefresh').addEventListener('click', function() {
+        showDailyFact();
+    });
+
 })();
 </script>
 {% endblock %}
