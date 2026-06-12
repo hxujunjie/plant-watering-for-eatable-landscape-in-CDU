@@ -126,6 +126,12 @@ def init_db():
     # 迁移：为已有表添加新列
     _migrate_db(conn)
 
+    # 添加 nickname 列（如果不存在）
+    try:
+        conn.execute('ALTER TABLE plant_unlock ADD COLUMN nickname TEXT DEFAULT ""')
+    except:
+        pass  # 列已存在
+
     # 预设 tag 种子数据：当 tag 表为空时插入
     count = conn.execute("SELECT COUNT(*) as cnt FROM tag").fetchone()['cnt']
     if count == 0:
@@ -940,7 +946,7 @@ def get_all_codex_entries():
     # 获取所有已解锁的记录
     unlocks = conn.execute('''
         SELECT id, plant_lib_id, custom_name, tag_name, unlocked_at,
-               record_count, care_days, last_record_at, cover_photo_path
+               record_count, care_days, last_record_at, cover_photo_path, nickname
         FROM plant_unlock
         ORDER BY plant_lib_id ASC NULLS LAST, id ASC
     ''').fetchall()
@@ -990,6 +996,7 @@ def get_all_codex_entries():
             'cultivation_level': cultivation_level,
             'silhouette_url': plant.get('silhouette_path', ''),
             'illustration_url': plant.get('illustration_path', ''),
+            'nickname': unlock_info.get('nickname', '') if is_unlocked else '',
         })
 
     # 2. 自定义植物（不在植物库中的标签）
@@ -1007,6 +1014,7 @@ def get_all_codex_entries():
             'is_custom': True,
             'silhouette_url': '',
             'illustration_url': '',
+            'nickname': custom.get('nickname', ''),
         })
 
     conn.close()
@@ -1044,6 +1052,7 @@ def get_plant_detail(plant_lib_id):
             'care_days': unlock['care_days'] or 0,
             'last_record_at': unlock['last_record_at'],
             'cover_url': unlock['cover_photo_path'] or '',
+            'nickname': unlock['nickname'] or '',
         }
     else:
         return {
@@ -1060,6 +1069,7 @@ def get_plant_detail(plant_lib_id):
             'care_days': 0,
             'last_record_at': None,
             'cover_url': '',
+            'nickname': '',
         }
 
 
@@ -1089,6 +1099,14 @@ def get_plant_timeline(plant_lib_id):
     ''' % placeholders, tag_ids).fetchall()
     db.close()
     return [dict(p) for p in photos]
+
+
+def update_plant_nickname(plant_lib_id, nickname):
+    """更新植物的昵称。"""
+    db = get_db()
+    db.execute('UPDATE plant_unlock SET nickname = ? WHERE plant_lib_id = ?', (nickname, plant_lib_id))
+    db.commit()
+    db.close()
 
 
 def get_plant_monthly_stats(plant_lib_id):

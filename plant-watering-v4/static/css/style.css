@@ -5193,6 +5193,70 @@ body {
     color: var(--ink);
 }
 .settings-item-arrow {
-    font-size: 1rem;
-    color: var(--pencil);
+  font-size: 1rem;
+  color: var(--pencil);
+}
+
+/* ========== 植物昵称样式 ========== */
+.codex-nickname-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  margin: 0.3rem 0;
+  font-size: 0.8rem;
+  color: var(--pencil);
+}
+.codex-nickname-label {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+.codex-nickname-value {
+  color: var(--accent);
+  font-weight: 600;
+}
+.codex-nickname-edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 0.1rem;
+}
+.codex-nickname-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  margin: 0.3rem 0;
+}
+.codex-nickname-input {
+  padding: 0.3rem 0.5rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  width: 120px;
+}
+.codex-nickname-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.codex-nickname-save-btn, .codex-nickname-cancel-btn {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.7rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+.codex-nickname-save-btn {
+  background: var(--ink);
+  color: #fff;
+}
+.codex-card-nickname {
+  padding: 0 0.6rem 0.3rem;
+  font-size: 0.65rem;
+  color: var(--accent);
+  font-weight: 600;
 }

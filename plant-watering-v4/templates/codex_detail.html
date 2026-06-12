@@ -12,6 +12,16 @@
 <!-- 植物头部信息区 -->
 <div class="codex-detail-header">
     <h1 class="codex-detail-name">{{ detail.name }}</h1>
+    <div class="codex-nickname-area" id="nicknameArea">
+        <span class="codex-nickname-label">昵称：</span>
+        <span class="codex-nickname-value" id="nicknameValue"></span>
+        <button class="codex-nickname-edit-btn" id="nicknameEditBtn" onclick="editNickname()">&#9999;&#65039;</button>
+    </div>
+    <div class="codex-nickname-form" id="nicknameForm" style="display:none;">
+        <input type="text" class="codex-nickname-input" id="nicknameInput" placeholder="给它取个名字..." maxlength="20">
+        <button class="codex-nickname-save-btn" onclick="saveNickname()">保存</button>
+        <button class="codex-nickname-cancel-btn" onclick="cancelNickname()">取消</button>
+    </div>
     <span class="codex-detail-tag">{{ detail.category }}</span>
     {% if detail.care_tip %}
     <p class="codex-detail-tip">{{ detail.care_tip }}</p>
@@ -581,7 +591,73 @@
         return div.innerHTML;
     }
 
+    // ========== 昵称功能 ==========
+    function initNickname() {
+        if (!isUnlocked) {
+            document.getElementById('nicknameArea').style.display = 'none';
+            return;
+        }
+        var nickname = detail.nickname || '';
+        var valueEl = document.getElementById('nicknameValue');
+        if (nickname) {
+            valueEl.textContent = nickname;
+            valueEl.style.color = 'var(--accent)';
+        } else {
+            valueEl.textContent = '点击取个名字';
+            valueEl.style.color = 'var(--muted)';
+        }
+    }
+
+    window.editNickname = function() {
+        document.getElementById('nicknameArea').style.display = 'none';
+        document.getElementById('nicknameForm').style.display = 'flex';
+        var input = document.getElementById('nicknameInput');
+        input.value = detail.nickname || '';
+        input.focus();
+    };
+
+    window.saveNickname = function() {
+        var input = document.getElementById('nicknameInput');
+        var nickname = input.value.trim();
+        fetch('/api/codex/' + plantId + '/nickname', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nickname: nickname })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                detail.nickname = data.nickname;
+                var valueEl = document.getElementById('nicknameValue');
+                if (data.nickname) {
+                    valueEl.textContent = data.nickname;
+                    valueEl.style.color = 'var(--accent)';
+                } else {
+                    valueEl.textContent = '点击取个名字';
+                    valueEl.style.color = 'var(--muted)';
+                }
+                cancelNickname();
+            }
+        })
+        .catch(function() {});
+    };
+
+    window.cancelNickname = function() {
+        document.getElementById('nicknameForm').style.display = 'none';
+        document.getElementById('nicknameArea').style.display = 'flex';
+    };
+
+    // 回车保存昵称
+    document.getElementById('nicknameInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            saveNickname();
+        } else if (e.key === 'Escape') {
+            cancelNickname();
+        }
+    });
+
     // ========== 启动 ==========
+    initNickname();
     initCareData();
     loadTimeline();
     loadStats();

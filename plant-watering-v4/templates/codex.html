@@ -127,6 +127,9 @@
                     (entry.cover_url ? '<img src="' + entry.cover_url + '" alt="' + entry.name + '">' : (entry.illustration_url ? '<img src="' + entry.illustration_url + '" alt="' + entry.name + '">' : '<div class="codex-card-placeholder">🌿</div>')) +
                     '</div>';
                 html += '<div class="codex-card-name">' + escapeHtml(entry.name) + '</div>';
+                if (entry.nickname) {
+                    html += '<div class="codex-card-nickname">' + escapeHtml(entry.nickname) + '</div>';
+                }
                 html += '<div class="codex-card-stats">' + entry.record_count + '次记录 · ' + entry.care_days + '天</div>';
                 // 提醒文字
                 var daysSince = reminderMap[entry.id];

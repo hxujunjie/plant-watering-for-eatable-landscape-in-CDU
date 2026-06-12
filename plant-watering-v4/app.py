@@ -580,6 +580,16 @@ def api_codex_cultivation(plant_id):
     return jsonify(cultivation)
 
 
+@app.route('/api/codex/<int:plant_id>/nickname', methods=['PUT'])
+def api_update_nickname(plant_id):
+    """更新植物的昵称。"""
+    from database import update_plant_nickname
+    data = request.get_json()
+    nickname = data.get('nickname', '').strip()
+    update_plant_nickname(plant_id, nickname)
+    return jsonify({'success': True, 'nickname': nickname})
+
+
 @app.route('/uploads/<path:filename>')
 def serve_upload(filename):
     """提供上传文件的访问路由。"""
