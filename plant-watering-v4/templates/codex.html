@@ -85,7 +85,12 @@
                 var reminders = data.reminders || [];
                 reminderMap = {};
                 reminders.forEach(function(r) {
-                    reminderMap[r.plant_lib_id] = r.days_since_last;
+                    // 预设植物用 plant_lib_id，自定义植物用 name 作为 key
+                    if (r.plant_lib_id) {
+                        reminderMap[r.plant_lib_id] = r.days_since_last;
+                    } else {
+                        reminderMap[r.name] = r.days_since_last;
+                    }
                 });
                 renderGrid();
             })
@@ -132,7 +137,7 @@
                 }
                 html += '<div class="codex-card-stats">' + entry.record_count + '次记录 · ' + entry.care_days + '天</div>';
                 // 提醒文字
-                var daysSince = reminderMap[entry.id];
+                var daysSince = entry.is_custom ? reminderMap[entry.name] : reminderMap[entry.id];
                 if (daysSince !== undefined && daysSince > 0) {
                     var overdueClass = daysSince >= redDays ? ' overdue' : '';
                     html += '<div class="codex-card-reminder' + overdueClass + '">你的植物想你了，已经' + daysSince + '天没去看它了</div>';

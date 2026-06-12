@@ -1003,7 +1003,7 @@ def get_all_codex_entries():
     for custom in custom_entries:
         entries.append({
             'id': custom['id'],
-            'name': custom['custom_name'],
+            'name': custom['custom_name'] or custom['tag_name'],
             'category': '自定义',
             'care_tip': '',
             'unlocked': True,
@@ -1071,6 +1071,96 @@ def get_plant_detail(plant_lib_id):
             'cover_url': '',
             'nickname': '',
         }
+
+
+def get_custom_plant_detail_by_unlock_id(unlock_id):
+    """通过 unlock_id 获取自定义植物详情。"""
+    db = get_db()
+    unlock = db.execute(
+        "SELECT * FROM plant_unlock WHERE id = ? AND plant_lib_id IS NULL",
+        (unlock_id,)
+    ).fetchone()
+    db.close()
+
+    if not unlock:
+        return None
+
+    return {
+        'id': unlock['id'],
+        'name': unlock['custom_name'] or unlock['tag_name'],
+        'aliases': [unlock['tag_name']],
+        'category': '自定义',
+        'care_tip': '自由生长的植物，记录它的故事',
+        'description': '这是你自己命名的植物，给它一个专属的故事吧',
+        'unlocked': True,
+        'unlocked_at': unlock['unlocked_at'],
+        'tag_name': unlock['tag_name'],
+        'record_count': unlock['record_count'] or 0,
+        'care_days': unlock['care_days'] or 0,
+        'last_record_at': unlock['last_record_at'],
+        'cover_url': unlock['cover_photo_path'] or '',
+        'nickname': unlock['nickname'] or '',
+    }
+
+
+def get_custom_plant_timeline(tag_name):
+    """获取自定义植物的所有照片（通过 tag_name 匹配），按时间正序排列。"""
+    db = get_db()
+    tag = db.execute('SELECT id FROM tag WHERE name = ?', (tag_name,)).fetchone()
+    if not tag:
+        db.close()
+        return []
+    tag_id = tag['id']
+    photos = db.execute('''
+        SELECT p.id, p.file_path, p.caption, p.created_at, p.watering_log_id
+        FROM photo p
+        JOIN photo_tag pt ON p.id = pt.photo_id
+        WHERE pt.tag_id = ?
+        ORDER BY p.created_at ASC
+    ''', (tag_id,)).fetchall()
+    db.close()
+    return [dict(p) for p in photos]
+
+
+def get_custom_plant_monthly_stats(tag_name):
+    """获取自定义植物的按月统计（记录次数+照片数量）。"""
+    db = get_db()
+    tag = db.execute('SELECT id FROM tag WHERE name = ?', (tag_name,)).fetchone()
+    if not tag:
+        db.close()
+        return []
+    tag_id = tag['id']
+    rows = db.execute('''
+        SELECT strftime('%Y-%m', p.created_at) as month,
+               COUNT(DISTINCT p.watering_log_id) as log_count,
+               COUNT(p.id) as photo_count
+        FROM photo p
+        JOIN photo_tag pt ON p.id = pt.photo_id
+        WHERE pt.tag_id = ?
+        GROUP BY month
+        ORDER BY month ASC
+    ''', (tag_id,)).fetchall()
+    db.close()
+    return [dict(r) for r in rows]
+
+
+def get_custom_plant_cultivation(tag_name):
+    """获取自定义植物的培育等级。"""
+    db = get_db()
+    unlock = db.execute(
+        "SELECT record_count, care_days FROM plant_unlock WHERE plant_lib_id IS NULL AND tag_name = ?",
+        (tag_name,)
+    ).fetchone()
+    db.close()
+
+    record_count = unlock['record_count'] or 0 if unlock else 0
+    care_days = unlock['care_days'] or 0 if unlock else 0
+
+    result = calc_cultivation_level(record_count, care_days)
+    result['plant_name'] = tag_name
+    quote_template = CULTIVATION_QUOTES.get(result['level'], '')
+    result['quote'] = quote_template.replace('{plant}', tag_name)
+    return result
 
 
 def get_plant_timeline(plant_lib_id):

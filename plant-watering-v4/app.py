@@ -495,28 +495,58 @@ def api_codex():
 
 @app.route('/codex/<int:plant_id>')
 def codex_detail(plant_id):
-    """植物图鉴详情页。"""
-    from database import get_plant_detail
+    """植物图鉴详情页（支持预设植物和自定义植物）。"""
+    from database import get_plant_detail, get_custom_plant_detail_by_unlock_id
+
+    # 先尝试作为预设植物查询
     detail = get_plant_detail(plant_id)
-    if not detail:
-        return redirect('/codex')
-    return render_template('codex_detail.html', plant_id=plant_id, detail=detail)
+    if detail:
+        return render_template('codex_detail.html', plant_id=plant_id, detail=detail)
+
+    # 再尝试作为自定义植物查询（plant_id 实际上是 unlock_id）
+    detail = get_custom_plant_detail_by_unlock_id(plant_id)
+    if detail:
+        return render_template('codex_detail.html', plant_id=plant_id, detail=detail)
+
+    return redirect('/codex')
 
 
 @app.route('/api/codex/<int:plant_id>/timeline')
 def api_codex_timeline(plant_id):
-    """获取植物的时间线照片。"""
-    from database import get_plant_timeline
+    """获取植物的时间线照片（支持预设植物和自定义植物）。"""
+    from database import get_plant_timeline, get_custom_plant_detail_by_unlock_id, get_custom_plant_timeline
+
+    # 先尝试作为预设植物
     photos = get_plant_timeline(plant_id)
-    return jsonify({'photos': photos})
+    if photos is not None and len(photos) > 0:
+        return jsonify({'photos': photos})
+
+    # 再尝试作为自定义植物
+    detail = get_custom_plant_detail_by_unlock_id(plant_id)
+    if detail:
+        photos = get_custom_plant_timeline(detail['tag_name'])
+        return jsonify({'photos': photos})
+
+    return jsonify({'photos': []})
 
 
 @app.route('/api/codex/<int:plant_id>/stats')
 def api_codex_stats(plant_id):
-    """获取植物的月度统计数据。"""
-    from database import get_plant_monthly_stats
+    """获取植物的月度统计数据（支持预设植物和自定义植物）。"""
+    from database import get_plant_monthly_stats, get_custom_plant_detail_by_unlock_id, get_custom_plant_monthly_stats
+
+    # 先尝试作为预设植物
     stats = get_plant_monthly_stats(plant_id)
-    return jsonify({'stats': stats})
+    if stats:
+        return jsonify({'stats': stats})
+
+    # 再尝试作为自定义植物
+    detail = get_custom_plant_detail_by_unlock_id(plant_id)
+    if detail:
+        stats = get_custom_plant_monthly_stats(detail['tag_name'])
+        return jsonify({'stats': stats})
+
+    return jsonify({'stats': []})
 
 
 @app.route('/api/codex/reminders')
@@ -529,8 +559,10 @@ def api_codex_reminders():
 
 @app.route('/api/codex/<int:plant_id>/plans', methods=['GET', 'POST'])
 def api_plant_plans(plant_id):
-    """获取或新增某植物的计划。"""
-    from database import get_plans, add_plan
+    """获取或新增某植物的计划（支持预设植物和自定义植物）。"""
+    from database import get_plans, add_plan, get_custom_plant_detail_by_unlock_id
+
+    # 对于自定义植物，plans 的 plant_lib_id 存储的是 unlock_id
     if request.method == 'POST':
         data = request.get_json()
         if not data or not data.get('content', '').strip():
@@ -572,22 +604,46 @@ def api_pending_plan_count():
 
 @app.route('/api/codex/<int:plant_id>/cultivation')
 def api_codex_cultivation(plant_id):
-    """获取某植物的培育等级。"""
-    from database import get_plant_cultivation
+    """获取某植物的培育等级（支持预设植物和自定义植物）。"""
+    from database import get_plant_cultivation, get_custom_plant_detail_by_unlock_id, get_custom_plant_cultivation
+
+    # 先尝试作为预设植物
     cultivation = get_plant_cultivation(plant_id)
-    if not cultivation:
-        return jsonify({'error': '植物不存在'}), 404
-    return jsonify(cultivation)
+    if cultivation:
+        return jsonify(cultivation)
+
+    # 再尝试作为自定义植物
+    detail = get_custom_plant_detail_by_unlock_id(plant_id)
+    if detail:
+        cultivation = get_custom_plant_cultivation(detail['tag_name'])
+        return jsonify(cultivation)
+
+    return jsonify({'error': '植物不存在'}), 404
 
 
 @app.route('/api/codex/<int:plant_id>/nickname', methods=['PUT'])
 def api_update_nickname(plant_id):
-    """更新植物的昵称。"""
-    from database import update_plant_nickname
+    """更新植物的昵称（支持预设植物和自定义植物）。"""
+    from database import update_plant_nickname, get_custom_plant_detail_by_unlock_id, get_db
     data = request.get_json()
     nickname = data.get('nickname', '').strip()
-    update_plant_nickname(plant_id, nickname)
-    return jsonify({'success': True, 'nickname': nickname})
+
+    # 先尝试更新预设植物
+    from database import get_plant_detail
+    if get_plant_detail(plant_id):
+        update_plant_nickname(plant_id, nickname)
+        return jsonify({'success': True, 'nickname': nickname})
+
+    # 再尝试更新自定义植物（plant_id 是 unlock_id）
+    detail = get_custom_plant_detail_by_unlock_id(plant_id)
+    if detail:
+        db = get_db()
+        db.execute('UPDATE plant_unlock SET nickname = ? WHERE id = ?', (nickname, plant_id))
+        db.commit()
+        db.close()
+        return jsonify({'success': True, 'nickname': nickname})
+
+    return jsonify({'success': False, 'error': '植物不存在'}), 404
 
 
 @app.route('/uploads/<path:filename>')
