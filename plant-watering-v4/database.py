@@ -1,7 +1,7 @@
 import sqlite3
 import os
 from datetime import datetime, timezone, timedelta
-from plant_library import PLANT_LIBRARY, match_tag_to_plant, get_plant_by_id, calc_cultivation_level, CULTIVATION_QUOTES
+from plant_library import PLANT_LIBRARY, match_tag_to_plant, get_plant_by_id, calc_cultivation_level, CULTIVATION_QUOTES, is_action_tag
 
 # 数据库路径，支持环境变量覆盖
 DB_PATH = os.path.join(os.path.dirname(__file__), 'watering.db')
@@ -817,6 +817,11 @@ def sync_plant_unlocks():
 
     for tag in tags:
         tag_name = tag['name']
+
+        # 跳过行为标签（如开花、浇水等），它们不是植物名称
+        if is_action_tag(tag_name):
+            continue
+
         plant = match_tag_to_plant(tag_name)
 
         if plant:

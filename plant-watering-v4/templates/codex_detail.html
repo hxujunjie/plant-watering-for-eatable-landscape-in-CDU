@@ -21,8 +21,15 @@
     {% endif %}
 </div>
 
+<!-- 未解锁提示 -->
+<div class="codex-locked-notice sketch-card" id="lockedNotice" style="display:none;">
+    <div class="codex-locked-icon">&#128274;</div>
+    <div class="codex-locked-title">这株植物还在路上</div>
+    <div class="codex-locked-desc">给照片打上"{{ detail.name }}"的标签，就能解锁它</div>
+</div>
+
 <!-- 养护数据卡片 -->
-<div class="codex-care-card sketch-card">
+<div class="codex-care-card sketch-card" id="careCard">
     <div class="codex-care-grid">
         <div class="codex-care-item">
             <div class="codex-care-value" id="careFirstDate">--</div>
@@ -56,7 +63,7 @@
 </div>
 
 <!-- 生长日记时间线 -->
-<div class="codex-timeline-section">
+<div class="codex-timeline-section" id="timelineSection">
     <div class="codex-section-title">
         <span class="codex-section-leaf">&#9752;</span>
         生长日记
@@ -159,28 +166,36 @@
     var allPhotos = [];
     var monthlyStats = [];
 
+    // ========== 页面模式判断 ==========
+    var isUnlocked = detail && detail.unlocked;
+
+    // 未解锁模式：显示锁定提示，隐藏个人数据区域
+    if (!isUnlocked) {
+        document.getElementById('lockedNotice').style.display = 'block';
+        document.getElementById('careCard').style.display = 'none';
+        document.getElementById('cultivationCard').style.display = 'none';
+        document.getElementById('timelineSection').style.display = 'none';
+        document.getElementById('codexCompareSection').style.display = 'none';
+        document.getElementById('codexChartSection').style.display = 'none';
+        document.getElementById('planSection').style.display = 'none';
+    }
+
     // ========== 初始化养护数据 ==========
     function initCareData() {
+        if (!isUnlocked || !detail) return;
         // 首次记录日期
         var firstDate = document.getElementById('careFirstDate');
         var recordCount = document.getElementById('careRecordCount');
         var careDays = document.getElementById('careDays');
         var lastRecord = document.getElementById('careLastRecord');
 
-        if (detail.unlocked) {
-            recordCount.textContent = detail.record_count;
-            careDays.textContent = detail.care_days;
-            if (detail.unlocked_at) {
-                firstDate.textContent = detail.unlocked_at.substring(5, 10);
-            }
-            if (detail.last_record_at) {
-                lastRecord.textContent = detail.last_record_at.substring(5, 10);
-            }
-        } else {
-            firstDate.textContent = '--';
-            recordCount.textContent = '0';
-            careDays.textContent = '0';
-            lastRecord.textContent = '--';
+        recordCount.textContent = detail.record_count;
+        careDays.textContent = detail.care_days;
+        if (detail.unlocked_at) {
+            firstDate.textContent = detail.unlocked_at.substring(5, 10);
+        }
+        if (detail.last_record_at) {
+            lastRecord.textContent = detail.last_record_at.substring(5, 10);
         }
     }
 

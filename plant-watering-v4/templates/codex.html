@@ -110,7 +110,8 @@
         var html = '';
         filtered.forEach(function(entry) {
             var lockedClass = entry.unlocked ? '' : ' locked';
-            var clickAttr = entry.unlocked ? ' onclick="location.href=\'/codex/' + entry.id + '\'"' : '';
+            // 所有卡片都可点击：已解锁进入详情页，未解锁进入预览页
+            var clickAttr = ' onclick="location.href=\'/codex/' + entry.id + '\'"';
             html += '<div class="codex-card' + lockedClass + '"' + clickAttr + '>';
             if (entry.unlocked) {
                 // 星星标识（培育等级）

@@ -4,6 +4,18 @@
 
 PLANT_CATEGORIES = ['观叶', '多肉', '花卉', '蔬果']
 
+# 行为标签白名单：这些标签描述养护行为，不应被识别为植物名称
+ACTION_TAGS = {
+    '开花', '发芽', '浇水', '施肥', '修剪', '换盆', '新叶', '枯萎', '结果', '虫害',
+    '喷药', '移栽', '繁殖', '修剪', '松土', '清洁'
+}
+
+def is_action_tag(tag_name):
+    """判断是否为行为标签（而非植物名称）。"""
+    if not tag_name:
+        return False
+    return tag_name.strip() in ACTION_TAGS
+
 PLANT_LIBRARY = [
     # 观叶类 (5种)
     {'id': 1, 'name': '绿萝', 'aliases': ['绿萝', '黄金葛', '魔鬼藤', '绿萝花'], 'category': '观叶', 'care_tip': '耐阴耐旱，新手友好', 'description': '号称"生命之藤"的室内经典', 'silhouette_path': '/static/img/plants/silhouettes/green_lu.svg', 'illustration_path': '/static/img/plants/illustrations/green_lu.svg'},
