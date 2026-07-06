@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300" width="240" height="300" role="img" aria-label="虎皮兰植物学手稿">
+  <defs>
+    <filter id="paperGrain">
+      <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="4" seed="23"/>
+      <feColorMatrix type="saturate" values=".18"/>
+      <feBlend in="SourceGraphic" mode="multiply"/>
+    </filter>
+    <filter id="softInk" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#8b765a" flood-opacity=".25"/>
+    </filter>
+    <radialGradient id="wash" cx="50%" cy="38%" r="62%">
+      <stop offset="0" stop-color="#f7f0df"/>
+      <stop offset="1" stop-color="#d8ccaf"/>
+    </radialGradient>
+  </defs>
+  <rect width="240" height="300" rx="24" fill="#d8ccaf"/>
+  <rect x="10" y="10" width="220" height="280" rx="21" fill="url(#wash)" filter="url(#paperGrain)"/>
+  <path d="M24 34h55M162 34h54M24 266h54M162 266h54" stroke="#927d5e" stroke-width="1" opacity=".42"/>
+  <text x="24" y="55" font-family="serif" font-size="7" fill="#6f5d4a" opacity=".62" transform="rotate(-4 24 55)">specimen study</text>
+  <text x="158" y="55" font-family="serif" font-size="7" fill="#6f5d4a" opacity=".62" transform="rotate(-4 158 55)">剑叶虎纹</text>
+  <path d="M51 58L92 92" stroke="#6f5d4a" stroke-width=".8" opacity=".38" stroke-dasharray="3 3"/>
+  <path d="M184 58L151 94" stroke="#6f5d4a" stroke-width=".8" opacity=".38" stroke-dasharray="3 3"/>
+  <g filter="url(#softInk)">
+
+    <path d="M82 238c-18-72-10-151 16-208 25 66 24 142-16 208z" fill="#1f91b7" fill-opacity=".46" stroke="#16506c" stroke-width="1.3"/>
+    <path d="M120 240c-23-91-12-174 12-217 32 74 30 158-12 217z" fill="#8ccfe0" fill-opacity=".56" stroke="#16506c" stroke-width="1.3"/>
+    <path d="M158 238c-18-72-10-151 16-208 25 66 24 142-16 208z" fill="#1f91b7" fill-opacity=".46" stroke="#16506c" stroke-width="1.3"/>
+    <path d="M84 72h26M78 120h34M86 168h24M122 62h34M116 112h42M123 164h31M160 76h24M154 126h34M162 174h24" stroke="#f0d467" stroke-width="3" opacity=".7" stroke-linecap="round"/>
+
+  </g>
+  <g opacity=".62">
+    <circle cx="42" cy="226" r="17" fill="none" stroke="#6f5d4a" stroke-width="1"/>
+    <path d="M31 226h22M42 215v22" stroke="#6f5d4a" stroke-width=".8"/>
+    <text x="25" y="253" font-family="serif" font-size="7" fill="#6f5d4a" opacity=".62" transform="rotate(-4 25 253)">detail</text>
+    <path d="M190 218c17 8 16 25 0 33-15-8-15-25 0-33z" fill="none" stroke="#6f5d4a" stroke-width="1"/>
+    <path d="M190 220v29" stroke="#6f5d4a" stroke-width=".8"/>
+  </g>
+  <text x="120" y="277" text-anchor="middle" font-family="serif" font-size="15" fill="#66533d" letter-spacing="5">虎皮兰</text>
+</svg>

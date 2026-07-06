@@ -78,10 +78,11 @@ def records():
 def checkin():
     """处理签到请求，支持每张照片的 caption 和 tags。"""
     name = request.form.get('name', '').strip()
+    note = request.form.get('note', '').strip()
     if not name:
         return jsonify({'success': False, 'error': '请输入姓名'}), 400
 
-    log_id = add_watering_log(name)
+    log_id = add_watering_log(name, note=note)
 
     photo_count = 0
     files = request.files.getlist('photos')
@@ -107,7 +108,7 @@ def checkin():
 
             # 设置照片标签
             if tag_ids:
-                set_photo_tags(photo_id, tag_ids)
+                set_photo_tags_with_feedback(photo_id, tag_ids)
 
             photo_count += 1
 
@@ -126,6 +127,33 @@ def _trigger_backup():
         backup.schedule_backup()
     except Exception:
         pass
+
+
+def _codex_snapshot():
+    """获取当前图鉴名称集合，用于生成解锁反馈。"""
+    from database import sync_plant_unlocks, get_plant_by_id
+    sync_plant_unlocks()
+    db = get_db()
+    rows = db.execute('SELECT id, plant_lib_id, custom_name, tag_name FROM plant_unlock').fetchall()
+    db.close()
+    result = set()
+    for row in rows:
+        if row['plant_lib_id'] is not None:
+            plant = get_plant_by_id(row['plant_lib_id'])
+            if plant:
+                result.add(('preset', plant['name']))
+        else:
+            result.add(('custom', row['custom_name'] or row['tag_name']))
+    return result
+
+
+def set_photo_tags_with_feedback(photo_id, tag_ids):
+    """设置照片标签，并返回新增图鉴收录提示。"""
+    before = _codex_snapshot()
+    set_photo_tags(photo_id, tag_ids)
+    after = _codex_snapshot()
+    added = sorted(after - before)
+    return [{'kind': kind, 'name': name} for kind, name in added]
 
 
 @app.route('/api/logs', methods=['GET'])
@@ -207,9 +235,12 @@ def api_create_tag():
     if not data or not data.get('name', '').strip():
         return jsonify({'success': False, 'error': '标签名称不能为空'}), 400
     name = data['name'].strip()
+    tag_type = (data.get('tag_type') or 'plain').strip()
+    plant_category = (data.get('plant_category') or '').strip()
     try:
-        tag_id = create_tag(name)
-        return jsonify({'success': True, 'tag': {'id': tag_id, 'name': name}})
+        tag_id = create_tag(name, tag_type=tag_type, plant_category=plant_category)
+        tag = next((t for t in get_all_tags() if t['id'] == tag_id), {'id': tag_id, 'name': name})
+        return jsonify({'success': True, 'tag': tag})
     except Exception as e:
         # 可能是 UNIQUE 约束冲突（标签已存在）
         if 'UNIQUE' in str(e):
@@ -221,6 +252,9 @@ def api_create_tag():
 def api_delete_tag(tag_id):
     """删除标签（关联的 photo_tag 会级联删除）。"""
     delete_tag(tag_id)
+    from database import sync_plant_unlocks
+    sync_plant_unlocks()
+    _trigger_backup()
     return jsonify({'success': True, 'message': '标签已删除'})
 
 
@@ -251,9 +285,9 @@ def api_set_photo_tags(photo_id):
     tag_ids = data['tag_ids']
     if not isinstance(tag_ids, list):
         return jsonify({'success': False, 'error': 'tag_ids 必须是数组'}), 400
-    set_photo_tags(photo_id, tag_ids)
+    unlocks = set_photo_tags_with_feedback(photo_id, tag_ids)
     tags = get_photo_tags(photo_id)
-    return jsonify({'success': True, 'tags': tags})
+    return jsonify({'success': True, 'tags': tags, 'codex_unlocks': unlocks})
 
 
 @app.route('/api/photos/<int:photo_id>/caption', methods=['PUT'])
@@ -475,8 +509,8 @@ def api_get_log_likes(log_id):
 
 @app.route('/board')
 def board_page():
-    """黑板留言板页面。"""
-    return render_template('board.html')
+    """旧黑板入口，统一跳转到档案页黑板。"""
+    return redirect('/records?tab=board')
 
 
 @app.route('/codex')
@@ -488,65 +522,127 @@ def codex_page():
 @app.route('/api/codex')
 def api_codex():
     """获取图鉴列表数据（全部植物+解锁状态）。"""
-    from database import get_all_codex_entries
+    from database import get_all_codex_entries, get_pending_welcome_plan_count
     entries = get_all_codex_entries()
-    return jsonify({'entries': entries})
+    incoming_count = get_pending_welcome_plan_count()
+    return jsonify({'entries': entries, 'incoming_count': incoming_count})
+
+
+@app.route('/codex/preset/<int:plant_id>')
+def codex_detail_preset(plant_id):
+    """预设植物图鉴详情页。"""
+    from database import get_plant_detail
+    detail = get_plant_detail(plant_id)
+    if not detail:
+        return redirect('/codex')
+    return render_template('codex_detail.html', plant_id=plant_id, kind='preset', detail=detail)
+
+
+@app.route('/codex/custom/<int:unlock_id>')
+def codex_detail_custom(unlock_id):
+    """自定义植物图鉴详情页（基于 plant_unlock.id）。"""
+    from database import get_custom_plant_detail_by_unlock_id
+    detail = get_custom_plant_detail_by_unlock_id(unlock_id)
+    if not detail:
+        return redirect('/codex')
+    return render_template('codex_detail.html', plant_id=unlock_id, kind='custom', detail=detail)
 
 
 @app.route('/codex/<int:plant_id>')
 def codex_detail(plant_id):
-    """植物图鉴详情页（支持预设植物和自定义植物）。"""
-    from database import get_plant_detail, get_custom_plant_detail_by_unlock_id
-
-    # 先尝试作为预设植物查询
-    detail = get_plant_detail(plant_id)
-    if detail:
-        return render_template('codex_detail.html', plant_id=plant_id, detail=detail)
-
-    # 再尝试作为自定义植物查询（plant_id 实际上是 unlock_id）
-    detail = get_custom_plant_detail_by_unlock_id(plant_id)
-    if detail:
-        return render_template('codex_detail.html', plant_id=plant_id, detail=detail)
-
+    """兼容旧链接：默认走预设植物。如果不是预设，则跳转到图鉴页。"""
+    from database import get_plant_detail
+    if get_plant_detail(plant_id):
+        return redirect(f'/codex/preset/{plant_id}')
     return redirect('/codex')
 
 
-@app.route('/api/codex/<int:plant_id>/timeline')
-def api_codex_timeline(plant_id):
-    """获取植物的时间线照片（支持预设植物和自定义植物）。"""
-    from database import get_plant_timeline, get_custom_plant_detail_by_unlock_id, get_custom_plant_timeline
-
-    # 先尝试作为预设植物
-    photos = get_plant_timeline(plant_id)
-    if photos is not None and len(photos) > 0:
-        return jsonify({'photos': photos})
-
-    # 再尝试作为自定义植物
-    detail = get_custom_plant_detail_by_unlock_id(plant_id)
-    if detail:
-        photos = get_custom_plant_timeline(detail['tag_name'])
-        return jsonify({'photos': photos})
-
-    return jsonify({'photos': []})
+@app.route('/api/codex/preset/<int:plant_id>/timeline')
+def api_codex_preset_timeline(plant_id):
+    """获取预设植物的时间线照片。"""
+    from database import get_plant_timeline
+    photos = get_plant_timeline(plant_id) or []
+    return jsonify({'photos': photos})
 
 
-@app.route('/api/codex/<int:plant_id>/stats')
-def api_codex_stats(plant_id):
-    """获取植物的月度统计数据（支持预设植物和自定义植物）。"""
-    from database import get_plant_monthly_stats, get_custom_plant_detail_by_unlock_id, get_custom_plant_monthly_stats
+@app.route('/api/codex/custom/<int:unlock_id>/timeline')
+def api_codex_custom_timeline(unlock_id):
+    """获取自定义植物的时间线照片。"""
+    from database import get_custom_plant_detail_by_unlock_id, get_custom_plant_timeline
+    detail = get_custom_plant_detail_by_unlock_id(unlock_id)
+    if not detail:
+        return jsonify({'photos': []})
+    photos = get_custom_plant_timeline(detail['tag_name'])
+    return jsonify({'photos': photos})
 
-    # 先尝试作为预设植物
-    stats = get_plant_monthly_stats(plant_id)
-    if stats:
-        return jsonify({'stats': stats})
 
-    # 再尝试作为自定义植物
-    detail = get_custom_plant_detail_by_unlock_id(plant_id)
-    if detail:
-        stats = get_custom_plant_monthly_stats(detail['tag_name'])
-        return jsonify({'stats': stats})
+@app.route('/api/codex/<kind>/<int:plant_id>/water', methods=['POST'])
+def api_codex_quick_water(kind, plant_id):
+    """快速浇水：为指定植物创建一条浇水记录（无需照片）。"""
+    from database import quick_water_plant, get_plant_detail, get_custom_plant_detail_by_unlock_id
+    if kind not in ('preset', 'custom'):
+        return jsonify({'success': False, 'error': '植物类型不正确'}), 400
 
-    return jsonify({'stats': []})
+    if kind == 'preset':
+        detail = get_plant_detail(plant_id)
+        if not detail:
+            return jsonify({'success': False, 'error': '植物不存在'}), 404
+        plant_name = detail['name']
+    else:
+        detail = get_custom_plant_detail_by_unlock_id(plant_id)
+        if not detail:
+            return jsonify({'success': False, 'error': '植物不存在'}), 404
+        plant_name = detail['custom_name'] or detail['tag_name']
+
+    log_id = quick_water_plant(plant_name)
+    _trigger_backup()
+    return jsonify({'success': True, 'message': '浇水成功', 'log_id': log_id})
+
+
+@app.route('/api/codex/<kind>/<int:plant_id>/cover', methods=['PUT', 'DELETE'])
+def api_codex_cover(kind, plant_id):
+    """设置或清除用户手动选择的图鉴封面。"""
+    from database import set_manual_cover, clear_manual_cover
+    if kind not in ('preset', 'custom'):
+        return jsonify({'success': False, 'error': '植物类型不正确'}), 400
+
+    if request.method == 'DELETE':
+        ok = clear_manual_cover(kind, plant_id)
+        if not ok:
+            return jsonify({'success': False, 'error': '植物不存在'}), 404
+        return jsonify({'success': True, 'cover_url': ''})
+
+    data = request.get_json() or {}
+    try:
+        photo_id = int(data.get('photo_id', 0))
+    except (TypeError, ValueError):
+        photo_id = 0
+    if photo_id <= 0:
+        return jsonify({'success': False, 'error': '照片不存在'}), 400
+
+    cover_url = set_manual_cover(kind, plant_id, photo_id)
+    if not cover_url:
+        return jsonify({'success': False, 'error': '这张照片不属于这株植物'}), 400
+    return jsonify({'success': True, 'cover_url': cover_url})
+
+
+@app.route('/api/codex/preset/<int:plant_id>/stats')
+def api_codex_preset_stats(plant_id):
+    """获取预设植物的月度统计数据。"""
+    from database import get_plant_monthly_stats
+    stats = get_plant_monthly_stats(plant_id) or []
+    return jsonify({'stats': stats})
+
+
+@app.route('/api/codex/custom/<int:unlock_id>/stats')
+def api_codex_custom_stats(unlock_id):
+    """获取自定义植物的月度统计数据。"""
+    from database import get_custom_plant_detail_by_unlock_id, get_custom_plant_monthly_stats
+    detail = get_custom_plant_detail_by_unlock_id(unlock_id)
+    if not detail:
+        return jsonify({'stats': []})
+    stats = get_custom_plant_monthly_stats(detail['tag_name'])
+    return jsonify({'stats': stats})
 
 
 @app.route('/api/codex/reminders')
@@ -559,22 +655,29 @@ def api_codex_reminders():
 
 @app.route('/api/codex/<int:plant_id>/plans', methods=['GET', 'POST'])
 def api_plant_plans(plant_id):
-    """获取或新增某植物的计划（支持预设植物和自定义植物）。"""
-    from database import get_plans, add_plan, get_custom_plant_detail_by_unlock_id
+    """获取或新增某植物的计划（支持预设植物和自定义植物）。
+    plant_id 对预设植物=plant_lib_id，对自定义植物=plant_unlock.id（unlock_id）。
+    可选 query 参数 kind=preset|custom 用于消除歧义；默认 preset。
+    """
+    from database import get_plans, add_plan, get_custom_plant_detail_by_unlock_id, get_plant_detail
 
-    # 对于自定义植物，plans 的 plant_lib_id 存储的是 unlock_id
+    kind = request.args.get('kind', '') or (request.get_json(silent=True) or {}).get('kind', '')
+    if not kind:
+        # 兼容旧调用：先按预设解析，命中则视为预设
+        kind = 'preset' if get_plant_detail(plant_id) else 'custom'
+
     if request.method == 'POST':
-        data = request.get_json()
-        if not data or not data.get('content', '').strip():
+        data = request.get_json() or {}
+        if not data.get('content', '').strip():
             return jsonify({'success': False, 'error': '计划内容不能为空'}), 400
         plan_type = data.get('type', 'todo')
         custom_plant_name = data.get('custom_plant_name', '')
         content = data['content'].strip()
         due_date = data.get('due_date', '')
-        plan_id = add_plan(plan_type, plant_id, custom_plant_name, content, due_date)
+        plan_id = add_plan(plan_type, plant_id, custom_plant_name, content, due_date, plant_kind=kind)
         return jsonify({'success': True, 'plan_id': plan_id})
     else:
-        plans = get_plans(plant_id)
+        plans = get_plans(plant_id, plant_kind=kind)
         return jsonify({'plans': plans})
 
 
@@ -604,37 +707,64 @@ def api_pending_plan_count():
 
 @app.route('/api/codex/<int:plant_id>/cultivation')
 def api_codex_cultivation(plant_id):
-    """获取某植物的培育等级（支持预设植物和自定义植物）。"""
+    """获取某植物的培育等级（兼容旧路径，先按预设解析）。"""
     from database import get_plant_cultivation, get_custom_plant_detail_by_unlock_id, get_custom_plant_cultivation
 
-    # 先尝试作为预设植物
     cultivation = get_plant_cultivation(plant_id)
     if cultivation:
         return jsonify(cultivation)
-
-    # 再尝试作为自定义植物
     detail = get_custom_plant_detail_by_unlock_id(plant_id)
     if detail:
         cultivation = get_custom_plant_cultivation(detail['tag_name'])
         return jsonify(cultivation)
-
     return jsonify({'error': '植物不存在'}), 404
+
+
+@app.route('/api/codex/preset/<int:plant_id>/cultivation')
+def api_codex_preset_cultivation(plant_id):
+    """获取预设植物的培育等级。"""
+    from database import get_plant_cultivation
+    cultivation = get_plant_cultivation(plant_id)
+    if cultivation:
+        return jsonify(cultivation)
+    return jsonify({'error': '植物不存在'}), 404
+
+
+@app.route('/api/codex/custom/<int:unlock_id>/cultivation')
+def api_codex_custom_cultivation(unlock_id):
+    """获取自定义植物的培育等级。"""
+    from database import get_custom_plant_detail_by_unlock_id, get_custom_plant_cultivation
+    detail = get_custom_plant_detail_by_unlock_id(unlock_id)
+    if not detail:
+        return jsonify({'error': '植物不存在'}), 404
+    cultivation = get_custom_plant_cultivation(detail['tag_name'])
+    return jsonify(cultivation)
 
 
 @app.route('/api/codex/<int:plant_id>/nickname', methods=['PUT'])
 def api_update_nickname(plant_id):
-    """更新植物的昵称（支持预设植物和自定义植物）。"""
-    from database import update_plant_nickname, get_custom_plant_detail_by_unlock_id, get_db
-    data = request.get_json()
+    """更新植物的昵称（兼容旧路径，按 kind 区分；缺省按预设解析）。"""
+    from database import update_plant_nickname, get_custom_plant_detail_by_unlock_id, get_db, get_plant_detail
+    data = request.get_json() or {}
     nickname = data.get('nickname', '').strip()
+    kind = (data.get('kind') or request.args.get('kind') or '').strip()
 
-    # 先尝试更新预设植物
-    from database import get_plant_detail
+    if kind == 'custom':
+        detail = get_custom_plant_detail_by_unlock_id(plant_id)
+        if not detail:
+            return jsonify({'success': False, 'error': '植物不存在'}), 404
+        db = get_db()
+        db.execute('UPDATE plant_unlock SET nickname = ? WHERE id = ?', (nickname, plant_id))
+        db.commit()
+        db.close()
+        return jsonify({'success': True, 'nickname': nickname})
+
+    # 默认按预设处理
     if get_plant_detail(plant_id):
         update_plant_nickname(plant_id, nickname)
         return jsonify({'success': True, 'nickname': nickname})
 
-    # 再尝试更新自定义植物（plant_id 是 unlock_id）
+    # 兜底：尝试作为自定义
     detail = get_custom_plant_detail_by_unlock_id(plant_id)
     if detail:
         db = get_db()
@@ -657,47 +787,67 @@ def serve_upload(filename):
 def export_excel():
     """导出 Excel 文件。"""
     from openpyxl import Workbook
+    from datetime import datetime as _dt
     logs = get_all_logs_for_export()
     wb = Workbook()
     ws = wb.active
     ws.title = "浇水签到记录"
-    ws.append(["ID", "姓名", "签到时间", "照片数量"])
+    ws.append(["ID", "姓名", "签到时间", "文字观察", "照片数量"])
     for log in logs:
-        ws.append([log['id'], log['name'], log['created_at'], log['photo_count']])
+        ws.append([log['id'], log['name'], log['created_at'], log.get('note', ''), log['photo_count']])
     ws.column_dimensions['A'].width = 8
     ws.column_dimensions['B'].width = 12
     ws.column_dimensions['C'].width = 22
-    ws.column_dimensions['D'].width = 10
+    ws.column_dimensions['D'].width = 36
+    ws.column_dimensions['E'].width = 10
 
     buffer = io.BytesIO()
     wb.save(buffer)
     buffer.seek(0)
-    return send_file(
+    ts = _dt.now().strftime('%Y%m%d_%H%M%S')
+    resp = send_file(
         io.BytesIO(buffer.getvalue()),
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         as_attachment=True,
-        download_name='浇水签到记录.xlsx'
+        download_name=f'plant-watering-{ts}.xlsx'
     )
+    # 显式提供中文文件名（RFC 5987），同时保留 ASCII 兜底，避免某些浏览器只下载到 .xlsx
+    from urllib.parse import quote as _quote
+    cn_name = f'浇水签到记录_{ts}.xlsx'
+    resp.headers['Content-Disposition'] = (
+        f"attachment; filename=plant-watering-{ts}.xlsx; "
+        f"filename*=UTF-8''{_quote(cn_name)}"
+    )
+    return resp
 
 
 @app.route('/export/csv')
 def export_csv():
     """导出 CSV 文件。"""
+    from datetime import datetime as _dt
     logs = get_all_logs_for_export()
     si = io.StringIO()
     writer = csv.writer(si)
-    writer.writerow(["ID", "姓名", "签到时间", "照片数量"])
+    writer.writerow(["ID", "姓名", "签到时间", "文字观察", "照片数量"])
     for log in logs:
-        writer.writerow([log['id'], log['name'], log['created_at'], log['photo_count']])
+        writer.writerow([log['id'], log['name'], log['created_at'], log.get('note', ''), log['photo_count']])
     output = io.BytesIO()
     output.write(si.getvalue().encode('utf-8-sig'))
     output.seek(0)
-    return send_file(
+    ts = _dt.now().strftime('%Y%m%d_%H%M%S')
+    resp = send_file(
         output,
         mimetype='text/csv; charset=utf-8',
         as_attachment=True,
-        download_name='浇水签到记录.csv'
+        download_name=f'plant-watering-{ts}.csv'
     )
+    from urllib.parse import quote as _quote
+    cn_name = f'浇水签到记录_{ts}.csv'
+    resp.headers['Content-Disposition'] = (
+        f"attachment; filename=plant-watering-{ts}.csv; "
+        f"filename*=UTF-8''{_quote(cn_name)}"
+    )
+    return resp
 
 
 # ========== 备份 / 恢复 (admin) ==========
@@ -801,14 +951,14 @@ def api_stats():
             if rc > 0:
                 cl = calc_cultivation_level(rc, cd)
                 if best is None or cl['level'] > best['level'] or (cl['level'] == best['level'] and rc > best['rc']):
-                    best = {'level': cl['level'], 'rc': rc, 'plant_lib_id': u['plant_lib_id']}
+                    best = {'level': cl['level'], 'level_name': cl.get('level_name', ''), 'rc': rc, 'plant_lib_id': u['plant_lib_id']}
         if best:
             plant = get_plant_by_id(best['plant_lib_id'])
             if plant:
                 top_plant = {
                     'name': plant['name'],
                     'level': best['level'],
-                    'level_name': cl.get('level_name', ''),
+                    'level_name': best['level_name'],
                     'plant_lib_id': best['plant_lib_id']
                 }
 
@@ -837,11 +987,12 @@ def api_profile():
     stats = get_user_stats()
     achievements = check_milestones()
 
-    # 图鉴进度
+    # 植物园住客
     sync_plant_unlocks()
     db = get_db()
-    unlocked_count = db.execute('SELECT COUNT(*) FROM plant_unlock WHERE plant_lib_id IS NOT NULL').fetchone()[0]
-    total_count = len(PLANT_LIBRARY)
+    preset_count = db.execute('SELECT COUNT(*) FROM plant_unlock WHERE plant_lib_id IS NOT NULL').fetchone()[0]
+    custom_count = db.execute('SELECT COUNT(*) FROM plant_unlock WHERE plant_lib_id IS NULL').fetchone()[0]
+    resident_count = preset_count + custom_count
     db.close()
 
     # 培育排行 TOP5（按培育等级排序）
@@ -870,19 +1021,29 @@ def api_profile():
     rank_list.sort(key=lambda x: (-x['level'], -x['record_count']))
     rank_list = rank_list[:5]
 
-    # 最爱记录的植物 TOP3（按签到记录中 name 出现次数）
+    # 最常记录植物 TOP3（按图鉴记录次数）
     db = get_db()
-    top_names = db.execute('''
-        SELECT name, COUNT(*) as cnt FROM watering_log
-        GROUP BY name ORDER BY cnt DESC LIMIT 3
+    top_rows = db.execute('''
+        SELECT id, plant_lib_id, custom_name, tag_name, record_count
+        FROM plant_unlock
+        WHERE record_count > 0
+        ORDER BY record_count DESC, care_days DESC
+        LIMIT 3
     ''').fetchall()
     db.close()
-    top_plants = [{'name': r['name'], 'count': r['cnt']} for r in top_names]
+    top_plants = []
+    for r in top_rows:
+        if r['plant_lib_id'] is not None:
+            plant = get_plant_by_id(r['plant_lib_id'])
+            if plant:
+                top_plants.append({'name': plant['name'], 'count': r['record_count'], 'kind': 'preset', 'id': r['plant_lib_id']})
+        else:
+            top_plants.append({'name': r['custom_name'] or r['tag_name'], 'count': r['record_count'], 'kind': 'custom', 'id': r['id']})
 
     return jsonify({
         'stats': stats,
         'achievements': achievements,
-        'codex_progress': {'unlocked': unlocked_count, 'total': total_count},
+        'codex_progress': {'residents': resident_count, 'preset': preset_count, 'custom': custom_count},
         'rank_list': rank_list,
         'top_plants': top_plants,
     })

@@ -1,22 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <!-- 辣椒手绘插图 - 尖椒形 -->
-  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <!-- 茎 -->
-    <path d="M50,90 Q48,68 48,52 Q48,44 50,40 Q52,44 52,52 Q52,68 50,90Z" stroke="#5a9e5a" stroke-width="2"/>
-    <!-- 叶子 -->
-    <path d="M48,58 Q38,52 30,48 Q26,46 28,44 Q32,46 38,50 Q44,54 48,56Z" fill="#a8d5a2" stroke="#2c2c2c"/>
-    <path d="M52,62 Q62,56 70,52 Q74,50 72,48 Q68,50 62,54 Q56,58 52,60Z" fill="#8fc48a" stroke="#2c2c2c"/>
-    <!-- 辣椒1（红色下垂） -->
-    <path d="M48,40 Q44,34 38,28 Q34,24 32,22 Q30,20 32,18 Q36,18 40,22 Q46,28 50,36 Q52,38 50,40Z" fill="#e85050" stroke="#2c2c2c"/>
-    <!-- 辣椒蒂1 -->
-    <path d="M48,40 Q46,38 44,38 Q46,36 48,38Z" fill="#5a9e5a" stroke="#2c2c2c"/>
-    <!-- 辣椒高光 -->
-    <path d="M44,28 Q40,24 38,22" stroke="#f0a0a0" stroke-width="1" opacity="0.4"/>
-    <!-- 辣椒2（绿色） -->
-    <path d="M52,40 Q56,32 62,26 Q66,22 68,20 Q70,18 68,16 Q64,16 60,20 Q54,28 50,36 Q48,38 50,40Z" fill="#8fc48a" stroke="#2c2c2c"/>
-    <!-- 辣椒蒂2 -->
-    <path d="M52,40 Q54,38 56,38 Q54,36 52,38Z" fill="#5a9e5a" stroke="#2c2c2c"/>
-    <!-- 辣椒高光2 -->
-    <path d="M56,26 Q60,22 62,20" stroke="#b8e0b2" stroke-width="1" opacity="0.4"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="辣椒识别插画">
+  <defs>
+    <radialGradient id="paper" cx="50%" cy="38%" r="65%">
+      <stop offset="0" stop-color="#fff8de"/>
+      <stop offset="1" stop-color="#eadfbd"/>
+    </radialGradient>
+    <linearGradient id="pot" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d7a06d"/>
+      <stop offset="1" stop-color="#a7704c"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="1.4" dy="2.1" stdDeviation="1.1" flood-color="#3a2a20" flood-opacity=".24"/>
+    </filter>
+  </defs>
+  <rect x="7" y="7" width="106" height="106" rx="20" fill="url(#paper)"/>
+  <g filter="url(#shadow)">
+
+    <path d="M60 82c0-23 1-43 3-61" fill="none" stroke="#4d8356" stroke-width="3"/>
+    <path d="M54 28c15 8 18 30 3 48-13-16-12-36-3-48z" fill="#db4b41" stroke="#30251d" stroke-width="1.3"/>
+    <path d="M72 33c12 10 11 28-2 42-10-14-9-31 2-42z" fill="#c83f39" stroke="#30251d" stroke-width="1.3"/>
+    <path d="M55 27c-5-5-2-12 5-15 5 5 3 12-3 16zM72 32c-4-5-1-11 5-13 4 5 2 10-3 14z" fill="#4f9958" stroke="#30251d" stroke-width="1"/>
+    <ellipse cx="42" cy="64" rx="10" ry="15" transform="rotate(-38 42 64)" fill="#5aa45f" stroke="#263126" stroke-width="1.2"/>
+    <path d="M38 82h44l-5 22H43z" fill="url(#pot)" stroke="#3a2a22" stroke-width="1.4"/>
+    <path d="M34 78h52v8H34z" fill="#c78b5e" stroke="#3a2a22" stroke-width="1.4" rx="3"/>
+
   </g>
+  <path d="M24 102c15 5 57 5 72 0" fill="none" stroke="#b69a6c" stroke-width="2.4" opacity=".32" stroke-linecap="round"/>
 </svg>

@@ -19,7 +19,7 @@
     <button class="tab active" data-tab="list">记录列表</button>
     <button class="tab" data-tab="calendar">日历</button>
     <button class="tab" data-tab="board">黑板</button>
-    <button class="tab" data-tab="tags" onclick="switchTab('tags')">标签筛选</button>
+    <button class="tab" data-tab="tags">标签筛选</button>
 </div>
 
 <!-- 签到列表 -->
@@ -157,6 +157,8 @@
             } else if (targetTab === 'board' && !boardLoaded) {
                 boardLoaded = true;
                 initBoard();
+            } else if (targetTab === 'tags' && !tagsLoaded) {
+                loadTagsCloud();
             }
         });
     });
@@ -239,6 +241,12 @@
 
         content.appendChild(nameSpan);
         content.appendChild(timeSpan);
+        if (log.note) {
+            var noteEl = document.createElement('div');
+            noteEl.className = 'record-note';
+            noteEl.textContent = log.note;
+            content.appendChild(noteEl);
+        }
 
         // 照片缩略图
         if (log.photos && log.photos.length > 0) {
@@ -362,7 +370,7 @@
 
             btn.addEventListener('click', function() {
                 var id = this.getAttribute('data-id');
-                showModal('确认作废', '确定要将这条记录作废吗？', function() {
+                showModal('确认作废这条记录？', '这会删除本条记录、关联照片、照片标签和留言；如果它是某株植物唯一的记录，图鉴解锁状态也可能变化。此操作不能撤回。', function() {
                     fetch('/api/delete/' + id, { method: 'DELETE' })
                         .then(function(res) { return res.json(); })
                         .then(function(data) {
@@ -544,6 +552,12 @@
 
                     info.appendChild(nameSpan);
                     info.appendChild(timeSpan);
+                    if (log.note) {
+                        var noteEl = document.createElement('div');
+                        noteEl.className = 'cal-detail-note';
+                        noteEl.textContent = log.note;
+                        info.appendChild(noteEl);
+                    }
 
                     // 照片缩略图
                     if (log.photos && log.photos.length > 0) {
@@ -625,6 +639,7 @@
 
         allTagsCache.forEach(function(tag) {
             var item = document.createElement('button');
+            item.type = 'button';
             var isActive = activeTagIds.indexOf(tag.id) !== -1;
             item.className = 'tag-cloud-item' + (isActive ? ' active' : '');
             item.setAttribute('data-id', tag.id);
@@ -1162,6 +1177,8 @@
         if (!boardWall) return;
 
         if (boardMessages.length === 0) {
+            // 清空"加载中..."占位，避免残留
+            boardWall.innerHTML = '';
             boardWall.style.display = 'none';
             if (boardEmpty) {
                 if (boardCurrentKeyword) {
@@ -1355,6 +1372,14 @@
     // ========== 初始化 ==========
     initCalendar();
     loadRecords(false);
+
+    (function openInitialTabFromUrl() {
+        var params = new URLSearchParams(window.location.search);
+        var initialTab = params.get('tab');
+        if (['list', 'calendar', 'board', 'tags'].indexOf(initialTab) !== -1) {
+            switchTab(initialTab);
+        }
+    })();
 
     // 监听全局排序变化，刷新当前数据
     window.addEventListener('sortOrderChanged', function() {

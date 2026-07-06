@@ -1,15 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <!-- 吊兰手绘插图 - 细长叶子下垂 -->
-  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <!-- 中心丛 -->
-    <path d="M50,22 Q48,30 46,40 Q44,50 42,60 Q40,70 38,80 Q37,86 39,88 Q41,90 43,86 Q44,80 46,70 Q48,60 50,50" fill="#a8d5a2" stroke="#2c2c2c"/>
-    <path d="M50,22 Q52,30 54,40 Q56,50 58,60 Q60,70 62,80 Q63,86 61,88 Q59,90 57,86 Q56,80 54,70 Q52,60 50,50" fill="#8fc48a" stroke="#2c2c2c"/>
-    <path d="M50,22 Q46,28 42,36 Q38,44 34,52 Q31,60 29,68 Q28,74 30,76 Q32,78 34,74 Q36,68 40,60 Q44,52 48,44" fill="#b8e0b2" stroke="#2c2c2c"/>
-    <path d="M50,22 Q54,28 58,36 Q62,44 66,52 Q69,60 71,68 Q72,74 70,76 Q68,78 66,74 Q64,68 60,60 Q56,52 52,44" fill="#7ab875" stroke="#2c2c2c"/>
-    <path d="M50,22 Q44,26 38,32 Q32,38 26,46 Q23,52 25,54 Q27,55 29,51 Q33,44 39,38 Q45,32 49,28" fill="#a8d5a2" stroke="#2c2c2c"/>
-    <path d="M50,22 Q56,26 62,32 Q68,38 74,46 Q77,52 75,54 Q73,55 71,51 Q67,44 61,38 Q55,32 51,28" fill="#8fc48a" stroke="#2c2c2c"/>
-    <!-- 叶脉 -->
-    <line x1="50" y1="24" x2="40" y2="70" stroke="#2c2c2c" stroke-width="0.6" opacity="0.3"/>
-    <line x1="50" y1="24" x2="60" y2="70" stroke="#2c2c2c" stroke-width="0.6" opacity="0.3"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="吊兰识别插画">
+  <defs>
+    <radialGradient id="paper" cx="50%" cy="38%" r="65%">
+      <stop offset="0" stop-color="#fff8de"/>
+      <stop offset="1" stop-color="#eadfbd"/>
+    </radialGradient>
+    <linearGradient id="pot" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d7a06d"/>
+      <stop offset="1" stop-color="#a7704c"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="1.4" dy="2.1" stdDeviation="1.1" flood-color="#3a2a20" flood-opacity=".24"/>
+    </filter>
+  </defs>
+  <rect x="7" y="7" width="106" height="106" rx="20" fill="url(#paper)"/>
+  <g filter="url(#shadow)">
+
+    <path d="M60 82c-18-18-27-38-28-62" fill="none" stroke="#5fa36b" stroke-width="4" stroke-linecap="round"/>
+    <path d="M58 82c-4-24-3-46 1-66" fill="none" stroke="#86c977" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M62 82c14-19 23-38 27-60" fill="none" stroke="#5fa36b" stroke-width="4" stroke-linecap="round"/>
+    <path d="M50 80c-22-5-35-17-42-35" fill="none" stroke="#8ed284" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M70 80c22-5 35-17 42-35" fill="none" stroke="#8ed284" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M61 33c8 19 14 30 25 39" fill="none" stroke="#5fa36b" stroke-width="1.5"/>
+    <circle cx="91" cy="76" r="5" fill="#8fd48b" stroke="#263126" stroke-width="1.1"/>
+    <path d="M88 76l-7 7M94 76l7 7" stroke="#5fa36b" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M38 82h44l-5 22H43z" fill="url(#pot)" stroke="#3a2a22" stroke-width="1.4"/>
+    <path d="M34 78h52v8H34z" fill="#c78b5e" stroke="#3a2a22" stroke-width="1.4" rx="3"/>
+
   </g>
+  <path d="M24 102c15 5 57 5 72 0" fill="none" stroke="#b69a6c" stroke-width="2.4" opacity=".32" stroke-linecap="round"/>
 </svg>

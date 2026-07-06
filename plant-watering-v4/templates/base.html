@@ -48,11 +48,11 @@
             <span class="nav-icon">✏️</span>
             <span class="nav-label">记录</span>
         </a>
-        <a href="/codex" class="nav-item {% if request.endpoint == 'codex' %}active{% endif %}">
+        <a href="/codex" class="nav-item {% if request.path.startswith('/codex') %}active{% endif %}">
             <span class="nav-icon">📖</span>
             <span class="nav-label">图鉴</span>
         </a>
-        <a href="/records" class="nav-item {% if request.endpoint == 'records' %}active{% endif %}">
+        <a href="/records" class="nav-item {% if request.path.startswith('/records') or request.path.startswith('/board') %}active{% endif %}">
             <span class="nav-icon">📜</span>
             <span class="nav-label">档案</span>
         </a>
@@ -124,17 +124,26 @@
                 <button class="settings-close" id="settingsClose">✕</button>
             </div>
             <div class="settings-body">
-                <div class="settings-item" onclick="location.href='/profile'" style="cursor:pointer;">
+                <a class="settings-item" href="/profile">
                     <span class="settings-item-icon">👤</span>
                     <span class="settings-item-text">我的档案</span>
                     <span class="settings-item-arrow">›</span>
-                </div>
+                </a>
                 <div class="settings-section">
                     <h3>排序方式</h3>
-                    <p>照片和记录的时间排列顺序</p>
+                    <p>记录列表的时间排列顺序</p>
                     <div class="settings-buttons">
                         <button class="btn-export sort-option active" data-order="desc" onclick="setSortOrder('desc')">从新到旧</button>
                         <button class="btn-export sort-option" data-order="asc" onclick="setSortOrder('asc')">从旧到新</button>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>植物提醒</h3>
+                    <p>超过几天没记录时提醒，超过几天重点标红</p>
+                    <div class="settings-thresholds">
+                        <label>温柔提醒 <input type="number" id="reminderShowDaysInput" min="1" max="365" value="5"> 天</label>
+                        <label>重点标红 <input type="number" id="reminderRedDaysInput" min="1" max="365" value="10"> 天</label>
+                        <button class="btn-export" onclick="saveReminderSettings()">保存提醒设置</button>
                     </div>
                 </div>
                 <div class="settings-section">
@@ -159,11 +168,22 @@
             <div class="tag-picker-search">
                 <input type="text" id="tagSearchInput" placeholder="搜索或创建新标签" oninput="filterTags(this.value)">
             </div>
+            <div class="tag-picker-tip">植物名标签会点亮图鉴；养护行为标签只用于记录；未知标签需确认后才会加入图鉴。</div>
             <div class="tag-picker-list" id="tagPickerList">
                 <!-- 动态渲染 -->
             </div>
             <div class="tag-picker-create" id="tagPickerCreate" style="display:none;">
-                <button id="tagCreateBtn" onclick="createTagFromPicker()">创建 "xxx" 标签</button>
+                <div class="tag-create-options">
+                    <button id="tagCreatePlainBtn" onclick="createTagFromPicker('plain')">创建普通标签</button>
+                    <select id="tagCreateCategory">
+                        <option value="自定义">自定义</option>
+                        <option value="观叶">观叶</option>
+                        <option value="多肉">多肉</option>
+                        <option value="花卉">花卉</option>
+                        <option value="蔬果">蔬果</option>
+                    </select>
+                    <button id="tagCreatePlantBtn" onclick="createTagFromPicker('plant')">作为新植物收录</button>
+                </div>
             </div>
             <div class="tag-picker-footer">
                 <button class="tag-picker-confirm" onclick="confirmTagPicker()">确定</button>

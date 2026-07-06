@@ -103,7 +103,7 @@
         </div>
     </div>
     <div class="fun-level-top-plant" id="topPlant" style="display:none;">
-        你最擅长的是：<a href="/codex/{plant_lib_id}" id="topPlantLink"><strong id="topPlantName"></strong>（<span id="topPlantLevel"></span>）</a>
+        你最擅长的是：<a href="/codex" id="topPlantLink"><strong id="topPlantName"></strong>（<span id="topPlantLevel"></span>）</a>
     </div>
 </div>
 
@@ -228,6 +228,7 @@
     // 每张照片的注释和标签数据（索引对应 selectedFiles）
     var photoCaptions = [];   // 注释文字数组
     var photoTagIds = [];     // 标签ID数组（每个元素是数组）
+    window.photoTagIds = photoTagIds;
 
     uploadZone.addEventListener('click', function() {
         photoInput.click();
@@ -350,7 +351,7 @@
     checkinForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        // 文字模式：走 /api/board 接口
+        // 文字模式：保存为无照片的观察记录
         if (currentMode === 'text') {
             var author = nameInput.value.trim();
             var content = textNoteInput.value.trim();
@@ -360,11 +361,10 @@
             }
             checkinBtn.disabled = true;
             checkinBtn.innerHTML = '...';
-            fetch('/api/board', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ author: author, content: content, color: '#ffffff' })
-            })
+            var textFormData = new FormData();
+            textFormData.append('name', author);
+            textFormData.append('note', content);
+            fetch('/api/checkin', { method: 'POST', body: textFormData })
             .then(function(res) { return res.json(); })
             .then(function(data) {
                 if (data.success || data.id) {
@@ -454,7 +454,7 @@
                         if (d.top_plant) {
                             document.getElementById('topPlantName').textContent = d.top_plant.name;
                             document.getElementById('topPlantLevel').textContent = d.top_plant.level_name;
-                            document.getElementById('topPlantLink').href = '/codex/' + d.top_plant.plant_lib_id;
+                            document.getElementById('topPlantLink').href = '/codex/preset/' + d.top_plant.plant_lib_id;
                             topPlantEl.style.display = '';
                         } else {
                             topPlantEl.style.display = 'none';
@@ -467,6 +467,7 @@
                 selectedFiles = [];
                 photoCaptions = [];
                 photoTagIds = [];
+                window.photoTagIds = photoTagIds;
             } else {
                 showToast(data.message || '记录失败，请重试');
             }
@@ -547,7 +548,7 @@
                 var topPlantEl = document.getElementById('topPlant');
                 document.getElementById('topPlantName').textContent = d.top_plant.name;
                 document.getElementById('topPlantLevel').textContent = d.top_plant.level_name;
-                document.getElementById('topPlantLink').href = '/codex/' + d.top_plant.plant_lib_id;
+                document.getElementById('topPlantLink').href = '/codex/preset/' + d.top_plant.plant_lib_id;
                 topPlantEl.style.display = '';
             }
         }).catch(function() {});
@@ -557,17 +558,19 @@
     (function() {
         var badge = document.getElementById('reminderBadge');
         if (!badge) return;
+        var showDays = parseInt(localStorage.getItem('reminderShowDays')) || 5;
         var redDays = parseInt(localStorage.getItem('reminderRedDays')) || 10;
         fetch('/api/codex/reminders')
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 var reminders = data.reminders || [];
+                var attention = reminders.filter(function(r) { return r.days_since_last >= showDays; });
                 var overdue = reminders.filter(function(r) { return r.days_since_last >= redDays; });
-                if (overdue.length > 0) {
-                    badge.textContent = overdue.length + '株待关注';
+                if (attention.length > 0) {
+                    badge.textContent = overdue.length > 0 ? (overdue.length + '株有点想你了') : (attention.length + '株待关注');
                     badge.style.display = 'inline-block';
                     badge.style.cursor = 'pointer';
-                    badge.title = overdue.map(function(r) { return r.name + '(' + r.days_since_last + '天)'; }).join(', ');
+                    badge.title = attention.map(function(r) { return r.name + '(' + r.days_since_last + '天)'; }).join(', ');
                     badge.addEventListener('click', function() {
                         location.href = '/codex';
                     });

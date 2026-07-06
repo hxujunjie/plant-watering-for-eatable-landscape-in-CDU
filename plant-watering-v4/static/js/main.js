@@ -176,7 +176,7 @@
             .then(function (r) { return r.json(); })
             .then(function (result) {
               if (result.success) {
-                showToast("标签已更新");
+                showCodexUnlockToast(result.codex_unlocks);
               } else {
                 showToast(result.error || "更新失败", "error");
               }
@@ -369,6 +369,7 @@
   /* ---------- 5. 设置面板 ---------- */
   window.openSettings = function () {
     var overlay = document.getElementById("settingsOverlay");
+    initReminderInputs();
     if (overlay) {
       overlay.classList.add("show");
       document.body.style.overflow = "hidden";
@@ -481,11 +482,13 @@
 
     // 如果没有精确匹配，显示"创建新标签"按钮
     var createDiv = document.getElementById("tagPickerCreate");
-    var createBtn = document.getElementById("tagCreateBtn");
-    if (createDiv && createBtn) {
+    var plainBtn = document.getElementById("tagCreatePlainBtn");
+    var plantBtn = document.getElementById("tagCreatePlantBtn");
+    if (createDiv && plainBtn && plantBtn) {
       if (query.length > 0 && filtered.every(function (t) { return t.name.toLowerCase() !== query; })) {
         createDiv.style.display = "block";
-        createBtn.textContent = '创建 "' + query + '" 标签';
+        plainBtn.textContent = '创建 "' + query + '" 普通标签';
+        plantBtn.textContent = '把 "' + query + '" 作为新植物收录';
       } else {
         createDiv.style.display = "none";
       }
@@ -495,15 +498,18 @@
   /**
    * 从选择器中创建新标签
    */
-  window.createTagFromPicker = function () {
+  window.createTagFromPicker = function (tagType) {
     var searchInput = document.getElementById("tagSearchInput");
     var name = (searchInput ? searchInput.value.trim() : "");
     if (!name) return;
+    tagType = tagType || "plain";
+    var categorySelect = document.getElementById("tagCreateCategory");
+    var plantCategory = tagType === "plant" && categorySelect ? categorySelect.value : "";
 
     fetch("/api/tags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name })
+      body: JSON.stringify({ name: name, tag_type: tagType, plant_category: plantCategory })
     })
       .then(function (res) { return res.json(); })
       .then(function (data) {
@@ -519,7 +525,7 @@
           var createDiv = document.getElementById("tagPickerCreate");
           if (createDiv) createDiv.style.display = "none";
           renderTagPickerList(_allTags, "");
-          showToast("标签已创建");
+          showToast(tagType === "plant" ? "新植物标签已创建" : "普通标签已创建");
         } else {
           showToast(data.error || data.message || "创建失败");
         }
@@ -560,10 +566,19 @@
       item.setAttribute("data-id", tag.id);
 
       // 标签名称
+      var textWrap = document.createElement("span");
+      textWrap.className = "tag-picker-item-text";
       var nameSpan = document.createElement("span");
       nameSpan.className = "tag-picker-item-name";
       nameSpan.textContent = tag.name;
-      item.appendChild(nameSpan);
+      textWrap.appendChild(nameSpan);
+      if (tag.codex_hint) {
+        var hintSpan = document.createElement("span");
+        hintSpan.className = "tag-picker-item-hint";
+        hintSpan.textContent = tag.codex_hint;
+        textWrap.appendChild(hintSpan);
+      }
+      item.appendChild(textWrap);
 
       // 计数（如果有）
       if (tag.count !== undefined) {
@@ -907,5 +922,35 @@
       btn.classList.toggle("active", btn.getAttribute("data-order") === _sortOrder);
     });
   })();
+
+  function initReminderInputs() {
+    var showInput = document.getElementById("reminderShowDaysInput");
+    var redInput = document.getElementById("reminderRedDaysInput");
+    if (showInput) showInput.value = localStorage.getItem("reminderShowDays") || "5";
+    if (redInput) redInput.value = localStorage.getItem("reminderRedDays") || "10";
+  }
+
+  window.saveReminderSettings = function () {
+    var showInput = document.getElementById("reminderShowDaysInput");
+    var redInput = document.getElementById("reminderRedDaysInput");
+    var showDays = parseInt(showInput && showInput.value, 10) || 5;
+    var redDays = parseInt(redInput && redInput.value, 10) || 10;
+    showDays = Math.max(1, showDays);
+    redDays = Math.max(showDays, redDays);
+    localStorage.setItem("reminderShowDays", String(showDays));
+    localStorage.setItem("reminderRedDays", String(redDays));
+    initReminderInputs();
+    window.dispatchEvent(new CustomEvent("reminderSettingsChanged", { detail: { showDays: showDays, redDays: redDays } }));
+    showToast("提醒设置已保存");
+  };
+
+  window.showCodexUnlockToast = function (unlocks) {
+    if (unlocks && unlocks.length) {
+      var first = unlocks[0];
+      showToast(first.kind === "custom" ? "已把“" + first.name + "”加入你的植物园" : "成功收录新植物：" + first.name);
+    } else {
+      showToast("标签已更新");
+    }
+  };
 
 })();

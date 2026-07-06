@@ -1,23 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <!-- 薄荷手绘插图 - 心形薄荷叶 -->
-  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <!-- 茎 -->
-    <path d="M50,90 Q48,68 48,52 Q48,42 50,36 Q52,42 52,52 Q52,68 50,90Z" stroke="#5a9e5a" stroke-width="2"/>
-    <!-- 分枝 -->
-    <path d="M48,55 Q40,48 34,42 Q30,38 32,36 Q36,38 40,42 Q44,46 48,52Z" stroke="#5a9e5a" stroke-width="1.5"/>
-    <path d="M52,50 Q60,43 66,37 Q70,33 68,31 Q64,33 60,37 Q56,43 52,48Z" stroke="#5a9e5a" stroke-width="1.5"/>
-    <!-- 顶部薄荷叶 -->
-    <path d="M50,36 Q42,28 36,22 Q32,18 34,16 Q38,16 42,20 Q48,26 50,32 Q52,26 58,20 Q62,16 66,16 Q68,18 64,22 Q58,28 50,36Z" fill="#a8d5a2" stroke="#2c2c2c"/>
-    <line x1="50" y1="20" x2="50" y2="34" stroke="#2c2c2c" stroke-width="0.8" opacity="0.4"/>
-    <line x1="50" y1="24" x2="42" y2="22" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
-    <line x1="50" y1="24" x2="58" y2="22" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
-    <!-- 侧叶1 -->
-    <path d="M34,42 Q28,36 24,32 Q22,30 24,28 Q26,30 28,32 Q32,36 34,40Z" fill="#8fc48a" stroke="#2c2c2c"/>
-    <path d="M34,42 Q30,34 26,30 Q24,28 26,26 Q28,28 30,30 Q32,34 34,40Z" fill="#7ab875" stroke="#2c2c2c"/>
-    <line x1="28" y1="32" x2="34" y2="38" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
-    <!-- 侧叶2 -->
-    <path d="M66,37 Q72,31 76,27 Q78,25 76,23 Q74,25 72,27 Q68,31 66,35Z" fill="#8fc48a" stroke="#2c2c2c"/>
-    <path d="M66,37 Q70,29 74,25 Q76,23 74,21 Q72,23 70,25 Q68,29 66,35Z" fill="#7ab875" stroke="#2c2c2c"/>
-    <line x1="72" y1="27" x2="66" y2="33" stroke="#2c2c2c" stroke-width="0.5" opacity="0.3"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="薄荷识别插画">
+  <defs>
+    <radialGradient id="paper" cx="50%" cy="38%" r="65%">
+      <stop offset="0" stop-color="#fff8de"/>
+      <stop offset="1" stop-color="#eadfbd"/>
+    </radialGradient>
+    <linearGradient id="pot" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d7a06d"/>
+      <stop offset="1" stop-color="#a7704c"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="1.4" dy="2.1" stdDeviation="1.1" flood-color="#3a2a20" flood-opacity=".24"/>
+    </filter>
+  </defs>
+  <rect x="7" y="7" width="106" height="106" rx="20" fill="url(#paper)"/>
+  <g filter="url(#shadow)">
+
+    <path d="M60 83c-1-27 0-49 1-65" fill="none" stroke="#3e8054" stroke-width="3"/>
+    <path d="M47 30l-8 4 5 4-7 5 8 3-3 7 10-2 2 8 6-9c-2-9-6-16-13-20z" fill="#79c28e" stroke="#263126" stroke-width="1.1"/>
+    <path d="M73 34l8 4-5 4 7 5-8 3 3 7-10-2-2 8-6-9c2-9 6-16 13-20z" fill="#5dab78" stroke="#263126" stroke-width="1.1"/>
+    <path d="M47 61l-8 4 5 4-7 5 8 3-3 7 10-2 2 8 6-9c-2-9-6-16-13-20z" fill="#84cd95" stroke="#263126" stroke-width="1.1"/>
+    <path d="M73 64l8 4-5 4 7 5-8 3 3 7-10-2-2 8-6-9c2-9 6-16 13-20z" fill="#65b981" stroke="#263126" stroke-width="1.1"/>
+    <path d="M38 82h44l-5 22H43z" fill="url(#pot)" stroke="#3a2a22" stroke-width="1.4"/>
+    <path d="M34 78h52v8H34z" fill="#c78b5e" stroke="#3a2a22" stroke-width="1.4" rx="3"/>
+
   </g>
+  <path d="M24 102c15 5 57 5 72 0" fill="none" stroke="#b69a6c" stroke-width="2.4" opacity=".32" stroke-linecap="round"/>
 </svg>

@@ -1,13 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <!-- 绿萝剪影 - 心形叶子垂吊 -->
-  <g fill="#d0d0d0" stroke="none">
-    <path d="M50,20 Q48,18 50,15 Q52,18 50,20Z"/>
-    <path d="M50,20 Q46,24 44,30 Q42,34 44,36 Q46,38 50,34 Q54,38 56,36 Q58,34 56,30 Q54,24 50,20Z"/>
-    <path d="M44,36 Q40,44 36,52 Q34,56 36,58 Q38,60 42,56 Q44,52 46,46"/>
-    <path d="M56,36 Q60,44 64,52 Q66,56 64,58 Q62,60 58,56 Q56,52 54,46"/>
-    <path d="M42,56 Q38,62 34,68 Q32,72 34,74 Q36,76 40,72 Q42,68 44,62"/>
-    <path d="M58,56 Q62,62 66,68 Q68,72 66,74 Q64,76 60,72 Q58,68 56,62"/>
-    <path d="M40,72 Q38,78 36,84 Q35,88 37,90 Q39,91 42,86 Q43,82 44,76"/>
-    <path d="M60,72 Q62,78 64,84 Q65,88 63,90 Q61,91 58,86 Q57,82 56,76"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="绿萝纸剪影">
+  <defs>
+    <radialGradient id="paperGlow" cx="50%" cy="38%" r="60%">
+      <stop offset="0" stop-color="#efe4c4" stop-opacity=".46"/>
+      <stop offset="1" stop-color="#efe4c4" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="1.5" dy="2" stdDeviation="1.2" flood-color="#2a1b18" flood-opacity=".32"/>
+    </filter>
+  </defs>
+  <circle cx="60" cy="55" r="48" fill="url(#paperGlow)"/>
+  <g filter="url(#softShadow)">
+    <path d="M52 19c5 9 7 22 4 37-3 18-12 34-26 48" fill="none" stroke="#2b3326" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M61 21c-4 14-2 26 5 40 6 13 12 25 10 42" fill="none" stroke="#2b3326" stroke-width="2.9" stroke-linecap="round"/>
+    <path d="M51 27c-9-11-24-5-24 7 0 10 12 18 24 30 12-12 24-20 24-30 0-12-15-18-24-7z" fill="#1f2b23"/>
+    <path d="M38 55c-8-8-20-3-20 7 0 8 10 14 20 24 10-10 20-16 20-24 0-10-13-15-20-7z" fill="#263729"/>
+    <path d="M72 54c-8-8-20-3-20 7 0 8 10 15 20 25 10-10 20-17 20-25 0-10-12-15-20-7z" fill="#1f2b23"/>
+    <path d="M29 82c-6-6-16-2-16 6 0 6 8 12 16 20 8-8 16-14 16-20 0-8-10-12-16-6z" fill="#2b3f2e"/>
+    <path d="M84 82c-6-6-16-2-16 6 0 6 8 12 16 20 8-8 16-14 16-20 0-8-10-12-16-6z" fill="#263729"/>
+    <path d="M51 33c-1 12-1 20-1 27M38 60c-1 9-1 16 0 23M72 60c-1 9 0 16 0 23" fill="none" stroke="#b9aa83" stroke-width="1.2" stroke-linecap="round" opacity=".62"/>
   </g>
+  <path d="M26 108c10-5 52-5 68 0" fill="none" stroke="#5d4b38" stroke-width="3" stroke-linecap="round" opacity=".35"/>
 </svg>

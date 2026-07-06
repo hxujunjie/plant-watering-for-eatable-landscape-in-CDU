@@ -30,13 +30,10 @@
 
 <!-- 收集进度 -->
 <div class="profile-section">
-    <div class="profile-section-title">图鉴收集</div>
+    <div class="profile-section-title">植物园住客</div>
     <div class="profile-codex-progress">
         <div class="profile-codex-text">
-            <span id="codexUnlocked">0</span> / <span id="codexTotal">0</span> 种植物
-        </div>
-        <div class="profile-codex-bar-wrap">
-            <div class="profile-codex-bar" id="codexBar" style="width:0%"></div>
+            已认识 <span id="codexResidents">0</span> 位植物朋友，其中 <span id="codexPreset">0</span> 位来自图鉴，<span id="codexCustom">0</span> 位由你命名
         </div>
     </div>
 </div>
@@ -59,7 +56,7 @@
         </div>
         <div class="profile-stat-item">
             <div class="profile-stat-value" id="statTopPlant">-</div>
-            <div class="profile-stat-label">最爱记录</div>
+            <div class="profile-stat-label">最常记录植物</div>
         </div>
     </div>
 </div>
@@ -125,18 +122,21 @@
             achievements.forEach(function(a) {
                 var item = document.createElement('div');
                 item.className = 'badge-item' + (a.unlocked ? '' : ' locked');
+                var iconHtml = a.unlocked
+                    ? '<img src="/static/img/badges/' + a.id + '.svg" alt="' + a.name + '">'
+                    : '<span class="badge-lock">&#128274;</span>';
+                var nameHtml = a.unlocked ? a.name : '未解锁';
                 item.innerHTML =
-                    '<div class="badge-icon">' + (a.unlocked ? '<img src="/static/img/badges/' + a.id + '.svg" alt="' + a.name + '">' : '?') + '</div>' +
-                    '<div class="badge-name">' + (a.unlocked ? a.name : '???') + '</div>' +
+                    '<div class="badge-icon">' + iconHtml + '</div>' +
+                    '<div class="badge-name">' + nameHtml + '</div>' +
                     '<div class="badge-desc">' + a.desc + '</div>';
                 badgeWall.appendChild(item);
             });
 
-            // 图鉴进度
-            document.getElementById('codexUnlocked').textContent = codex.unlocked;
-            document.getElementById('codexTotal').textContent = codex.total;
-            var pct = codex.total > 0 ? Math.round((codex.unlocked / codex.total) * 100) : 0;
-            document.getElementById('codexBar').style.width = pct + '%';
+            // 植物园住客
+            document.getElementById('codexResidents').textContent = codex.residents || 0;
+            document.getElementById('codexPreset').textContent = codex.preset || 0;
+            document.getElementById('codexCustom').textContent = codex.custom || 0;
 
             // 统计数据
             document.getElementById('statLogCount').textContent = stats.log_count;
@@ -169,7 +169,7 @@
                     }
                     item.innerHTML =
                         '<span class="profile-rank-num">' + (idx + 1) + '</span>' +
-                        '<a class="profile-rank-name" href="/codex/' + r.plant_lib_id + '">' + r.name + '</a>' +
+                        '<a class="profile-rank-name" href="/codex/preset/' + r.plant_lib_id + '">' + r.name + '</a>' +
                         '<span class="profile-rank-level">' + r.level_name + '</span>' +
                         '<span class="profile-rank-stars">' + stars + '</span>';
                     rankEl.appendChild(item);

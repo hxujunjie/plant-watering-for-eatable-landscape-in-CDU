@@ -1,15 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <!-- 龟背竹剪影 - 大型裂叶 -->
-  <g fill="#d0d0d0" stroke="none">
-    <path d="M50,10 Q30,20 20,40 Q15,55 20,70 Q25,80 35,85 Q42,88 50,90 Q58,88 65,85 Q75,80 80,70 Q85,55 80,40 Q70,20 50,10Z"/>
-    <!-- 裂口 -->
-    <path d="M50,10 Q48,30 44,50 Q42,60 40,70" fill="#fff" stroke="none"/>
-    <path d="M50,10 Q52,30 56,50 Q58,60 60,70" fill="#fff" stroke="none"/>
-    <path d="M30,30 Q38,40 42,55" fill="#fff" stroke="none"/>
-    <path d="M70,30 Q62,40 58,55" fill="#fff" stroke="none"/>
-    <path d="M22,55 Q30,58 38,62" fill="#fff" stroke="none"/>
-    <path d="M78,55 Q70,58 62,62" fill="#fff" stroke="none"/>
-    <!-- 茎 -->
-    <rect x="48" y="88" width="4" height="10" rx="1"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="龟背竹纸剪影">
+  <defs>
+    <radialGradient id="paperGlow" cx="50%" cy="42%" r="58%">
+      <stop offset="0" stop-color="#efe4c4" stop-opacity=".48"/>
+      <stop offset="1" stop-color="#efe4c4" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="leafCut">
+      <path d="M58 14c-20 6-37 22-42 44-4 18 2 35 16 44 14 10 34 9 48 0 15-9 24-27 21-45C97 32 79 16 58 14z"/>
+    </clipPath>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="1.5" dy="2" stdDeviation="1.2" flood-color="#251715" flood-opacity=".34"/>
+    </filter>
+  </defs>
+  <circle cx="60" cy="58" r="50" fill="url(#paperGlow)"/>
+  <g filter="url(#softShadow)">
+    <path d="M58 14c-20 6-37 22-42 44-4 18 2 35 16 44 14 10 34 9 48 0 15-9 24-27 21-45C97 32 79 16 58 14z" fill="#1f2b23"/>
+    <g clip-path="url(#leafCut)" fill="#efe4c4" opacity=".92">
+      <path d="M55 16c-3 19-4 45-1 82l7 1c-3-37-3-64 2-82z"/>
+      <path d="M29 32c11 8 18 17 22 31l-7 3c-4-12-12-22-24-29z"/>
+      <path d="M89 30c-12 9-19 20-23 34l7 3c4-13 11-23 23-31z"/>
+      <path d="M15 57c15 1 26 6 35 16l-5 5c-9-9-21-14-35-14z"/>
+      <path d="M102 58c-15 1-27 6-36 16l5 5c9-9 21-14 35-14z"/>
+      <path d="M23 86c10-6 20-8 31-5l-2 6c-10-2-19 0-28 6z"/>
+      <path d="M93 86c-10-6-20-8-31-5l2 6c10-2 19 0 28 6z"/>
+    </g>
+    <path d="M58 96c-1 7-1 11-1 16" fill="none" stroke="#2b3326" stroke-width="4" stroke-linecap="round"/>
+    <path d="M58 20c-2 20-2 50 0 78" fill="none" stroke="#b9aa83" stroke-width="1.1" stroke-linecap="round" opacity=".55"/>
   </g>
+  <path d="M30 110c14-4 48-4 62 0" fill="none" stroke="#5d4b38" stroke-width="3" stroke-linecap="round" opacity=".35"/>
 </svg>

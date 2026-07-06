@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300" width="240" height="300" role="img" aria-label="辣椒植物学手稿">
+  <defs>
+    <filter id="paperGrain">
+      <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="4" seed="23"/>
+      <feColorMatrix type="saturate" values=".18"/>
+      <feBlend in="SourceGraphic" mode="multiply"/>
+    </filter>
+    <filter id="softInk" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#8b765a" flood-opacity=".25"/>
+    </filter>
+    <radialGradient id="wash" cx="50%" cy="38%" r="62%">
+      <stop offset="0" stop-color="#f7f0df"/>
+      <stop offset="1" stop-color="#d8ccaf"/>
+    </radialGradient>
+  </defs>
+  <rect width="240" height="300" rx="24" fill="#d8ccaf"/>
+  <rect x="10" y="10" width="220" height="280" rx="21" fill="url(#wash)" filter="url(#paperGrain)"/>
+  <path d="M24 34h55M162 34h54M24 266h54M162 266h54" stroke="#927d5e" stroke-width="1" opacity=".42"/>
+  <text x="24" y="55" font-family="serif" font-size="7" fill="#6f5d4a" opacity=".62" transform="rotate(-4 24 55)">specimen study</text>
+  <text x="158" y="55" font-family="serif" font-size="7" fill="#6f5d4a" opacity=".62" transform="rotate(-4 158 55)">长椒挂果</text>
+  <path d="M51 58L92 92" stroke="#6f5d4a" stroke-width=".8" opacity=".38" stroke-dasharray="3 3"/>
+  <path d="M184 58L151 94" stroke="#6f5d4a" stroke-width=".8" opacity=".38" stroke-dasharray="3 3"/>
+  <g filter="url(#softInk)">
+
+    <path d="M120 240C118 170 122 104 130 48" fill="none" stroke="#8a6b48" stroke-width="3" stroke-linecap="round"/>
+    <path d="M100 64c42 28 46 96 2 150-35-47-32-112-2-150z" fill="#1f91b7" fill-opacity=".62" stroke="#16506c" stroke-width="1.2"/>
+    <path d="M154 78c32 30 28 88-8 130-28-42-24-96 8-130z" fill="#8ccfe0" fill-opacity=".58" stroke="#16506c" stroke-width="1.2"/>
+    <path d="M100 62c-16-18-6-40 14-48 18 16 12 38-8 52zM154 76c-12-16-4-34 14-42 14 14 8 32-8 44z" fill="#708b65" fill-opacity=".62" stroke="#16506c" stroke-width="1"/>
+
+  </g>
+  <g opacity=".62">
+    <circle cx="42" cy="226" r="17" fill="none" stroke="#6f5d4a" stroke-width="1"/>
+    <path d="M31 226h22M42 215v22" stroke="#6f5d4a" stroke-width=".8"/>
+    <text x="25" y="253" font-family="serif" font-size="7" fill="#6f5d4a" opacity=".62" transform="rotate(-4 25 253)">detail</text>
+    <path d="M190 218c17 8 16 25 0 33-15-8-15-25 0-33z" fill="none" stroke="#6f5d4a" stroke-width="1"/>
+    <path d="M190 220v29" stroke="#6f5d4a" stroke-width=".8"/>
+  </g>
+  <text x="120" y="277" text-anchor="middle" font-family="serif" font-size="15" fill="#66533d" letter-spacing="5">辣椒</text>
+</svg>

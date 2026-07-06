@@ -1,27 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <!-- 芦荟手绘插图 - 剑形叶子丛生 -->
-  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <!-- 中心叶 -->
-    <path d="M50,90 Q48,70 47,50 Q46,35 48,20 Q50,12 52,20 Q54,35 53,50 Q52,70 50,90Z" fill="#a8d5a2" stroke="#2c2c2c"/>
-    <!-- 左叶1 -->
-    <path d="M50,90 Q44,72 38,55 Q34,42 30,32 Q28,26 32,24 Q36,26 40,34 Q44,44 48,58 Q50,68 50,78Z" fill="#8fc48a" stroke="#2c2c2c"/>
-    <!-- 右叶1 -->
-    <path d="M50,90 Q56,72 62,55 Q66,42 70,32 Q72,26 68,24 Q64,26 60,34 Q56,44 52,58 Q50,68 50,78Z" fill="#7ab875" stroke="#2c2c2c"/>
-    <!-- 左叶2 -->
-    <path d="M50,90 Q42,76 34,62 Q28,52 22,44 Q18,38 22,36 Q26,38 30,44 Q36,52 44,66 Q48,74 50,82Z" fill="#b8e0b2" stroke="#2c2c2c"/>
-    <!-- 右叶2 -->
-    <path d="M50,90 Q58,76 66,62 Q72,52 78,44 Q82,38 78,36 Q74,38 70,44 Q64,52 56,66 Q52,74 50,82Z" fill="#a8d5a2" stroke="#2c2c2c"/>
-    <!-- 左叶3 -->
-    <path d="M50,90 Q40,80 30,70 Q22,62 16,56 Q12,52 16,50 Q20,52 26,56 Q34,62 44,74 Q48,80 50,86Z" fill="#8fc48a" stroke="#2c2c2c"/>
-    <!-- 右叶3 -->
-    <path d="M50,90 Q60,80 70,70 Q78,62 84,56 Q88,52 84,50 Q80,52 74,56 Q66,62 56,74 Q52,80 50,86Z" fill="#7ab875" stroke="#2c2c2c"/>
-    <!-- 叶片上的斑点 -->
-    <circle cx="49" cy="40" r="1" fill="#2c2c2c" opacity="0.2"/>
-    <circle cx="49" cy="50" r="1" fill="#2c2c2c" opacity="0.2"/>
-    <circle cx="49" cy="60" r="1" fill="#2c2c2c" opacity="0.2"/>
-    <circle cx="51" cy="45" r="1" fill="#2c2c2c" opacity="0.2"/>
-    <circle cx="51" cy="55" r="1" fill="#2c2c2c" opacity="0.2"/>
-    <!-- 叶脉 -->
-    <line x1="50" y1="20" x2="50" y2="85" stroke="#2c2c2c" stroke-width="0.6" opacity="0.3"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="芦荟识别插画">
+  <defs>
+    <radialGradient id="paper" cx="50%" cy="38%" r="65%">
+      <stop offset="0" stop-color="#fff8de"/>
+      <stop offset="1" stop-color="#eadfbd"/>
+    </radialGradient>
+    <linearGradient id="pot" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d7a06d"/>
+      <stop offset="1" stop-color="#a7704c"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="1.4" dy="2.1" stdDeviation="1.1" flood-color="#3a2a20" flood-opacity=".24"/>
+    </filter>
+  </defs>
+  <rect x="7" y="7" width="106" height="106" rx="20" fill="url(#paper)"/>
+  <g filter="url(#shadow)">
+
+    <path d="M60 82C45 57 42 34 47 13c12 17 15 42 13 69z" fill="#72b66f" stroke="#263126" stroke-width="1.2"/>
+    <path d="M60 82C75 57 78 34 73 13c-12 17-15 42-13 69z" fill="#5ca45f" stroke="#263126" stroke-width="1.2"/>
+    <path d="M52 82C36 62 27 42 27 23c15 12 25 35 25 59zM68 82c16-20 25-40 25-59-15 12-25 35-25 59z" fill="#80bf74" stroke="#263126" stroke-width="1.2"/>
+    <path d="M47 20c3 18 7 37 10 55M73 20c-3 18-7 37-10 55M32 31c9 18 14 34 17 47M88 31c-9 18-14 34-17 47" stroke="#dff1aa" stroke-width="1.2" opacity=".65"/>
+    <path d="M38 82h44l-5 22H43z" fill="url(#pot)" stroke="#3a2a22" stroke-width="1.4"/>
+    <path d="M34 78h52v8H34z" fill="#c78b5e" stroke="#3a2a22" stroke-width="1.4" rx="3"/>
+
   </g>
+  <path d="M24 102c15 5 57 5 72 0" fill="none" stroke="#b69a6c" stroke-width="2.4" opacity=".32" stroke-linecap="round"/>
 </svg>

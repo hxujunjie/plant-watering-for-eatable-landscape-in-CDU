@@ -1352,6 +1352,16 @@ body {
   font-style: italic;
   margin-top: 0.1rem;
 }
+.record-note,
+.cal-detail-note {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--ink);
+  background: rgba(255, 247, 220, 0.55);
+  border-left: 2px solid var(--accent-warm);
+  padding: 0.35rem 0.5rem;
+}
 
 .record-photos {
   display: flex;
@@ -3073,12 +3083,44 @@ body {
 .tag-picker-item.selected {
   background: rgba(74, 124, 89, 0.08);
 }
+.tag-picker-tip {
+  padding: 0.55rem 1.5rem;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--pencil);
+  border-bottom: 1px dashed var(--paper-dark);
+}
+.tag-picker-item-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
 
 .tag-picker-item-name {
-  flex: 1;
   font-size: 0.9rem;
   color: var(--ink);
   font-family: 'Noto Serif SC', serif;
+}
+.tag-picker-item-hint {
+  font-size: 0.64rem;
+  color: var(--muted);
+}
+.tag-create-options {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  padding: 0.65rem 1.5rem;
+  border-top: 1px dashed var(--paper-dark);
+}
+.tag-create-options button,
+.tag-create-options select {
+  border: 1.5px solid var(--pencil);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0.38rem 0.65rem;
+  font-size: 0.7rem;
 }
 
 .tag-picker-item-count {
@@ -4146,36 +4188,74 @@ body {
 .codex-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.6rem;
-  padding: 0.4rem 1.2rem 1rem;
+  gap: 0.85rem;
+  padding: 0.55rem 1.05rem 1.2rem;
 }
 .codex-card {
-  background: #fff;
-  border-radius: 2px;
-  padding: 0;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, .42), transparent 42%),
+    linear-gradient(180deg, #eee4cb 0%, #d5c7aa 100%);
+  border: 1px solid rgba(111, 93, 74, .34);
+  border-radius: 18px;
+  padding: 0.42rem;
   overflow: hidden;
-  box-shadow: 2px 3px 0 var(--shadow);
+  box-shadow:
+    0 14px 28px rgba(83, 67, 47, .2),
+    inset 0 0 0 1px rgba(255, 252, 238, .32);
   position: relative;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-height: 236px;
+}
+.codex-card::before {
+  content: '';
+  position: absolute;
+  inset: 0.28rem;
+  border: 1px solid rgba(111, 93, 74, .2);
+  border-radius: 14px;
+  pointer-events: none;
 }
 .codex-card:active {
   transform: scale(0.97);
 }
 .codex-card.locked {
-  opacity: 0.7;
-  cursor: default;
+  opacity: 1;
+  cursor: pointer;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(255, 255, 255, .28), transparent 44%),
+    linear-gradient(180deg, #ded3b8 0%, #c4b797 100%);
 }
 .codex-card-cover {
   width: 100%;
   aspect-ratio: 1;
   overflow: hidden;
-  background: var(--bg2);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 255, 255, .54), transparent 62%),
+    linear-gradient(180deg, #efe4cb, #d0c1a2);
+  border: 1px solid rgba(111, 93, 74, .24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .codex-card-cover img {
   width: 100%;
   height: 100%;
+  display: block;
+}
+.codex-card-cover img.codex-card-photo {
   object-fit: cover;
+  filter: contrast(1.02) saturate(.86) sepia(.1);
+}
+.codex-card-artwork {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: contrast(1.04) saturate(.96) sepia(.04);
+}
+.codex-card-user-cover {
+  object-fit: cover;
+  filter: contrast(1.02) saturate(.92) sepia(.08);
 }
 .codex-card-placeholder {
   width: 100%;
@@ -4193,25 +4273,87 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 2rem;
-  color: #ccc;
-  background: var(--bg2);
+  color: rgba(239, 224, 188, .65);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 36%, rgba(255, 255, 255, .35), transparent 58%),
+    linear-gradient(180deg, #d7ccb1, #baae8f);
+  border: 1px solid rgba(111, 93, 74, .22);
+  position: relative;
+  overflow: hidden;
+}
+.codex-card.locked .codex-card-silhouette::after {
+  content: '未收录';
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.55rem;
+  z-index: 2;
+  padding: 0.16rem 0.42rem;
+  border-radius: 999px;
+  background: rgba(239, 228, 203, .82);
+  border: 1px solid rgba(111, 93, 74, .22);
+  color: rgba(57, 78, 84, .78);
+  font-size: 0.56rem;
+  letter-spacing: .08em;
+}
+.codex-card-silhouette-img {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  opacity: .72;
+  filter: brightness(0) saturate(1) sepia(.35) hue-rotate(145deg) brightness(.9);
+}
+.codex-card-css-silhouette {
+  filter: brightness(0) opacity(.68);
+}
+.codex-card.locked .codex-card-name {
+  color: rgba(70, 82, 79, .86);
 }
 .codex-card-name {
-  padding: 0.4rem 0.6rem 0.1rem;
-  font-size: 0.8rem;
+  padding: 0.52rem 0.35rem 0.1rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: var(--ink);
+  color: #5c4b38;
+  text-align: center;
+  letter-spacing: 0.12em;
 }
 .codex-card-stats {
-  padding: 0 0.6rem 0.4rem;
+  padding: 0.08rem 0.35rem 0.35rem;
   font-size: 0.65rem;
-  color: var(--pencil);
+  color: rgba(92, 75, 56, .72);
+  text-align: center;
+}
+.codex-card-plan-badge {
+  margin: 0.08rem auto 0.34rem;
+  display: inline-block;
+  padding: 0.2rem 0.45rem;
+  border: 1px dashed rgba(86, 119, 126, .4);
+  border-radius: 999px;
+  font-size: 0.62rem;
+  color: rgba(57, 78, 84, .86);
+  background: rgba(239, 228, 203, .66);
 }
 .codex-card-hint {
-  padding: 0 0.6rem 0.4rem;
-  font-size: 0.6rem;
-  color: var(--muted);
+  padding: 0.05rem 0.35rem 0.4rem;
+  font-size: 0.62rem;
+  color: rgba(92, 75, 56, .62);
   font-style: italic;
+  text-align: center;
+  min-height: 2.2em;
+}
+.codex-card-category {
+  position: absolute;
+  top: 0.72rem;
+  left: 0.72rem;
+  z-index: 2;
+  padding: 0.18rem 0.48rem;
+  border-radius: 999px;
+  background: rgba(239, 228, 203, .84);
+  border: 1px solid rgba(111, 93, 74, .22);
+  color: rgba(57, 78, 84, .82);
+  font-size: 0.58rem;
+  line-height: 1;
+  backdrop-filter: blur(4px);
 }
 .codex-empty {
   display: flex;
@@ -4402,6 +4544,131 @@ body {
   color: var(--pencil);
   line-height: 1.5;
 }
+.codex-art-panel {
+  margin: 0.8rem 1.2rem 1rem;
+  padding: 0.72rem;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(255, 255, 255, .35), transparent 34%),
+    linear-gradient(180deg, rgba(238, 228, 202, .98), rgba(205, 192, 161, .98));
+  border: 1px solid rgba(111, 93, 74, .3);
+  box-shadow: 0 18px 38px rgba(94, 73, 50, .2);
+}
+.codex-art-frame {
+  aspect-ratio: 4 / 5;
+  border-radius: 16px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255, 255, 255, .42), transparent 62%),
+    #ddd0b5;
+  border: 1px solid rgba(111, 93, 74, .24);
+  position: relative;
+}
+.codex-art-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 32px rgba(93, 76, 54, .18);
+}
+.codex-art-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: contrast(1.03) saturate(.98) sepia(.04);
+}
+.codex-art-silhouette {
+  object-fit: contain;
+  padding: 12%;
+  filter: brightness(0) saturate(1) sepia(.35) hue-rotate(145deg) brightness(.9);
+  opacity: .72;
+}
+.codex-art-caption {
+  margin-top: 0.55rem;
+  text-align: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: rgba(92, 75, 56, .78);
+}
+.codex-growth-actions {
+  margin: -0.35rem 1.2rem 0.75rem;
+  padding: 0.72rem;
+  background:
+    linear-gradient(180deg, rgba(247, 238, 213, .96), rgba(222, 209, 177, .96));
+  border: 1px solid rgba(111, 93, 74, .24);
+  box-shadow: 0 10px 22px rgba(94, 73, 50, .12);
+}
+.codex-growth-actions-title {
+  margin-bottom: 0.48rem;
+  color: rgba(92, 75, 56, .86);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-align: center;
+}
+.codex-growth-action-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+}
+.codex-growth-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.1rem;
+  gap: 0.24rem;
+  border: 1px solid rgba(86, 119, 126, .3);
+  border-radius: 14px;
+  background: rgba(250, 245, 226, .72);
+  color: #4f6264;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: 1px 1px 0 rgba(111, 93, 74, .2);
+}
+.codex-growth-action:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+.codex-growth-action-icon {
+  font-size: 1rem;
+  line-height: 1;
+  color: #1f7792;
+}
+.codex-cover-control {
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.55rem;
+}
+.codex-cover-status {
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+.codex-cover-reset-btn,
+.codex-set-cover-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--pencil);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.65rem;
+  line-height: 1;
+  padding: 0.35rem 0.65rem;
+  box-shadow: 1px 1px 0 var(--shadow);
+}
+.codex-set-cover-btn {
+  margin-top: 0.35rem;
+}
+.codex-cover-reset-btn:active,
+.codex-set-cover-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
 
 /* --- 养护数据卡片 --- */
 .codex-care-card {
@@ -4429,6 +4696,40 @@ body {
 .codex-care-label {
   font-size: 0.65rem;
   color: var(--pencil);
+}
+.codex-quick-water-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0.8rem auto 0;
+  padding: 0.5rem 1.6rem;
+  border: 1.5px solid var(--accent);
+  border-radius: 2rem;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.05em;
+}
+.codex-quick-water-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(92,140,100,0.25);
+}
+.codex-quick-water-btn:active {
+  transform: scale(0.96);
+}
+.codex-quick-water-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: transparent;
+  color: var(--accent);
+}
+.codex-quick-water-icon {
+  font-size: 1.1rem;
 }
 
 /* --- 区域标题 --- */
@@ -5045,6 +5346,12 @@ body {
     font-size: 1.4rem;
     line-height: 1.5;
 }
+.badge-icon .badge-lock {
+    display: inline-block;
+    font-size: 1.2rem;
+    color: var(--pencil);
+    opacity: 0.7;
+}
 .badge-name {
     font-size: 0.6rem;
     font-weight: 600;
@@ -5179,6 +5486,8 @@ body {
     border-bottom: 1px dashed var(--pencil);
     cursor: pointer;
     transition: background 0.2s;
+    text-decoration: none;
+    color: inherit;
 }
 .settings-item:hover {
     background: var(--paper-dark);
@@ -5195,6 +5504,21 @@ body {
 .settings-item-arrow {
   font-size: 1rem;
   color: var(--pencil);
+}
+.settings-thresholds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+}
+.settings-thresholds input {
+  width: 4.2rem;
+  border: 1.5px solid var(--pencil);
+  border-radius: 8px;
+  padding: 0.3rem;
+  background: var(--paper);
 }
 
 /* ========== 植物昵称样式 ========== */

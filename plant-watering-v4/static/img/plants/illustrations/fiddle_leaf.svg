@@ -1,20 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <!-- 琴叶榕手绘插图 - 大型提琴形叶子 -->
-  <g fill="none" stroke="#2c2c2c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <!-- 主叶 -->
-    <path d="M50,12 Q30,18 22,35 Q18,50 22,65 Q28,78 40,85 Q46,88 50,90 Q54,88 60,85 Q72,78 78,65 Q82,50 78,35 Q70,18 50,12Z" fill="#8fc48a" stroke="#2c2c2c"/>
-    <!-- 叶脉 - 主脉 -->
-    <path d="M50,18 Q50,50 50,88" stroke="#2c2c2c" stroke-width="1.2" opacity="0.5"/>
-    <!-- 叶脉 - 侧脉 -->
-    <path d="M50,25 Q38,30 28,40" stroke="#2c2c2c" stroke-width="0.8" opacity="0.3"/>
-    <path d="M50,25 Q62,30 72,40" stroke="#2c2c2c" stroke-width="0.8" opacity="0.3"/>
-    <path d="M50,40 Q36,46 26,55" stroke="#2c2c2c" stroke-width="0.8" opacity="0.3"/>
-    <path d="M50,40 Q64,46 74,55" stroke="#2c2c2c" stroke-width="0.8" opacity="0.3"/>
-    <path d="M50,55 Q38,60 30,68" stroke="#2c2c2c" stroke-width="0.8" opacity="0.3"/>
-    <path d="M50,55 Q62,60 70,68" stroke="#2c2c2c" stroke-width="0.8" opacity="0.3"/>
-    <path d="M50,68 Q42,72 36,78" stroke="#2c2c2c" stroke-width="0.8" opacity="0.3"/>
-    <path d="M50,68 Q58,72 64,78" stroke="#2c2c2c" stroke-width="0.8" opacity="0.3"/>
-    <!-- 茎 -->
-    <path d="M50,88 Q49,92 48,98" stroke="#2c2c2c" stroke-width="2.5" fill="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="琴叶榕识别插画">
+  <defs>
+    <radialGradient id="paper" cx="50%" cy="38%" r="65%">
+      <stop offset="0" stop-color="#fff8de"/>
+      <stop offset="1" stop-color="#eadfbd"/>
+    </radialGradient>
+    <linearGradient id="pot" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#d7a06d"/>
+      <stop offset="1" stop-color="#a7704c"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="1.4" dy="2.1" stdDeviation="1.1" flood-color="#3a2a20" flood-opacity=".24"/>
+    </filter>
+  </defs>
+  <rect x="7" y="7" width="106" height="106" rx="20" fill="url(#paper)"/>
+  <g filter="url(#shadow)">
+
+    <path d="M60 84V21" fill="none" stroke="#6a7841" stroke-width="4" stroke-linecap="round"/>
+    <path d="M52 24c-17 8-18 30-5 38 8-5 14-15 15-27-2-5-5-9-10-11z" fill="#5b9c58" stroke="#263126" stroke-width="1.4"/>
+    <path d="M72 31c19 8 20 31 5 40-10-6-15-18-14-31 2-5 5-8 9-9z" fill="#4f8d51" stroke="#263126" stroke-width="1.4"/>
+    <path d="M50 61c-15 9-13 27 1 34 9-6 13-17 11-28-3-4-7-6-12-6z" fill="#6ca85f" stroke="#263126" stroke-width="1.4"/>
+    <path d="M51 31c4 10 4 17-1 25M73 38c-5 11-4 20 2 27M51 68c5 8 5 15 0 21" fill="none" stroke="#e6d894" stroke-width="1.1" opacity=".7"/>
+    <path d="M38 82h44l-5 22H43z" fill="url(#pot)" stroke="#3a2a22" stroke-width="1.4"/>
+    <path d="M34 78h52v8H34z" fill="#c78b5e" stroke="#3a2a22" stroke-width="1.4" rx="3"/>
+
   </g>
+  <path d="M24 102c15 5 57 5 72 0" fill="none" stroke="#b69a6c" stroke-width="2.4" opacity=".32" stroke-linecap="round"/>
 </svg>
